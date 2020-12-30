@@ -25,6 +25,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: true
       - name: configure debug
         run: cmake . -B build -DCMAKE_BUILD_TYPE=Debug
       - name: build debug
