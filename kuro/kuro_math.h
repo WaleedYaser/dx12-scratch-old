@@ -105,25 +105,25 @@ namespace kuro
     inline static f32
     sqrt(f32 f)
     {
-        return 0.0f;
+        return f;
     }
 
     inline static f32
     sin(f32 f)
     {
-        return 0.0f;
+        return f;
     }
 
     inline static f32
     cos(f32 f)
     {
-        return 0.0f;
+        return f;
     }
 
     inline static f32
     tan(f32 f)
     {
-        return 0.0f;
+        return f;
     }
 
     // =================================================================================================
