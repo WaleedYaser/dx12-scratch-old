@@ -108,10 +108,22 @@ namespace kuro
         return ::sqrtf(f);
     }
 
+    inline static f64
+    sqrt(f64 f)
+    {
+        return ::sqrt(f);
+    }
+
     inline static f32
     sin(f32 f)
     {
         return ::sinf(f);
+    }
+
+    inline static f64
+    sin(f64 f)
+    {
+        return ::sin(f);
     }
 
     inline static f32
@@ -120,8 +132,20 @@ namespace kuro
         return ::cosf(f);
     }
 
+    inline static f64
+    cos(f64 f)
+    {
+        return ::cos(f);
+    }
+
     inline static f32
     tan(f32 f)
+    {
+        return ::tanf(f);
+    }
+
+    inline static f64
+    tan(f64 f)
     {
         return ::tan(f);
     }

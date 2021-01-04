@@ -89,6 +89,48 @@ TEST_CASE("[kuro_math]: consts")
 // == MATH =========================================================================================
 // =================================================================================================
 
+TEST_CASE("[kuro_math]: math")
+{
+    SUBCASE("sqrt")
+    {
+        for (kuro::f64 i = 0.0; i < 100.0; i += 0.1)
+        {
+            CHECK(doctest::Approx(kuro::sqrt(i*i)) == i);
+            CHECK(doctest::Approx(kuro::sqrt(kuro::f32(i*i))) == kuro::f32(i));
+        }
+    }
+
+    SUBCASE("sin")
+    {
+        for (kuro::f64 theta = -2.0 * kuro::TAU; theta < 2 * kuro::TAU; theta += 0.1)
+        {
+            INFO("theta: ", theta);
+            CHECK(doctest::Approx(kuro::sin(theta)) == ::sin(theta));
+            CHECK(doctest::Approx(kuro::sin(kuro::f32(theta))) == ::sinf(kuro::f32(theta)));
+        }
+    }
+
+    SUBCASE("cos")
+    {
+        for (kuro::f64 theta = -2.0 * kuro::TAU; theta < 2 * kuro::TAU; theta += 0.1)
+        {
+            INFO("theta: ", theta);
+            CHECK(doctest::Approx(kuro::cos(theta)) == ::cos(theta));
+            CHECK(doctest::Approx(kuro::cos(kuro::f32(theta))) == ::cosf(kuro::f32(theta)));
+        }
+    }
+
+    SUBCASE("tan")
+    {
+        for (kuro::f64 theta = -2.0 * kuro::TAU; theta < 2 * kuro::TAU; theta += 0.1)
+        {
+            INFO("theta: ", theta);
+            CHECK(doctest::Approx(kuro::tan(theta)) == ::tan(theta));
+            CHECK(doctest::Approx(kuro::tan(kuro::f32(theta))) == ::tanf(kuro::f32(theta)));
+        }
+    }
+}
+
 // =================================================================================================
 // == VEC2 =========================================================================================
 // =================================================================================================
