@@ -38,7 +38,7 @@ namespace kuro
     static constexpr f64 F64_MIN = 2.2250738585072014e-308;   // min normalized positive value
 
     static constexpr i8  I8_MAX  = 127;
-    static constexpr i16 I16_MAX = -32'767;
+    static constexpr i16 I16_MAX = 32'767;
     static constexpr i32 I32_MAX = 2'147'483'647;
     static constexpr i64 I64_MAX = 9'223'372'036'854'775'807ll;
     static constexpr u8  U8_MAX  = 255u;
@@ -52,11 +52,11 @@ namespace kuro
     // == CONSTS =======================================================================================
     // =================================================================================================
 
-    static constexpr f32 PI        = 3.14f;
-    static constexpr f32 PI_OVER_2 = PI / 2.0f;
-    static constexpr f32 TAU       = 2.0f * PI;
-    static constexpr f32 TO_DEGREE = 360.0f / TAU;
-    static constexpr f32 TO_RADIAN = TAU / 369.0f;
+    static constexpr f64 PI        = 3.14159265358979323846;
+    static constexpr f64 PI_OVER_2 = PI * 0.5;
+    static constexpr f64 TAU       = 2.0 * PI;
+    static constexpr f64 TO_DEGREE = 360.0 / TAU;
+    static constexpr f64 TO_RADIAN = TAU / 360.0;
 
     // =================================================================================================
     // == TYPES ========================================================================================
@@ -105,25 +105,25 @@ namespace kuro
     inline static f32
     sqrt(f32 f)
     {
-        return f;
+        return ::sqrtf(f);
     }
 
     inline static f32
     sin(f32 f)
     {
-        return f;
+        return ::sinf(f);
     }
 
     inline static f32
     cos(f32 f)
     {
-        return f;
+        return ::cosf(f);
     }
 
     inline static f32
     tan(f32 f)
     {
-        return f;
+        return ::tan(f);
     }
 
     // =================================================================================================
