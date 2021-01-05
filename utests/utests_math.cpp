@@ -135,13 +135,560 @@ TEST_CASE("[kuro_math]: math")
 // == VEC2 =========================================================================================
 // =================================================================================================
 
+TEST_CASE("[kuro_math]: vec2")
+{
+    SUBCASE("init")
+    {
+        kuro::vec2 v = {};
+        CHECK(v.x == 0);
+        CHECK(v.y == 0);
+
+        v = {1.0f, 2.0f};
+        CHECK(v.x == 1.0f);
+        CHECK(v.y == 2.0f);
+    }
+
+    SUBCASE("add")
+    {
+        kuro::vec2 a = {1.0f, 2.0f};
+        kuro::vec2 b = {11.0f, 12.0f};
+
+        kuro::vec2 c = a + b;
+        CHECK(c.x == a.x + b.x);
+        CHECK(c.y == a.y + b.y);
+
+        a += b;
+        CHECK(a.x == c.x);
+        CHECK(a.y == c.y);
+    }
+
+    SUBCASE("unary minus")
+    {
+        kuro::vec2 a = {1.0f, 2.0f};
+        kuro::vec2 b = -a;
+
+        CHECK(b.x == -a.x);
+        CHECK(b.y == -a.y);
+    }
+
+    SUBCASE("subtract")
+    {
+        kuro::vec2 a = {1.0f, 2.0f};
+        kuro::vec2 b = {11.0f, 12.0f};
+
+        kuro::vec2 c = a - b;
+        CHECK(c.x == a.x - b.x);
+        CHECK(c.y == a.y - b.y);
+
+        a -= b;
+        CHECK(a.x == c.x);
+        CHECK(a.y == c.y);
+    }
+
+    SUBCASE("multiply")
+    {
+        kuro::vec2 a = {1.0f, 2.0f};
+        float f = 5.0f;
+
+        {
+            kuro::vec2 b = a * f;
+            CHECK(b.x == a.x * f);
+            CHECK(b.y == a.y * f);
+        }
+
+        {
+            kuro::vec2 b = f * a;
+            CHECK(b.x == a.x * f);
+            CHECK(b.y == a.y * f);
+        }
+
+        {
+            kuro::vec2 b = a;
+            b *= f;
+            CHECK(b.x == a.x * f);
+            CHECK(b.y == a.y * f);
+        }
+    }
+
+    SUBCASE("divide")
+    {
+        kuro::vec2 a = {1.0f, 2.0f};
+        float f = 5.0f;
+
+        {
+            kuro::vec2 b = a / f;
+            CHECK(b.x == a.x / f);
+            CHECK(b.y == a.y / f);
+        }
+
+        {
+            kuro::vec2 b = a;
+            b /= f;
+            CHECK(b.x == a.x / f);
+            CHECK(b.y == a.y / f);
+        }
+    }
+
+    SUBCASE("norm")
+    {
+        kuro::vec2 a = {1.0f, 2.0f};
+        kuro::vec2 b = {11.0f, 12.0f};
+
+        float a_norm = kuro::norm(a);
+        float b_norm = kuro::norm(b);
+
+        CHECK(a_norm == 5.0f);
+        CHECK(b_norm == 265.0f);
+    }
+
+    SUBCASE("length")
+    {
+        kuro::vec2 a = {1.0f, 2.0f};
+        kuro::vec2 b = {11.0f, 12.0f};
+
+        float a_length = kuro::length(a);
+        float b_length = kuro::length(b);
+
+        CHECK(a_length == doctest::Approx(2.236f).epsilon(0.001f));
+        CHECK(b_length == doctest::Approx(16.279f).epsilon(0.001f));
+    }
+
+    SUBCASE("normalize")
+    {
+        kuro::vec2 a = {1.0f, 2.0f};
+        kuro::vec2 b = {11.0f, 12.0f};
+
+        kuro::vec2 a_normalized = kuro::normalize(a);
+        kuro::vec2 b_normalized = kuro::normalize(b);
+
+        float a_length = kuro::length(a_normalized);
+        float b_length = kuro::length(b_normalized);
+
+        CHECK(a_length == doctest::Approx(1.0f));
+        CHECK(b_length == doctest::Approx(1.0f));
+    }
+
+    SUBCASE("dot")
+    {
+        kuro::vec2 a = {1.0f, 2.0f};
+        kuro::vec2 b = {11.0f, 12.0f};
+
+        float a_norm = kuro::norm(a);
+        float b_norm = kuro::norm(b);
+
+        CHECK(kuro::dot(a, a) == doctest::Approx(a_norm));
+        CHECK(kuro::dot(b, b) == doctest::Approx(b_norm));
+        CHECK(kuro::dot(a, b) == doctest::Approx(35.0f));
+
+        kuro::vec2 a_normalized = kuro::normalize(a);
+        kuro::vec2 b_normalized = kuro::normalize(b);
+
+        CHECK(kuro::dot(a_normalized, a_normalized) == doctest::Approx(1.0f));
+        CHECK(kuro::dot(b_normalized, b_normalized) == doctest::Approx(1.0f));
+        CHECK(kuro::dot(a_normalized, b_normalized) == doctest::Approx(0.962f).epsilon(0.001f));
+    }
+
+    SUBCASE("cross")
+    {
+        kuro::vec2 x = {1.0f, 0.0f};
+        kuro::vec2 y = {0.0f, 1.0f};
+
+        float xy = kuro::cross(x, y);
+        CHECK(xy == doctest::Approx(1.0f));
+
+        float yx = kuro::cross(y, x);
+        CHECK(yx == doctest::Approx(-1.0f));
+    }
+}
+
 // =================================================================================================
 // == VEC3 =========================================================================================
 // =================================================================================================
 
+TEST_CASE("[kuro_math]: vec3")
+{
+    SUBCASE("init")
+    {
+        kuro::vec3 v = {};
+        CHECK(v.x == 0);
+        CHECK(v.y == 0);
+        CHECK(v.z == 0);
+
+        v = {1.0f, 2.0f, 3.0f};
+        CHECK(v.x == 1.0f);
+        CHECK(v.y == 2.0f);
+        CHECK(v.z == 3.0f);
+    }
+
+    SUBCASE("add")
+    {
+        kuro::vec3 a = {1.0f, 2.0f, 3.0f};
+        kuro::vec3 b = {11.0f, 12.0f, 13.0f};
+
+        kuro::vec3 c = a + b;
+        CHECK(c.x == a.x + b.x);
+        CHECK(c.y == a.y + b.y);
+        CHECK(c.z == a.z + b.z);
+
+        a += b;
+        CHECK(a.x == c.x);
+        CHECK(a.y == c.y);
+        CHECK(a.z == c.z);
+    }
+
+    SUBCASE("unary minus")
+    {
+        kuro::vec3 a = {1.0f, 2.0f, 3.0f};
+        kuro::vec3 b = -a;
+
+        CHECK(b.x == -a.x);
+        CHECK(b.y == -a.y);
+        CHECK(b.z == -a.z);
+    }
+
+    SUBCASE("subtract")
+    {
+        kuro::vec3 a = {1.0f, 2.0f, 3.0f};
+        kuro::vec3 b = {11.0f, 12.0f, 13.0f};
+
+        kuro::vec3 c = a - b;
+        CHECK(c.x == a.x - b.x);
+        CHECK(c.y == a.y - b.y);
+        CHECK(c.z == a.z - b.z);
+
+        a -= b;
+        CHECK(a.x == c.x);
+        CHECK(a.y == c.y);
+        CHECK(a.z == c.z);
+    }
+
+    SUBCASE("multiply")
+    {
+        kuro::vec3 a = {1.0f, 2.0f, 3.0f};
+        float f = 5.0f;
+
+        {
+            kuro::vec3 b = a * f;
+            CHECK(b.x == a.x * f);
+            CHECK(b.y == a.y * f);
+            CHECK(b.z == a.z * f);
+        }
+
+        {
+            kuro::vec3 b = f * a;
+            CHECK(b.x == a.x * f);
+            CHECK(b.y == a.y * f);
+            CHECK(b.z == a.z * f);
+        }
+
+        {
+            kuro::vec3 b = a;
+            b *= f;
+            CHECK(b.x == a.x * f);
+            CHECK(b.y == a.y * f);
+            CHECK(b.z == a.z * f);
+        }
+    }
+
+    SUBCASE("divide")
+    {
+        kuro::vec3 a = {1.0f, 2.0f, 3.0f};
+        float f = 5.0f;
+
+        {
+            kuro::vec3 b = a / f;
+            CHECK(b.x == a.x / f);
+            CHECK(b.y == a.y / f);
+            CHECK(b.z == a.z / f);
+        }
+
+        {
+            kuro::vec3 b = a;
+            b /= f;
+            CHECK(b.x == a.x / f);
+            CHECK(b.y == a.y / f);
+            CHECK(b.z == a.z / f);
+        }
+    }
+
+    SUBCASE("norm")
+    {
+        kuro::vec3 a = {1.0f, 2.0f, 3.0f};
+        kuro::vec3 b = {11.0f, 12.0f, 13.0f};
+
+        float a_norm = kuro::norm(a);
+        float b_norm = kuro::norm(b);
+
+        CHECK(a_norm == 14.0f);
+        CHECK(b_norm == 434.0f);
+    }
+
+    SUBCASE("length")
+    {
+        kuro::vec3 a = {1.0f, 2.0f, 3.0f};
+        kuro::vec3 b = {11.0f, 12.0f, 13.0f};
+
+        float a_length = kuro::length(a);
+        float b_length = kuro::length(b);
+
+        CHECK(a_length == doctest::Approx(3.742f).epsilon(0.001f));
+        CHECK(b_length == doctest::Approx(20.833f).epsilon(0.001f));
+    }
+
+    SUBCASE("normalize")
+    {
+        kuro::vec3 a = {1.0f, 2.0f, 3.0f};
+        kuro::vec3 b = {11.0f, 12.0f, 13.0f};
+
+        kuro::vec3 a_normalized = kuro::normalize(a);
+        kuro::vec3 b_normalized = kuro::normalize(b);
+
+        float a_length = kuro::length(a_normalized);
+        float b_length = kuro::length(b_normalized);
+
+        CHECK(a_length == doctest::Approx(1.0f));
+        CHECK(b_length == doctest::Approx(1.0f));
+    }
+
+    SUBCASE("dot")
+    {
+        kuro::vec3 a = {1.0f, 2.0f, 3.0f};
+        kuro::vec3 b = {11.0f, 12.0f, 13.0f};
+
+        float a_norm = kuro::norm(a);
+        float b_norm = kuro::norm(b);
+
+        CHECK(kuro::dot(a, a) == doctest::Approx(a_norm));
+        CHECK(kuro::dot(b, b) == doctest::Approx(b_norm));
+        CHECK(kuro::dot(a, b) == doctest::Approx(74.0f));
+
+        kuro::vec3 a_normalized = kuro::normalize(a);
+        kuro::vec3 b_normalized = kuro::normalize(b);
+
+        CHECK(kuro::dot(a_normalized, a_normalized) == doctest::Approx(1.0f));
+        CHECK(kuro::dot(b_normalized, b_normalized) == doctest::Approx(1.0f));
+        CHECK(kuro::dot(a_normalized, b_normalized) == doctest::Approx(0.949f).epsilon(0.001f));
+    }
+
+    SUBCASE("cross")
+    {
+        kuro::vec3 x = {1.0f, 0.0f, 0.0f};
+        kuro::vec3 y = {0.0f, 1.0f, 0.0f};
+        kuro::vec3 z = {0.0f, 0.0f, 1.0f};
+
+        kuro::vec3 xy = kuro::cross(x, y);
+        CHECK(xy.x == doctest::Approx(z.x));
+        CHECK(xy.y == doctest::Approx(z.y));
+        CHECK(xy.z == doctest::Approx(z.z));
+
+        kuro::vec3 yx = kuro::cross(y, x);
+        CHECK(yx.x == doctest::Approx(-z.x));
+        CHECK(yx.y == doctest::Approx(-z.y));
+        CHECK(yx.z == doctest::Approx(-z.z));
+
+        kuro::vec3 yz = kuro::cross(y, z);
+        CHECK(yz.x == doctest::Approx(x.x));
+        CHECK(yz.y == doctest::Approx(x.y));
+        CHECK(yz.z == doctest::Approx(x.z));
+
+        kuro::vec3 zy = kuro::cross(z, y);
+        CHECK(zy.x == doctest::Approx(-x.x));
+        CHECK(zy.y == doctest::Approx(-x.y));
+        CHECK(zy.z == doctest::Approx(-x.z));
+
+        kuro::vec3 zx = kuro::cross(z, x);
+        CHECK(zx.x == doctest::Approx(y.x));
+        CHECK(zx.y == doctest::Approx(y.y));
+        CHECK(zx.z == doctest::Approx(y.z));
+
+        kuro::vec3 xz = kuro::cross(x, z);
+        CHECK(xz.x == doctest::Approx(-y.x));
+        CHECK(xz.y == doctest::Approx(-y.y));
+        CHECK(xz.z == doctest::Approx(-y.z));
+    }
+}
+
 // =================================================================================================
 // == VEC4 =========================================================================================
 // =================================================================================================
+
+TEST_CASE("[kuro_math]: vec4")
+{
+    SUBCASE("init")
+    {
+        kuro::vec4 v = {};
+        CHECK(v.x == 0);
+        CHECK(v.y == 0);
+        CHECK(v.z == 0);
+        CHECK(v.w == 0);
+
+        v = {1.0f, 2.0f, 3.0f, 4.0f};
+        CHECK(v.x == 1.0f);
+        CHECK(v.y == 2.0f);
+        CHECK(v.z == 3.0f);
+        CHECK(v.w == 4.0f);
+    }
+
+    SUBCASE("add")
+    {
+        kuro::vec4 a = {1.0f, 2.0f, 3.0f, 4.0f};
+        kuro::vec4 b = {11.0f, 12.0f, 13.0f, 14.0f};
+
+        kuro::vec4 c = a + b;
+        CHECK(c.x == a.x + b.x);
+        CHECK(c.y == a.y + b.y);
+        CHECK(c.z == a.z + b.z);
+        CHECK(c.w == a.w + b.w);
+
+        a += b;
+        CHECK(a.x == c.x);
+        CHECK(a.y == c.y);
+        CHECK(a.z == c.z);
+        CHECK(a.w == c.w);
+    }
+
+    SUBCASE("unary minus")
+    {
+        kuro::vec4 a = {1.0f, 2.0f, 3.0f, 4.0f};
+        kuro::vec4 b = -a;
+
+        CHECK(b.x == -a.x);
+        CHECK(b.y == -a.y);
+        CHECK(b.z == -a.z);
+        CHECK(b.w == -a.w);
+    }
+
+    SUBCASE("subtract")
+    {
+        kuro::vec4 a = {1.0f, 2.0f, 3.0f, 4.0f};
+        kuro::vec4 b = {11.0f, 12.0f, 13.0f, 14.0f};
+
+        kuro::vec4 c = a - b;
+        CHECK(c.x == a.x - b.x);
+        CHECK(c.y == a.y - b.y);
+        CHECK(c.z == a.z - b.z);
+        CHECK(c.w == a.w - b.w);
+
+        a -= b;
+        CHECK(a.x == c.x);
+        CHECK(a.y == c.y);
+        CHECK(a.z == c.z);
+        CHECK(a.w == c.w);
+    }
+
+    SUBCASE("multiply")
+    {
+        kuro::vec4 a = {1.0f, 2.0f, 3.0f, 4.0f};
+        float f = 5.0f;
+
+        {
+            kuro::vec4 b = a * f;
+            CHECK(b.x == a.x * f);
+            CHECK(b.y == a.y * f);
+            CHECK(b.z == a.z * f);
+            CHECK(b.w == a.w * f);
+        }
+
+        {
+            kuro::vec4 b = f * a;
+            CHECK(b.x == a.x * f);
+            CHECK(b.y == a.y * f);
+            CHECK(b.z == a.z * f);
+            CHECK(b.w == a.w * f);
+        }
+
+        {
+            kuro::vec4 b = a;
+            b *= f;
+            CHECK(b.x == a.x * f);
+            CHECK(b.y == a.y * f);
+            CHECK(b.z == a.z * f);
+            CHECK(b.w == a.w * f);
+        }
+    }
+
+    SUBCASE("divide")
+    {
+        kuro::vec4 a = {1.0f, 2.0f, 3.0f, 4.0f};
+        float f = 5.0f;
+
+        {
+            kuro::vec4 b = a / f;
+            CHECK(b.x == a.x / f);
+            CHECK(b.y == a.y / f);
+            CHECK(b.z == a.z / f);
+            CHECK(b.w == a.w / f);
+        }
+
+        {
+            kuro::vec4 b = a;
+            b /= f;
+            CHECK(b.x == a.x / f);
+            CHECK(b.y == a.y / f);
+            CHECK(b.z == a.z / f);
+            CHECK(b.w == a.w / f);
+        }
+    }
+
+    SUBCASE("norm")
+    {
+        kuro::vec4 a = {1.0f, 2.0f, 3.0f, 4.0f};
+        kuro::vec4 b = {11.0f, 12.0f, 13.0f, 14.0f};
+
+        float a_norm = kuro::norm(a);
+        float b_norm = kuro::norm(b);
+
+        CHECK(a_norm == 30.0f);
+        CHECK(b_norm == 630.0f);
+    }
+
+    SUBCASE("length")
+    {
+        kuro::vec4 a = {1.0f, 2.0f, 3.0f, 4.0f};
+        kuro::vec4 b = {11.0f, 12.0f, 13.0f, 14.0f};
+
+        float a_length = kuro::length(a);
+        float b_length = kuro::length(b);
+
+        CHECK(a_length == doctest::Approx(5.477f).epsilon(0.001f));
+        CHECK(b_length == doctest::Approx(25.1f).epsilon(0.001f));
+    }
+
+    SUBCASE("normalize")
+    {
+        kuro::vec4 a = {1.0f, 2.0f, 3.0f, 4.0f};
+        kuro::vec4 b = {11.0f, 12.0f, 13.0f, 14.0f};
+
+        kuro::vec4 a_normalized = kuro::normalize(a);
+        kuro::vec4 b_normalized = kuro::normalize(b);
+
+        float a_length = kuro::length(a_normalized);
+        float b_length = kuro::length(b_normalized);
+
+        CHECK(a_length == doctest::Approx(1.0f));
+        CHECK(b_length == doctest::Approx(1.0f));
+    }
+
+    SUBCASE("dot")
+    {
+        kuro::vec4 a = {1.0f, 2.0f, 3.0f, 4.0f};
+        kuro::vec4 b = {11.0f, 12.0f, 13.0f, 14.0f};
+
+        float a_norm = kuro::norm(a);
+        float b_norm = kuro::norm(b);
+
+        CHECK(kuro::dot(a, a) == doctest::Approx(a_norm));
+        CHECK(kuro::dot(b, b) == doctest::Approx(b_norm));
+        CHECK(kuro::dot(a, b) == doctest::Approx(130.0f));
+
+        kuro::vec4 a_normalized = kuro::normalize(a);
+        kuro::vec4 b_normalized = kuro::normalize(b);
+
+        CHECK(kuro::dot(a_normalized, a_normalized) == doctest::Approx(1.0f));
+        CHECK(kuro::dot(b_normalized, b_normalized) == doctest::Approx(1.0f));
+        CHECK(kuro::dot(a_normalized, b_normalized) == doctest::Approx(0.946f).epsilon(0.001f));
+    }
+}
 
 // =================================================================================================
 // == MAT2 =========================================================================================

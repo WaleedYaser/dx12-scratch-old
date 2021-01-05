@@ -1,7 +1,7 @@
 //
 // kuro_math.h - C++ single header mathematics library for graphics programming
 //
-// Copyright (c) 2020 Waleed Yaser
+// Copyright (c) 2020-2021 Waleed Yaser
 
 #pragma once
 
