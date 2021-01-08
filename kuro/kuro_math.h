@@ -2,6 +2,9 @@
 // kuro_math.h - C++ single header mathematics library for graphics programming
 //
 // Copyright (c) 2020-2021 Waleed Yaser
+//
+// TODO[Waleed]:
+// * invistigate more about vector norm, text books says that it's the lenght of vector
 
 #pragma once
 
@@ -450,7 +453,8 @@ namespace kuro
     {
         return mat2{
             A.m00 + B.m00, A.m01 + B.m01,
-            A.m10 + B.m10, A.m11 + B.m11};
+            A.m10 + B.m10, A.m11 + B.m11
+        };
     }
 
     inline static mat2 &
@@ -465,7 +469,8 @@ namespace kuro
     {
         return mat2{
             -M.m00, -M.m01,
-            -M.m10, -M.m11};
+            -M.m10, -M.m11
+        };
     }
 
     inline static mat2
@@ -473,7 +478,8 @@ namespace kuro
     {
         return mat2{
             A.m00 - B.m00, A.m01 - B.m01,
-            A.m10 - B.m10, A.m11 - B.m11};
+            A.m10 - B.m10, A.m11 - B.m11
+        };
     }
 
     inline static mat2 &
@@ -488,7 +494,8 @@ namespace kuro
     {
         return mat2{
             M.m00 * f, M.m01 * f,
-            M.m10 * f, M.m11 * f};
+            M.m10 * f, M.m11 * f
+        };
     }
 
     inline static mat2
@@ -509,7 +516,8 @@ namespace kuro
     {
         return vec2{
             v.x * M.m00 + v.y * M.m10,
-            v.x * M.m01 + v.y * M.m11};
+            v.x * M.m01 + v.y * M.m11
+        };
     }
 
     inline static mat2
@@ -531,7 +539,8 @@ namespace kuro
     {
         return mat2{
             M.m00 / f, M.m01 / f,
-            M.m10 / f, M.m11 / f};
+            M.m10 / f, M.m11 / f
+        };
     }
 
     inline static mat2
@@ -547,24 +556,13 @@ namespace kuro
         return M;
     }
 
-    inline static const f32 &
-    mat2_at(const mat2 &M, int i)
-    {
-        return *((f32 *)(&M) + i);
-    }
-
-    inline static f32 &
-    mat2_at(mat2 &M, int i)
-    {
-        return *((f32 *)(&M) + i);
-    }
-
     inline static mat2
     mat2_identity()
     {
         return mat2{
-            1, 0,
-            0, 1};
+            1.0f, 0.0f,
+            0.0f, 1.0f
+        };
     }
 
     inline static mat2
@@ -572,7 +570,8 @@ namespace kuro
     {
         return mat2{
             M.m00, M.m10,
-            M.m01, M.m11};
+            M.m01, M.m11
+        };
     }
 
     inline static f32
@@ -591,24 +590,12 @@ namespace kuro
     mat2_inverse(const mat2 &M)
     {
         f32 d = mat2_det(M);
-        if (d == 0)
+        if (d == 0.0f)
             return mat2{};
 
         return (1.0f / d) * mat2{
             M.m11, -M.m01,
             -M.m10,  M.m00};
-    }
-
-    inline static vec2
-    mat2_axis_x(const mat2 &M)
-    {
-        return normalize(vec2{M.m00, M.m01});
-    }
-
-    inline static vec2
-    mat2_axis_y(const mat2 &M)
-    {
-        return normalize(vec2{M.m10, M.m11});
     }
 
     inline static mat2
@@ -626,8 +613,21 @@ namespace kuro
     mat2_scaling(f32 sx, f32 sy)
     {
         return mat2{
-            sx,  0,
-            0, sy};
+            sx,  0.0f,
+            0.0f, sy};
+    }
+
+    inline static mat2
+    mat2_scaling(vec2 s)
+    {
+        return mat2_scaling(s.x, s.y);
+    }
+
+    inline static mat2
+    mat2_transform(vec2 scaling, float rotation)
+    {
+        // TODO[Waleed]: unroll this
+        return mat2_scaling(scaling.x, scaling.y) * mat2_rotation(rotation);
     }
 
     // =================================================================================================
@@ -748,18 +748,6 @@ namespace kuro
         return M;
     }
 
-    inline static const f32 &
-    mat3_at(const mat3 &M, int i)
-    {
-        return *((f32 *)(&M) + i);
-    }
-
-    inline static f32 &
-    mat3_at(mat3 &M, int i)
-    {
-        return *((f32 *)(&M) + i);
-    }
-
     inline static mat3
     mat3_identity()
     {
@@ -830,24 +818,6 @@ namespace kuro
             - (M.m00 * M.m21 - M.m01 * M.m20),
             // m22
             + (M.m00 * M.m11 - M.m01 * M.m10)};
-    }
-
-    inline static vec3
-    mat3_axis_x(const mat3 &M)
-    {
-        return normalize(vec3{M.m00, M.m01, M.m02});
-    }
-
-    inline static vec3
-    mat3_axis_y(const mat3 &M)
-    {
-        return normalize(vec3{M.m10, M.m11, M.m12});
-    }
-
-    inline static vec3
-    mat3_axis_z(const mat3 &M)
-    {
-        return normalize(vec3{M.m20, M.m21, M.m22});
     }
 
     inline static mat3
@@ -1058,18 +1028,6 @@ namespace kuro
         return M;
     }
 
-    inline const float &
-    mat4_at(const mat4 &M, int i)
-    {
-        return *((float *)(&M) + i);
-    }
-
-    inline float &
-    mat4_at(mat4 &M, int i)
-    {
-        return *((float *)(&M) + i);
-    }
-
     inline mat4
     mat4_identity()
     {
@@ -1216,24 +1174,6 @@ namespace kuro
             + M.m02 * (M.m10 * M.m21 - M.m11 * M.m20)};
     }
 
-    inline vec3
-    mat4_axis_x(const mat4 &M)
-    {
-        return normalize(vec3{M.m00, M.m01, M.m02});
-    }
-
-    inline vec3
-    mat4_axis_y(const mat4 &M)
-    {
-        return normalize(vec3{M.m10, M.m11, M.m12});
-    }
-
-    inline vec3
-    mat4_axis_z(const mat4 &M)
-    {
-        return normalize(vec3{M.m20, M.m21, M.m22});
-    }
-
     inline mat4
     mat4_translation(float dx, float dy, float dz)
     {
@@ -1293,7 +1233,7 @@ namespace kuro
             0,  0,  0, 1};
     }
 
-    // TODO(Waleed): add unittests
+    // TODO[Waleed]: add unittests
     inline mat4
     mat4_look_at(vec3 eye, vec3 target, vec3 up)
     {
@@ -1311,7 +1251,7 @@ namespace kuro
         };
     }
 
-    // TODO(Waleed): add unittests
+    // TODO[Waleed]: add unittests
     inline mat4
     mat4_ortho(float left, float right, float bottom, float top, float znear, float zfar)
     {
@@ -1334,7 +1274,7 @@ namespace kuro
         return M;
     }
 
-    // TODO(Waleed): add unittests
+    // TODO[Waleed]: add unittests
     inline mat4
     mat4_prespective(float fovy, float aspect, float znear, float zfar)
     {
