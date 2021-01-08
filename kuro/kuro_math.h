@@ -560,8 +560,8 @@ namespace kuro
     mat2_identity()
     {
         return mat2{
-            1.0f, 0.0f,
-            0.0f, 1.0f
+            1, 0,
+            0, 1
         };
     }
 
@@ -594,7 +594,7 @@ namespace kuro
             return mat2{};
 
         return (1.0f / d) * mat2{
-            M.m11, -M.m01,
+             M.m11, -M.m01,
             -M.m10,  M.m00};
     }
 
@@ -605,26 +605,26 @@ namespace kuro
         f32 s = sin(theta);
 
         return mat2{
-            c,  s,
-            -s,  c};
+             c, s,
+            -s, c};
     }
 
     inline static mat2
     mat2_scaling(f32 sx, f32 sy)
     {
         return mat2{
-            sx,  0.0f,
-            0.0f, sy};
+            sx,  0,
+             0, sy};
     }
 
     inline static mat2
-    mat2_scaling(vec2 s)
+    mat2_scaling(const vec2 &s)
     {
         return mat2_scaling(s.x, s.y);
     }
 
     inline static mat2
-    mat2_transform(vec2 scaling, float rotation)
+    mat2_transform(const vec2 &scaling, float rotation)
     {
         // TODO[Waleed]: unroll this
         return mat2_scaling(scaling.x, scaling.y) * mat2_rotation(rotation);
@@ -640,7 +640,8 @@ namespace kuro
         return mat3{
             A.m00 + B.m00, A.m01 + B.m01, A.m02 + B.m02,
             A.m10 + B.m10, A.m11 + B.m11, A.m12 + B.m12,
-            A.m20 + B.m20, A.m21 + B.m21, A.m22 + B.m22};
+            A.m20 + B.m20, A.m21 + B.m21, A.m22 + B.m22
+        };
     }
 
     inline static mat3 &
@@ -656,7 +657,8 @@ namespace kuro
         return mat3{
             -M.m00, -M.m01, -M.m02,
             -M.m10, -M.m11, -M.m12,
-            -M.m20, -M.m21, -M.m22};
+            -M.m20, -M.m21, -M.m22
+        };
     }
 
     inline static mat3
@@ -665,7 +667,8 @@ namespace kuro
         return mat3{
             A.m00 - B.m00, A.m01 - B.m01, A.m02 - B.m02,
             A.m10 - B.m10, A.m11 - B.m11, A.m12 - B.m12,
-            A.m20 - B.m20, A.m21 - B.m21, A.m22 - B.m22};
+            A.m20 - B.m20, A.m21 - B.m21, A.m22 - B.m22
+        };
     }
 
     inline static mat3 &
@@ -681,7 +684,8 @@ namespace kuro
         return mat3{
             M.m00 * f, M.m01 * f, M.m02 * f,
             M.m10 * f, M.m11 * f, M.m12 * f,
-            M.m20 * f, M.m21 * f, M.m22 * f};
+            M.m20 * f, M.m21 * f, M.m22 * f
+        };
     }
 
     inline static mat3
@@ -703,7 +707,8 @@ namespace kuro
         return vec3{
             v.x * M.m00 + v.y * M.m10 + v.z * M.m20,
             v.x * M.m01 + v.y * M.m11 + v.z * M.m21,
-            v.x * M.m02 + v.y * M.m12 + v.z * M.m22};
+            v.x * M.m02 + v.y * M.m12 + v.z * M.m22
+        };
     }
 
     inline static mat3
@@ -732,7 +737,8 @@ namespace kuro
         return mat3{
             M.m00 / f, M.m01 / f, M.m02 / f,
             M.m10 / f, M.m11 / f, M.m12 / f,
-            M.m20 / f, M.m21 / f, M.m22 / f};
+            M.m20 / f, M.m21 / f, M.m22 / f
+        };
     }
 
     inline static mat3
@@ -754,7 +760,8 @@ namespace kuro
         return mat3{
             1, 0, 0,
             0, 1, 0,
-            0, 0, 1};
+            0, 0, 1
+        };
     }
 
     inline static mat3
@@ -763,7 +770,8 @@ namespace kuro
         return mat3{
             M.m00, M.m10, M.m20,
             M.m01, M.m11, M.m21,
-            M.m02, M.m12, M.m22};
+            M.m02, M.m12, M.m22
+        };
     }
 
     inline static f32
@@ -789,13 +797,13 @@ namespace kuro
             return mat3{};
 
         /*
-        * 1- matrix of minors
-        * 2- matrix of cofactors
-        * 3- adjoint (transpose)
-        * 4- multiply by 1 / det
-        *
-        * link: https://www.mathsisfun.com/algebra/matrix-inverse-minors-cofactors-adjugate.html
-        */
+         * 1- matrix of minors
+         * 2- matrix of cofactors
+         * 3- adjoint (transpose)
+         * 4- multiply by 1 / det
+         *
+         * link: https://www.mathsisfun.com/algebra/matrix-inverse-minors-cofactors-adjugate.html
+         */
 
         return (1.0f / d) * mat3{
             // m00
@@ -817,16 +825,24 @@ namespace kuro
             // m12
             - (M.m00 * M.m21 - M.m01 * M.m20),
             // m22
-            + (M.m00 * M.m11 - M.m01 * M.m10)};
+            + (M.m00 * M.m11 - M.m01 * M.m10)
+        };
     }
 
     inline static mat3
     mat3_translation_2d(f32 dx, f32 dy)
     {
         return mat3{
-            1,  0,  0,
-            0,  1,  0,
-            dx, dy,  1};
+             1,  0, 0,
+             0,  1, 0,
+            dx, dy, 1
+        };
+    }
+
+    inline static mat3
+    mat3_translation_2d(const vec2 &translation)
+    {
+        return mat3_translation_2d(translation.x, translation.y);
     }
 
     inline static mat3
@@ -836,18 +852,33 @@ namespace kuro
         f32 s = sin(theta);
 
         return mat3{
-            c,  s,  0,
-            -s,  c,  0,
-            0,  0,  1};
+             c, s, 0,
+            -s, c, 0,
+             0, 0, 1
+        };
     }
 
     inline static mat3
     mat3_scaling_2d(f32 sx, f32 sy)
     {
         return mat3{
-            sx,  0,  0,
-            0, sy,  0,
-            0,  0,  1};
+            sx,  0, 0,
+             0, sy, 0,
+             0,  0, 1
+        };
+    }
+
+    inline static mat3
+    mat3_scaling_2d(vec2 s)
+    {
+        return mat3_scaling_2d(s.x, s.y);
+    }
+
+    inline static mat3
+    mat3_transform_2d(const vec2 &scaling, float rotation, const vec2 &translation)
+    {
+        // TODO[Waleed]: unroll this
+        return mat3_scaling_2d(scaling) * mat3_rotation_2d(rotation) * mat3_translation_2d(translation);
     }
 
     inline static mat3
@@ -857,9 +888,9 @@ namespace kuro
         f32 s = sin(pitch);
 
         return mat3{
-            1,  0,  0,
-            0,  c,  s,
-            0, -s,  c};
+            1,  0, 0,
+            0,  c, s,
+            0, -s, c};
     }
 
     inline static mat3
@@ -869,9 +900,9 @@ namespace kuro
         f32 s = sin(yaw);
 
         return mat3{
-            c,  0, -s,
-            0,  1,  0,
-            s,  0,  c};
+            c, 0, -s,
+            0, 1,  0,
+            s, 0,  c};
     }
 
     inline static mat3
@@ -881,9 +912,22 @@ namespace kuro
         f32 s = sin(roll);
 
         return mat3{
-            c,  s,  0,
-            -s,  c,  0,
-            0,  0,  1};
+             c, s, 0,
+            -s, c, 0,
+             0, 0, 1};
+    }
+
+    inline static mat3
+    mat3_rotation_zxy(f32 pitch, f32 yaw, f32 roll)
+    {
+        // TODO[Waleed]: unroll this
+        return mat3_rotation_z(roll) * mat3_rotation_y(yaw) * mat3_rotation_x(pitch);
+    }
+
+    inline static mat3
+    mat3_rotation_zxy(const vec3 &euler_angles)
+    {
+        return mat3_rotation_zxy(euler_angles.x, euler_angles.y, euler_angles.z);
     }
 
     inline static mat3
@@ -891,8 +935,21 @@ namespace kuro
     {
         return mat3{
             sx,  0,  0,
-            0, sy,  0,
-            0,  0, sz};
+             0, sy,  0,
+             0,  0, sz};
+    }
+
+    inline static mat3
+    mat3_scaling(const vec3 &scaling)
+    {
+        return mat3_scaling(scaling.x, scaling.y, scaling.z);
+    }
+
+    inline static mat3
+    mat3_transform(const vec3 &scaling, const vec3 &euler_angles)
+    {
+        // TODO[Waleed]: unroll this
+        return mat3_scaling(scaling) * mat3_rotation_zxy(euler_angles);
     }
 
     // =================================================================================================
