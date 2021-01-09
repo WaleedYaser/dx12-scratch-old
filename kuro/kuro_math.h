@@ -4,7 +4,6 @@
 // Copyright (c) 2020-2021 Waleed Yaser
 //
 // TODO[Waleed]:
-// * invistigate more about vector norm, text books says that it's the lenght of vector
 // * add equal and not equal operator
 
 #pragma once
@@ -223,27 +222,27 @@ namespace kuro
     }
 
     inline static f32
+    dot(const vec2 &a, const vec2 &b)
+    {
+        return (a.x * b.x + a.y * b.y);
+    }
+
+    inline static f32
     norm(const vec2 &v)
     {
-        return (v.x * v.x + v.y * v.y);
+        return sqrt(dot(v, v));
     }
 
     inline static f32
     length(const vec2 &v)
     {
-        return sqrt(norm(v));
+        return norm(v);
     }
 
     inline static vec2
     normalize(const vec2 &v)
     {
         return v / length(v);
-    }
-
-    inline static f32
-    dot(const vec2 &a, const vec2 &b)
-    {
-        return (a.x * b.x + a.y * b.y);
     }
 
     inline static f32
@@ -321,27 +320,27 @@ namespace kuro
     }
 
     inline static f32
+    dot(const vec3 &a, const vec3 &b)
+    {
+        return (a.x * b.x + a.y * b.y + a.z * b.z);
+    }
+
+    inline static f32
     norm(const vec3 &v)
     {
-        return (v.x * v.x + v.y * v.y + v.z * v.z);
+        return sqrt(dot(v, v));
     }
 
     inline static f32
     length(const vec3 &v)
     {
-        return sqrt(norm(v));
+        return norm(v);
     }
 
     inline static vec3
     normalize(const vec3 &v)
     {
         return v / length(v);
-    }
-
-    inline static f32
-    dot(const vec3 &a, const vec3 &b)
-    {
-        return (a.x * b.x + a.y * b.y + a.z * b.z);
     }
 
     inline static vec3
@@ -422,27 +421,27 @@ namespace kuro
     }
 
     inline static f32
+    dot(const vec4 &a, const vec4 &b)
+    {
+        return (a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w);
+    }
+
+    inline static f32
     norm(const vec4 &v)
     {
-        return (v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w);
+        return sqrt(dot(v, v));
     }
 
     inline static f32
     length(const vec4 &v)
     {
-        return sqrt(norm(v));
+        return norm(v);
     }
 
     inline static vec4
     normalize(const vec4 &v)
     {
         return v / length(v);
-    }
-
-    inline static f32
-    dot(const vec4 &a, const vec4 &b)
-    {
-        return (a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w);
     }
 
     // =================================================================================================

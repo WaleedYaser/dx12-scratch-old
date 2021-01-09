@@ -217,6 +217,23 @@ TEST_CASE("[kuro_math]: vec2")
         CHECK(a.y == b.y);
     }
 
+    SUBCASE("dot")
+    {
+        kuro::vec2 a = {1.0f, 2.0f};
+        kuro::vec2 b = {11.0f, 12.0f};
+
+        CHECK(kuro::dot(a, a) == 5.0f);
+        CHECK(kuro::dot(b, b) == 265.0f);
+        CHECK(kuro::dot(a, b) == 35.0f);
+
+        kuro::vec2 a_normalized = kuro::normalize(a);
+        kuro::vec2 b_normalized = kuro::normalize(b);
+
+        CHECK(kuro::dot(a_normalized, a_normalized) == doctest::Approx(1.0f));
+        CHECK(kuro::dot(b_normalized, b_normalized) == doctest::Approx(1.0f));
+        CHECK(kuro::dot(a_normalized, b_normalized) == doctest::Approx(0.962f).epsilon(0.001f));
+    }
+
     SUBCASE("norm")
     {
         kuro::vec2 a = {1.0f, 2.0f};
@@ -225,8 +242,8 @@ TEST_CASE("[kuro_math]: vec2")
         kuro::f32 a_norm = kuro::norm(a);
         kuro::f32 b_norm = kuro::norm(b);
 
-        CHECK(a_norm == 5.0f);
-        CHECK(b_norm == 265.0f);
+        CHECK(a_norm == doctest::Approx(2.236f).epsilon(0.001f));
+        CHECK(b_norm == doctest::Approx(16.279f).epsilon(0.001f));
     }
 
     SUBCASE("length")
@@ -254,26 +271,6 @@ TEST_CASE("[kuro_math]: vec2")
 
         CHECK(a_length == doctest::Approx(1.0f));
         CHECK(b_length == doctest::Approx(1.0f));
-    }
-
-    SUBCASE("dot")
-    {
-        kuro::vec2 a = {1.0f, 2.0f};
-        kuro::vec2 b = {11.0f, 12.0f};
-
-        kuro::f32 a_norm = kuro::norm(a);
-        kuro::f32 b_norm = kuro::norm(b);
-
-        CHECK(kuro::dot(a, a) == doctest::Approx(a_norm));
-        CHECK(kuro::dot(b, b) == doctest::Approx(b_norm));
-        CHECK(kuro::dot(a, b) == doctest::Approx(35.0f));
-
-        kuro::vec2 a_normalized = kuro::normalize(a);
-        kuro::vec2 b_normalized = kuro::normalize(b);
-
-        CHECK(kuro::dot(a_normalized, a_normalized) == doctest::Approx(1.0f));
-        CHECK(kuro::dot(b_normalized, b_normalized) == doctest::Approx(1.0f));
-        CHECK(kuro::dot(a_normalized, b_normalized) == doctest::Approx(0.962f).epsilon(0.001f));
     }
 
     SUBCASE("cross")
@@ -387,6 +384,23 @@ TEST_CASE("[kuro_math]: vec3")
         CHECK(a.z == a.z);
     }
 
+    SUBCASE("dot")
+    {
+        kuro::vec3 a = {1.0f, 2.0f, 3.0f};
+        kuro::vec3 b = {11.0f, 12.0f, 13.0f};
+
+        CHECK(kuro::dot(a, a) == 14.0f);
+        CHECK(kuro::dot(b, b) == 434.0f);
+        CHECK(kuro::dot(a, b) == 74.0f);
+
+        kuro::vec3 a_normalized = kuro::normalize(a);
+        kuro::vec3 b_normalized = kuro::normalize(b);
+
+        CHECK(kuro::dot(a_normalized, a_normalized) == doctest::Approx(1.0f));
+        CHECK(kuro::dot(b_normalized, b_normalized) == doctest::Approx(1.0f));
+        CHECK(kuro::dot(a_normalized, b_normalized) == doctest::Approx(0.949f).epsilon(0.001f));
+    }
+
     SUBCASE("norm")
     {
         kuro::vec3 a = {1.0f, 2.0f, 3.0f};
@@ -395,8 +409,8 @@ TEST_CASE("[kuro_math]: vec3")
         kuro::f32 a_norm = kuro::norm(a);
         kuro::f32 b_norm = kuro::norm(b);
 
-        CHECK(a_norm == 14.0f);
-        CHECK(b_norm == 434.0f);
+        CHECK(a_norm == doctest::Approx(3.742f).epsilon(0.001f));
+        CHECK(b_norm == doctest::Approx(20.833f).epsilon(0.001f));
     }
 
     SUBCASE("length")
@@ -424,26 +438,6 @@ TEST_CASE("[kuro_math]: vec3")
 
         CHECK(a_length == doctest::Approx(1.0f));
         CHECK(b_length == doctest::Approx(1.0f));
-    }
-
-    SUBCASE("dot")
-    {
-        kuro::vec3 a = {1.0f, 2.0f, 3.0f};
-        kuro::vec3 b = {11.0f, 12.0f, 13.0f};
-
-        kuro::f32 a_norm = kuro::norm(a);
-        kuro::f32 b_norm = kuro::norm(b);
-
-        CHECK(kuro::dot(a, a) == doctest::Approx(a_norm));
-        CHECK(kuro::dot(b, b) == doctest::Approx(b_norm));
-        CHECK(kuro::dot(a, b) == doctest::Approx(74.0f));
-
-        kuro::vec3 a_normalized = kuro::normalize(a);
-        kuro::vec3 b_normalized = kuro::normalize(b);
-
-        CHECK(kuro::dot(a_normalized, a_normalized) == doctest::Approx(1.0f));
-        CHECK(kuro::dot(b_normalized, b_normalized) == doctest::Approx(1.0f));
-        CHECK(kuro::dot(a_normalized, b_normalized) == doctest::Approx(0.949f).epsilon(0.001f));
     }
 
     SUBCASE("cross")
@@ -594,6 +588,23 @@ TEST_CASE("[kuro_math]: vec4")
         CHECK(a.w == b.w);
     }
 
+    SUBCASE("dot")
+    {
+        kuro::vec4 a = {1.0f, 2.0f, 3.0f, 4.0f};
+        kuro::vec4 b = {11.0f, 12.0f, 13.0f, 14.0f};
+
+        CHECK(kuro::dot(a, a) == 30.0f);
+        CHECK(kuro::dot(b, b) == 630.0f);
+        CHECK(kuro::dot(a, b) == 130.0f);
+
+        kuro::vec4 a_normalized = kuro::normalize(a);
+        kuro::vec4 b_normalized = kuro::normalize(b);
+
+        CHECK(kuro::dot(a_normalized, a_normalized) == doctest::Approx(1.0f));
+        CHECK(kuro::dot(b_normalized, b_normalized) == doctest::Approx(1.0f));
+        CHECK(kuro::dot(a_normalized, b_normalized) == doctest::Approx(0.946f).epsilon(0.001f));
+    }
+
     SUBCASE("norm")
     {
         kuro::vec4 a = {1.0f, 2.0f, 3.0f, 4.0f};
@@ -602,8 +613,8 @@ TEST_CASE("[kuro_math]: vec4")
         kuro::f32 a_norm = kuro::norm(a);
         kuro::f32 b_norm = kuro::norm(b);
 
-        CHECK(a_norm == 30.0f);
-        CHECK(b_norm == 630.0f);
+        CHECK(a_norm == doctest::Approx(5.477f).epsilon(0.001f));
+        CHECK(b_norm == doctest::Approx(25.1f).epsilon(0.001f));
     }
 
     SUBCASE("length")
@@ -631,26 +642,6 @@ TEST_CASE("[kuro_math]: vec4")
 
         CHECK(a_length == doctest::Approx(1.0f));
         CHECK(b_length == doctest::Approx(1.0f));
-    }
-
-    SUBCASE("dot")
-    {
-        kuro::vec4 a = {1.0f, 2.0f, 3.0f, 4.0f};
-        kuro::vec4 b = {11.0f, 12.0f, 13.0f, 14.0f};
-
-        kuro::f32 a_norm = kuro::norm(a);
-        kuro::f32 b_norm = kuro::norm(b);
-
-        CHECK(kuro::dot(a, a) == doctest::Approx(a_norm));
-        CHECK(kuro::dot(b, b) == doctest::Approx(b_norm));
-        CHECK(kuro::dot(a, b) == doctest::Approx(130.0f));
-
-        kuro::vec4 a_normalized = kuro::normalize(a);
-        kuro::vec4 b_normalized = kuro::normalize(b);
-
-        CHECK(kuro::dot(a_normalized, a_normalized) == doctest::Approx(1.0f));
-        CHECK(kuro::dot(b_normalized, b_normalized) == doctest::Approx(1.0f));
-        CHECK(kuro::dot(a_normalized, b_normalized) == doctest::Approx(0.946f).epsilon(0.001f));
     }
 }
 
