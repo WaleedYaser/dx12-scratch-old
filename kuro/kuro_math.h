@@ -5,6 +5,7 @@
 //
 // TODO[Waleed]:
 // * invistigate more about vector norm, text books says that it's the lenght of vector
+// * add equal and not equal operator
 
 #pragma once
 
@@ -963,7 +964,8 @@ namespace kuro
             A.m00 + B.m00, A.m01 + B.m01, A.m02 + B.m02, A.m03 + B.m03,
             A.m10 + B.m10, A.m11 + B.m11, A.m12 + B.m12, A.m13 + B.m13,
             A.m20 + B.m20, A.m21 + B.m21, A.m22 + B.m22, A.m23 + B.m23,
-            A.m30 + B.m30, A.m31 + B.m31, A.m32 + B.m32, A.m33 + B.m33};
+            A.m30 + B.m30, A.m31 + B.m31, A.m32 + B.m32, A.m33 + B.m33
+        };
     }
 
     inline mat4 &
@@ -980,7 +982,8 @@ namespace kuro
             -M.m00, -M.m01, -M.m02, -M.m03,
             -M.m10, -M.m11, -M.m12, -M.m13,
             -M.m20, -M.m21, -M.m22, -M.m23,
-            -M.m30, -M.m31, -M.m32, -M.m33};
+            -M.m30, -M.m31, -M.m32, -M.m33
+        };
     }
 
     inline mat4
@@ -990,7 +993,8 @@ namespace kuro
             A.m00 - B.m00, A.m01 - B.m01, A.m02 - B.m02, A.m03 - B.m03,
             A.m10 - B.m10, A.m11 - B.m11, A.m12 - B.m12, A.m13 - B.m13,
             A.m20 - B.m20, A.m21 - B.m21, A.m22 - B.m22, A.m23 - B.m23,
-            A.m30 - B.m30, A.m31 - B.m31, A.m32 - B.m32, A.m33 - B.m33};
+            A.m30 - B.m30, A.m31 - B.m31, A.m32 - B.m32, A.m33 - B.m33
+        };
     }
 
     inline mat4 &
@@ -1007,7 +1011,8 @@ namespace kuro
             M.m00 * f, M.m01 * f, M.m02 * f, M.m03 * f,
             M.m10 * f, M.m11 * f, M.m12 * f, M.m13 * f,
             M.m20 * f, M.m21 * f, M.m22 * f, M.m23 * f,
-            M.m30 * f, M.m31 * f, M.m32 * f, M.m33 * f};
+            M.m30 * f, M.m31 * f, M.m32 * f, M.m33 * f
+        };
     }
 
     inline mat4
@@ -1030,7 +1035,8 @@ namespace kuro
             v.x * M.m00 + v.y * M.m10 + v.z * M.m20 + v.w * M.m30,
             v.x * M.m01 + v.y * M.m11 + v.z * M.m21 + v.w * M.m31,
             v.x * M.m02 + v.y * M.m12 + v.z * M.m22 + v.w * M.m32,
-            v.x * M.m03 + v.y * M.m13 + v.z * M.m23 + v.w * M.m33};
+            v.x * M.m03 + v.y * M.m13 + v.z * M.m23 + v.w * M.m33
+        };
     }
 
     inline mat4
@@ -1069,7 +1075,8 @@ namespace kuro
             M.m00 / f, M.m01 / f, M.m02 / f, M.m03 / f,
             M.m10 / f, M.m11 / f, M.m12 / f, M.m13 / f,
             M.m20 / f, M.m21 / f, M.m22 / f, M.m23 / f,
-            M.m30 / f, M.m31 / f, M.m32 / f, M.m33 / f};
+            M.m30 / f, M.m31 / f, M.m32 / f, M.m33 / f
+        };
     }
 
     inline mat4
@@ -1092,7 +1099,8 @@ namespace kuro
             1, 0, 0, 0,
             0, 1, 0, 0,
             0, 0, 1, 0,
-            0, 0, 0, 1};
+            0, 0, 0, 1
+        };
     }
 
     inline mat4
@@ -1102,7 +1110,8 @@ namespace kuro
             M.m00, M.m10, M.m20, M.m30,
             M.m01, M.m11, M.m21, M.m31,
             M.m02, M.m12, M.m22, M.m32,
-            M.m03, M.m13, M.m23, M.m33};
+            M.m03, M.m13, M.m23, M.m33
+        };
     }
 
     inline float
@@ -1176,7 +1185,6 @@ namespace kuro
             + M.m02 * (M.m11 * M.m23 - M.m13 * M.m21)
             - M.m03 * (M.m11 * M.m22 - M.m12 * M.m21),
 
-
             // m01
             - M.m10 * (M.m22 * M.m33 - M.m23 * M.m32)
             + M.m12 * (M.m20 * M.m33 - M.m23 * M.m30)
@@ -1194,7 +1202,6 @@ namespace kuro
             - M.m02 * (M.m10 * M.m23 - M.m13 * M.m20)
             + M.m03 * (M.m10 * M.m22 - M.m12 * M.m20),
 
-
             // m02
             + M.m10 * (M.m21 * M.m33 - M.m23 * M.m31)
             - M.m11 * (M.m20 * M.m33 - M.m23 * M.m30)
@@ -1211,7 +1218,6 @@ namespace kuro
             - M.m00 * (M.m11 * M.m23 - M.m13 * M.m21)
             + M.m01 * (M.m10 * M.m23 - M.m13 * M.m20)
             - M.m03 * (M.m10 * M.m21 - M.m11 * M.m20),
-
 
             // m03
             - M.m10 * (M.m21 * M.m32 - M.m22 * M.m31)
@@ -1238,7 +1244,14 @@ namespace kuro
             1,  0,  0, 0,
             0,  1,  0, 0,
             0,  0,  1, 0,
-            dx, dy, dz, 1};
+            dx, dy, dz, 1
+        };
+    }
+
+    inline mat4
+    mat4_translation(const vec3 &translation)
+    {
+        return mat4_translation(translation.x, translation.y, translation.z);
     }
 
     inline mat4
@@ -1248,10 +1261,11 @@ namespace kuro
         float s = sin(pitch);
 
         return mat4{
-            1,  0,  0,  0,
-            0,  c,  s,  0,
-            0, -s,  c,  0,
-            0,  0,  0,  1};
+            1,  0, 0, 0,
+            0,  c, s, 0,
+            0, -s, c, 0,
+            0,  0, 0, 1
+        };
     }
 
     inline mat4
@@ -1261,10 +1275,11 @@ namespace kuro
         float s = sin(yaw);
 
         return mat4{
-            c,  0, -s,  0,
-            0,  1,  0,  0,
-            s,  0,  c,  0,
-            0,  0,  0,  1};
+            c, 0, -s, 0,
+            0, 1,  0, 0,
+            s, 0,  c, 0,
+            0, 0,  0, 1
+        };
     }
 
     inline mat4
@@ -1274,10 +1289,11 @@ namespace kuro
         float s = sin(roll);
 
         return mat4{
-            c,  s,  0,  0,
-            -s,  c,  0,  0,
-            0,  0,  1,  0,
-            0,  0,  0,  1};
+             c, s, 0, 0,
+            -s, c, 0, 0,
+             0, 0, 1, 0,
+             0, 0, 0, 1
+        };
     }
 
     inline mat4
@@ -1285,9 +1301,16 @@ namespace kuro
     {
         return mat4{
             sx,  0,  0, 0,
-            0, sy,  0, 0,
-            0,  0, sz, 0,
-            0,  0,  0, 1};
+             0, sy,  0, 0,
+             0,  0, sz, 0,
+             0,  0,  0, 1
+        };
+    }
+
+    inline mat4
+    mat4_scaling(const vec3 &scaling)
+    {
+        return mat4_scaling(scaling.x, scaling.y, scaling.z);
     }
 
     // TODO[Waleed]: add unittests
@@ -1301,10 +1324,10 @@ namespace kuro
         // TODO: documentation
         // TODO: translation?!
         return mat4{
-            r.x, u.x, v.x, -eye.x,
-            r.y, u.y, v.y, -eye.y,
-            r.z, u.z, v.z, -eye.z,
-            0.0f, 0.0f, 0.0f, 1.0f
+               r.x,    u.x,    v.x, 0.0f,
+               r.y,    u.y,    v.y, 0.0f,
+               r.z,    u.z,    v.z, 0.0f,
+            -eye.x, -eye.y, -eye.z, 1.0f
         };
     }
 
@@ -1320,11 +1343,11 @@ namespace kuro
         M.m11 = 2.0f / (top - bottom);
         M.m31 = -(top + bottom) / (top - bottom);
 
-        // to map z to [0, 1] use
-        // M.m22 = -1.0f / (far - near)
-        // M.m32 = -near / (far - near)
-        M.m22 = -2.0f / (zfar - znear);
-        M.m32 = -(zfar + znear) / (zfar - znear);
+        // to map z to [-1, 1] use
+        // M.m22 = -2.0f / (zfar - znear)
+        // M.m32 = -(zfar + znear) / (zfar - znear)
+        M.m22 = -1.0f / (zfar - znear);
+        M.m32 = -znear / (zfar - znear);
 
         M.m33 = 1.0f;
 
@@ -1343,12 +1366,12 @@ namespace kuro
         M.m00 = 1.0f / w;
         M.m11 = 1.0f / h;
 
-        // to map z to [0, 1] use
-        // M.m22 = -far / (far - near)
-        // M.m32 = -far * near / (far - near)
-        M.m22 = -(zfar + znear) / (zfar - znear);
+        // to map z to [-1, 1] use
+        // M.m22 = -(zfar + znear) / (zfar - znear)
+        // M.m32 = -(2.0f * zfar * znear) / (zfar - znear)
+        M.m22 = -zfar / (zfar - znear);
         M.m23 = -1.0f;
-        M.m32 = -(2.0f * zfar * znear) / (zfar - znear);
+        M.m32 = -(zfar * znear) / (zfar - znear);
 
         return M;
     }

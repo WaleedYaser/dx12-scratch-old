@@ -1076,7 +1076,9 @@ TEST_CASE("[kuro_math]: mat3")
         };
 
         kuro::vec3 b = a * M;
-        CHECK(b.x == 90.0f); CHECK(b.y == 96.0f); CHECK(b.z == 102.0f);
+        CHECK(b.x == 90.0f);
+        CHECK(b.y == 96.0f);
+        CHECK(b.z == 102.0f);
     }
 
     SUBCASE("multiply matrix")
@@ -1131,6 +1133,7 @@ TEST_CASE("[kuro_math]: mat3")
         kuro::vec3 b = a * I;
         CHECK(b.x == a.x);
         CHECK(b.y == a.y);
+        CHECK(b.z == a.z);
 
         kuro::mat3 A = {
             1.0f, 2.0f, 3.0f,
@@ -1255,6 +1258,13 @@ TEST_CASE("[kuro_math]: mat3")
         kuro::vec3 a = kuro::vec3{1.0f, 1.0f, 1.0f};
 
         kuro::vec3 b = a * P;
+        CHECK(b.x == a.x + p.x);
+        CHECK(b.y == a.y + p.y);
+        CHECK(b.z == 1.0f);
+
+        P = kuro::mat3_translation_2d(p);
+
+        b = a * P;
         CHECK(b.x == a.x + p.x);
         CHECK(b.y == a.y + p.y);
         CHECK(b.z == 1.0f);
@@ -1419,6 +1429,565 @@ TEST_CASE("[kuro_math]: mat3")
 // =================================================================================================
 // == MAT4 =========================================================================================
 // =================================================================================================
+
+TEST_CASE("[kuro_math]: mat4")
+{
+    SUBCASE("init")
+    {
+        kuro::mat4 M = {};
+
+        CHECK(M.m00 == 0.0f); CHECK(M.m01 == 0.0f); CHECK(M.m02 == 0.0f); CHECK(M.m03 == 0.0f);
+        CHECK(M.m10 == 0.0f); CHECK(M.m11 == 0.0f); CHECK(M.m12 == 0.0f); CHECK(M.m13 == 0.0f);
+        CHECK(M.m20 == 0.0f); CHECK(M.m21 == 0.0f); CHECK(M.m22 == 0.0f); CHECK(M.m23 == 0.0f);
+        CHECK(M.m30 == 0.0f); CHECK(M.m31 == 0.0f); CHECK(M.m32 == 0.0f); CHECK(M.m33 == 0.0f);
+
+        M = {
+             1.0f,  2.0f,  3.0f,  4.0f,
+             5.0f,  6.0f,  7.0f,  8.0f,
+             9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f
+        };
+
+        CHECK(M.m00 ==  1.0f); CHECK(M.m01 ==  2.0f); CHECK(M.m02 ==  3.0f); CHECK(M.m03 ==  4.0f);
+        CHECK(M.m10 ==  5.0f); CHECK(M.m11 ==  6.0f); CHECK(M.m12 ==  7.0f); CHECK(M.m13 ==  8.0f);
+        CHECK(M.m20 ==  9.0f); CHECK(M.m21 == 10.0f); CHECK(M.m22 == 11.0f); CHECK(M.m23 == 12.0f);
+        CHECK(M.m30 == 13.0f); CHECK(M.m31 == 14.0f); CHECK(M.m32 == 15.0f); CHECK(M.m33 == 16.0f);
+    }
+
+    SUBCASE("add")
+    {
+        kuro::mat4 A = {
+             1.0f,  2.0f,  3.0f,  4.0f,
+             5.0f,  6.0f,  7.0f,  8.0f,
+             9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f
+        };
+
+        kuro::mat4 B = {
+            21.0f, 22.0f, 23.0f, 24.0f,
+            25.0f, 26.0f, 27.0f, 28.0f,
+            29.0f, 30.0f, 31.0f, 32.0f,
+            33.0f, 34.0f, 35.0f, 36.0f
+        };
+
+        kuro::mat4 C = A + B;
+        CHECK(C.m00 == A.m00 + B.m00);
+        CHECK(C.m01 == A.m01 + B.m01);
+        CHECK(C.m02 == A.m02 + B.m02);
+        CHECK(C.m03 == A.m03 + B.m03);
+
+        CHECK(C.m10 == A.m10 + B.m10);
+        CHECK(C.m11 == A.m11 + B.m11);
+        CHECK(C.m12 == A.m12 + B.m12);
+        CHECK(C.m13 == A.m13 + B.m13);
+
+        CHECK(C.m20 == A.m20 + B.m20);
+        CHECK(C.m21 == A.m21 + B.m21);
+        CHECK(C.m22 == A.m22 + B.m22);
+        CHECK(C.m23 == A.m23 + B.m23);
+
+        CHECK(C.m30 == A.m30 + B.m30);
+        CHECK(C.m31 == A.m31 + B.m31);
+        CHECK(C.m32 == A.m32 + B.m32);
+        CHECK(C.m33 == A.m33 + B.m33);
+
+        A += B;
+        CHECK(A.m00 == C.m00); CHECK(A.m01 == C.m01); CHECK(A.m02 == C.m02); CHECK(A.m03 == C.m03);
+        CHECK(A.m10 == C.m10); CHECK(A.m11 == C.m11); CHECK(A.m12 == C.m12); CHECK(A.m13 == C.m13);
+        CHECK(A.m20 == C.m20); CHECK(A.m21 == C.m21); CHECK(A.m22 == C.m22); CHECK(A.m23 == C.m23);
+        CHECK(A.m30 == C.m30); CHECK(A.m31 == C.m31); CHECK(A.m32 == C.m32); CHECK(A.m33 == C.m33);
+    }
+
+    SUBCASE("unary minus")
+    {
+        kuro::mat4 A = {
+             1.0f,  2.0f,  3.0f,  4.0f,
+             5.0f,  6.0f,  7.0f,  8.0f,
+             9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f
+        };
+
+        kuro::mat4 B = -A;
+        CHECK(B.m00 == -A.m00); CHECK(B.m01 == -A.m01); CHECK(B.m02 == -A.m02); CHECK(B.m03 == -A.m03);
+        CHECK(B.m10 == -A.m10); CHECK(B.m11 == -A.m11); CHECK(B.m12 == -A.m12); CHECK(B.m13 == -A.m13);
+        CHECK(B.m20 == -A.m20); CHECK(B.m21 == -A.m21); CHECK(B.m22 == -A.m22); CHECK(B.m23 == -A.m23);
+        CHECK(B.m30 == -A.m30); CHECK(B.m31 == -A.m31); CHECK(B.m32 == -A.m32); CHECK(B.m33 == -A.m33);
+    }
+
+    SUBCASE("subtract")
+    {
+        kuro::mat4 A = {
+             1.0f,  2.0f,  3.0f,  4.0f,
+             5.0f,  6.0f,  7.0f,  8.0f,
+             9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f
+        };
+
+        kuro::mat4 B = {
+            21.0f, 22.0f, 23.0f, 24.0f,
+            25.0f, 26.0f, 27.0f, 28.0f,
+            29.0f, 30.0f, 31.0f, 32.0f,
+            33.0f, 34.0f, 35.0f, 36.0f
+        };
+
+        kuro::mat4 C = A - B;
+        CHECK(C.m00 == A.m00 - B.m00);
+        CHECK(C.m01 == A.m01 - B.m01);
+        CHECK(C.m02 == A.m02 - B.m02);
+        CHECK(C.m03 == A.m03 - B.m03);
+
+        CHECK(C.m10 == A.m10 - B.m10);
+        CHECK(C.m11 == A.m11 - B.m11);
+        CHECK(C.m12 == A.m12 - B.m12);
+        CHECK(C.m13 == A.m13 - B.m13);
+
+        CHECK(C.m20 == A.m20 - B.m20);
+        CHECK(C.m21 == A.m21 - B.m21);
+        CHECK(C.m22 == A.m22 - B.m22);
+        CHECK(C.m23 == A.m23 - B.m23);
+
+        CHECK(C.m30 == A.m30 - B.m30);
+        CHECK(C.m31 == A.m31 - B.m31);
+        CHECK(C.m32 == A.m32 - B.m32);
+        CHECK(C.m33 == A.m33 - B.m33);
+
+        A -= B;
+        CHECK(A.m00 == C.m00); CHECK(A.m01 == C.m01); CHECK(A.m02 == C.m02); CHECK(A.m03 == C.m03);
+        CHECK(A.m10 == C.m10); CHECK(A.m11 == C.m11); CHECK(A.m12 == C.m12); CHECK(A.m13 == C.m13);
+        CHECK(A.m20 == C.m20); CHECK(A.m21 == C.m21); CHECK(A.m22 == C.m22); CHECK(A.m23 == C.m23);
+        CHECK(A.m30 == C.m30); CHECK(A.m31 == C.m31); CHECK(A.m32 == C.m32); CHECK(A.m33 == C.m33);
+    }
+
+    SUBCASE("multiply scalar")
+    {
+        kuro::mat4 A = {
+             1.0f,  2.0f,  3.0f,  4.0f,
+             5.0f,  6.0f,  7.0f,  8.0f,
+             9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f
+        };
+
+        kuro::f32 f = 5.0f;
+
+        kuro::mat4 B = A * f;
+        CHECK(B.m00 == f * A.m00);
+        CHECK(B.m01 == f * A.m01);
+        CHECK(B.m02 == f * A.m02);
+        CHECK(B.m03 == f * A.m03);
+
+        CHECK(B.m10 == f * A.m10);
+        CHECK(B.m11 == f * A.m11);
+        CHECK(B.m12 == f * A.m12);
+        CHECK(B.m13 == f * A.m13);
+
+        CHECK(B.m20 == f * A.m20);
+        CHECK(B.m21 == f * A.m21);
+        CHECK(B.m22 == f * A.m22);
+        CHECK(B.m23 == f * A.m23);
+
+        CHECK(B.m30 == f * A.m30);
+        CHECK(B.m31 == f * A.m31);
+        CHECK(B.m32 == f * A.m32);
+        CHECK(B.m33 == f * A.m33);
+
+        B = f * A;
+        CHECK(B.m00 == f * A.m00);
+        CHECK(B.m01 == f * A.m01);
+        CHECK(B.m02 == f * A.m02);
+        CHECK(B.m03 == f * A.m03);
+
+        CHECK(B.m10 == f * A.m10);
+        CHECK(B.m11 == f * A.m11);
+        CHECK(B.m12 == f * A.m12);
+        CHECK(B.m13 == f * A.m13);
+
+        CHECK(B.m20 == f * A.m20);
+        CHECK(B.m21 == f * A.m21);
+        CHECK(B.m22 == f * A.m22);
+        CHECK(B.m23 == f * A.m23);
+
+        CHECK(B.m30 == f * A.m30);
+        CHECK(B.m31 == f * A.m31);
+        CHECK(B.m32 == f * A.m32);
+        CHECK(B.m33 == f * A.m33);
+
+        A *= f;
+        CHECK(A.m00 == B.m00); CHECK(A.m01 == B.m01); CHECK(A.m02 == B.m02); CHECK(A.m03 == B.m03);
+        CHECK(A.m10 == B.m10); CHECK(A.m11 == B.m11); CHECK(A.m12 == B.m12); CHECK(A.m13 == B.m13);
+        CHECK(A.m20 == B.m20); CHECK(A.m21 == B.m21); CHECK(A.m22 == B.m22); CHECK(A.m23 == B.m23);
+        CHECK(A.m30 == B.m30); CHECK(A.m31 == B.m31); CHECK(A.m32 == B.m32); CHECK(A.m33 == B.m33);
+    }
+
+    SUBCASE("multiply vector")
+    {
+        kuro::vec4 a = {1.0f, 2.0f, 3.0f, 4.0f};
+        kuro::mat4 M = {
+            11.0f, 12.0f, 13.0f, 14.0f,
+            15.0f, 16.0f, 17.0f, 18.0f,
+            19.0f, 20.0f, 21.0f, 22.0f,
+            23.0f, 24.0f, 25.0f, 26.0f
+        };
+
+        kuro::vec4 b = a * M;
+        CHECK(b.x == 190.0f);
+        CHECK(b.y == 200.0f);
+        CHECK(b.z == 210.0f);
+        CHECK(b.w == 220.0f);
+    }
+
+    SUBCASE("multiply matrix")
+    {
+        kuro::mat4 A = {
+             1.0f,  2.0f,  3.0f,  4.0f,
+             5.0f,  6.0f,  7.0f,  8.0f,
+             9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f
+        };
+
+        kuro::mat4 B = {
+            21.0f, 22.0f, 23.0f, 24.0f,
+            25.0f, 26.0f, 27.0f, 28.0f,
+            29.0f, 30.0f, 31.0f, 32.0f,
+            33.0f, 34.0f, 35.0f, 36.0f
+        };
+
+        kuro::mat4 C = A * B;
+        CHECK(C.m00 ==  290.0f); CHECK(C.m01 ==  300.0f); CHECK(C.m02 ==  310.0f); CHECK(C.m03 ==  320.0f);
+        CHECK(C.m10 ==  722.0f); CHECK(C.m11 ==  748.0f); CHECK(C.m12 ==  774.0f); CHECK(C.m13 ==  800.0f);
+        CHECK(C.m20 == 1154.0f); CHECK(C.m21 == 1196.0f); CHECK(C.m22 == 1238.0f); CHECK(C.m23 == 1280.0f);
+        CHECK(C.m30 == 1586.0f); CHECK(C.m31 == 1644.0f); CHECK(C.m32 == 1702.0f); CHECK(C.m33 == 1760.0f);
+    }
+
+    SUBCASE("divide")
+    {
+        kuro::mat4 A = {
+             1.0f,  2.0f,  3.0f,  4.0f,
+             5.0f,  6.0f,  7.0f,  8.0f,
+             9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f
+        };
+
+        kuro::f32 f = 5.0f;
+
+        kuro::mat4 B = A / f;
+        CHECK(B.m00 == A.m00 / f);
+        CHECK(B.m01 == A.m01 / f);
+        CHECK(B.m02 == A.m02 / f);
+        CHECK(B.m03 == A.m03 / f);
+
+        CHECK(B.m10 == A.m10 / f);
+        CHECK(B.m11 == A.m11 / f);
+        CHECK(B.m12 == A.m12 / f);
+        CHECK(B.m13 == A.m13 / f);
+
+        CHECK(B.m20 == A.m20 / f);
+        CHECK(B.m21 == A.m21 / f);
+        CHECK(B.m22 == A.m22 / f);
+        CHECK(B.m23 == A.m23 / f);
+
+        CHECK(B.m30 == A.m30 / f);
+        CHECK(B.m31 == A.m31 / f);
+        CHECK(B.m32 == A.m32 / f);
+        CHECK(B.m33 == A.m33 / f);
+
+        A /= f;
+        CHECK(A.m00 == B.m00); CHECK(A.m01 == B.m01); CHECK(A.m02 == B.m02); CHECK(A.m03 == B.m03);
+        CHECK(A.m10 == B.m10); CHECK(A.m11 == B.m11); CHECK(A.m12 == B.m12); CHECK(A.m13 == B.m13);
+        CHECK(A.m20 == B.m20); CHECK(A.m21 == B.m21); CHECK(A.m22 == B.m22); CHECK(A.m23 == B.m23);
+        CHECK(A.m30 == B.m30); CHECK(A.m31 == B.m31); CHECK(A.m32 == B.m32); CHECK(A.m33 == B.m33);
+    }
+
+    SUBCASE("identity")
+    {
+        kuro::mat4 I = kuro::mat4_identity();
+        CHECK(I.m00 == 1.0f); CHECK(I.m01 == 0.0f); CHECK(I.m02 == 0.0f); CHECK(I.m03 == 0.0f);
+        CHECK(I.m10 == 0.0f); CHECK(I.m11 == 1.0f); CHECK(I.m12 == 0.0f); CHECK(I.m13 == 0.0f);
+        CHECK(I.m20 == 0.0f); CHECK(I.m21 == 0.0f); CHECK(I.m22 == 1.0f); CHECK(I.m23 == 0.0f);
+        CHECK(I.m30 == 0.0f); CHECK(I.m31 == 0.0f); CHECK(I.m32 == 0.0f); CHECK(I.m33 == 1.0f);
+
+        kuro::vec4 a = {1.0f, 2.0f, 3.0f, 4.0f};
+        kuro::vec4 b = a * I;
+        CHECK(b.x == a.x);
+        CHECK(b.y == a.y);
+        CHECK(b.z == a.z);
+        CHECK(b.w == a.w);
+
+        kuro::mat4 A = {
+             1.0f,  2.0f,  3.0f,  4.0f,
+             5.0f,  6.0f,  7.0f,  8.0f,
+             9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f
+        };
+
+        kuro::mat4 B = I * A;
+        CHECK(B.m00 == A.m00); CHECK(B.m01 == A.m01); CHECK(B.m02 == A.m02); CHECK(B.m03 == A.m03);
+        CHECK(B.m10 == A.m10); CHECK(B.m11 == A.m11); CHECK(B.m12 == A.m12); CHECK(B.m13 == A.m13);
+        CHECK(B.m20 == A.m20); CHECK(B.m21 == A.m21); CHECK(B.m22 == A.m22); CHECK(B.m23 == A.m23);
+        CHECK(B.m30 == A.m30); CHECK(B.m31 == A.m31); CHECK(B.m32 == A.m32); CHECK(B.m33 == A.m33);
+
+        B = A * I;
+        CHECK(B.m00 == A.m00); CHECK(B.m01 == A.m01); CHECK(B.m02 == A.m02); CHECK(B.m03 == A.m03);
+        CHECK(B.m10 == A.m10); CHECK(B.m11 == A.m11); CHECK(B.m12 == A.m12); CHECK(B.m13 == A.m13);
+        CHECK(B.m20 == A.m20); CHECK(B.m21 == A.m21); CHECK(B.m22 == A.m22); CHECK(B.m23 == A.m23);
+        CHECK(B.m30 == A.m30); CHECK(B.m31 == A.m31); CHECK(B.m32 == A.m32); CHECK(B.m33 == A.m33);
+    }
+
+    SUBCASE("transpose")
+    {
+        kuro::mat4 A = {
+             1.0f,  2.0f,  3.0f,  4.0f,
+             5.0f,  6.0f,  7.0f,  8.0f,
+             9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f
+        };
+
+        kuro::mat4 B = kuro::mat4_transpose(A);
+        CHECK(B.m00 == A.m00); CHECK(B.m01 == A.m10); CHECK(B.m02 == A.m20);
+        CHECK(B.m10 == A.m01); CHECK(B.m11 == A.m11); CHECK(B.m12 == A.m21);
+        CHECK(B.m20 == A.m02); CHECK(B.m21 == A.m12); CHECK(B.m22 == A.m22);
+    }
+
+    SUBCASE("determinant")
+    {
+        kuro::mat4 I = kuro::mat4_identity();
+        CHECK(kuro::mat4_det(I) == 1.0f);
+
+        kuro::mat4 A = {
+             1.0f,  2.0f,  3.0f,  4.0f,
+             5.0f,  6.0f,  7.0f,  8.0f,
+             9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f
+        };
+
+        CHECK(kuro::mat4_det(A) == 0.0f);
+
+        kuro::mat4 B = {
+             3.0f, 2.0f, -1.0f,  4.0f,
+             2.0f, 1.0f,  5.0f,  7.0f,
+             0.0f, 5.0f,  2.0f, -6.0f,
+            -1.0f, 2.0f,  1.0f,  0.0f
+        };
+
+        CHECK(kuro::mat4_det(B) == -418.0f);
+    }
+
+    SUBCASE("invertible")
+    {
+        kuro::mat4 A = {
+             1.0f,  2.0f,  3.0f,  4.0f,
+             5.0f,  6.0f,  7.0f,  8.0f,
+             9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f
+        };
+
+        CHECK(kuro::mat4_invertible(A) == false);
+
+        kuro::mat4 B = {
+             3.0f, 2.0f, -1.0f,  4.0f,
+             2.0f, 1.0f,  5.0f,  7.0f,
+             0.0f, 5.0f,  2.0f, -6.0f
+            -1.0f, 2.0f,  1.0f,  0.0f
+        };
+
+        CHECK(kuro::mat4_invertible(B) == true);
+    }
+
+    SUBCASE("inverse")
+    {
+        kuro::mat4 A = {
+             3.0f, 2.0f, -1.0f,  4.0f,
+             2.0f, 1.0f,  5.0f,  7.0f,
+             0.0f, 5.0f,  2.0f, -6.0f
+            -1.0f, 2.0f,  1.0f,  0.0f
+        };
+
+        kuro::mat4 B = kuro::mat4_inverse(A);
+
+        kuro::mat4 C = A * B;
+        CHECK(C.m00 == doctest::Approx(1.0f));
+        CHECK(C.m01 == doctest::Approx(0.0f));
+        CHECK(C.m02 == doctest::Approx(0.0f));
+        CHECK(C.m03 == doctest::Approx(0.0f));
+
+        CHECK(C.m10 == doctest::Approx(0.0f));
+        CHECK(C.m11 == doctest::Approx(1.0f));
+        CHECK(C.m12 == doctest::Approx(0.0f));
+        CHECK(C.m13 == doctest::Approx(0.0f));
+
+        CHECK(C.m20 == doctest::Approx(0.0f));
+        CHECK(C.m21 == doctest::Approx(0.0f));
+        CHECK(C.m22 == doctest::Approx(1.0f));
+        CHECK(C.m23 == doctest::Approx(0.0f));
+
+        CHECK(C.m30 == doctest::Approx(0.0f));
+        CHECK(C.m31 == doctest::Approx(0.0f));
+        CHECK(C.m32 == doctest::Approx(0.0f));
+        CHECK(C.m33 == doctest::Approx(1.0f));
+
+        C = B * A;
+        CHECK(C.m00 == doctest::Approx(1.0f));
+        CHECK(C.m01 == doctest::Approx(0.0f));
+        CHECK(C.m02 == doctest::Approx(0.0f));
+        CHECK(C.m03 == doctest::Approx(0.0f));
+
+        CHECK(C.m10 == doctest::Approx(0.0f));
+        CHECK(C.m11 == doctest::Approx(1.0f));
+        CHECK(C.m12 == doctest::Approx(0.0f));
+        CHECK(C.m13 == doctest::Approx(0.0f));
+
+        CHECK(C.m20 == doctest::Approx(0.0f));
+        CHECK(C.m21 == doctest::Approx(0.0f));
+        CHECK(C.m22 == doctest::Approx(1.0f));
+        CHECK(C.m23 == doctest::Approx(0.0f));
+
+        CHECK(C.m30 == doctest::Approx(0.0f));
+        CHECK(C.m31 == doctest::Approx(0.0f));
+        CHECK(C.m32 == doctest::Approx(0.0f));
+        CHECK(C.m33 == doctest::Approx(1.0f));
+
+        kuro::vec4 a = {11.0f, 12.0f, 13.0f, 14.0f};
+        kuro::vec4 b = a * A * B;
+        CHECK(b.x == doctest::Approx(a.x));
+        CHECK(b.y == doctest::Approx(a.y));
+        CHECK(b.z == doctest::Approx(a.z));
+        CHECK(b.w == doctest::Approx(a.w));
+    }
+
+    SUBCASE("translation")
+    {
+        kuro::vec3 p = {10.0f, 20.0f, 30.0f};
+
+        kuro::mat4 P = kuro::mat4_translation(p.x, p.y, p.z);
+        kuro::vec4 a = kuro::vec4{1.0f, 1.0f, 1.0f, 1.0f};
+
+        kuro::vec4 b = a * P;
+        CHECK(b.x == a.x + p.x);
+        CHECK(b.y == a.y + p.y);
+        CHECK(b.z == a.z + p.z);
+        CHECK(b.w == 1.0f);
+
+        P = kuro::mat4_translation(p);
+
+        b = a * P;
+        CHECK(b.x == a.x + p.x);
+        CHECK(b.y == a.y + p.y);
+        CHECK(b.z == a.z + p.z);
+        CHECK(b.w == 1.0f);
+
+        kuro::vec4 c = b * kuro::mat4_inverse(P);
+        CHECK(c.x == a.x);
+        CHECK(c.y == a.y);
+        CHECK(c.z == a.z);
+        CHECK(c.w == 1.0f);
+    }
+
+    SUBCASE("rotation x")
+    {
+        kuro::mat4 R = kuro::mat4_rotation_x((kuro::f32)kuro::PI_OVER_2);
+        kuro::vec4 a = {1.0f, 1.0f, 1.0f, 1.0f};
+
+        kuro::vec4 b = a * R;
+        CHECK(b.x == doctest::Approx(a.x));
+        CHECK(b.y == doctest::Approx(-a.y));
+        CHECK(b.z == doctest::Approx(a.z));
+        CHECK(b.w == doctest::Approx(1.0f));
+
+        kuro::vec4 c = b * kuro::mat4_inverse(R);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+        CHECK(c.w == doctest::Approx(1.0f));
+    }
+
+    SUBCASE("rotation y")
+    {
+        kuro::mat4 R = kuro::mat4_rotation_y((kuro::f32)kuro::PI_OVER_2);
+        kuro::vec4 a = {1.0f, 1.0f, 1.0f, 1.0f};
+
+        kuro::vec4 b = a * R;
+        CHECK(b.x == doctest::Approx(a.x));
+        CHECK(b.y == doctest::Approx(a.y));
+        CHECK(b.z == doctest::Approx(-a.z));
+        CHECK(b.w == doctest::Approx(1.0f));
+
+        kuro::vec4 c = b * kuro::mat4_inverse(R);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+        CHECK(c.w == doctest::Approx(1.0f));
+    }
+
+    SUBCASE("rotation z")
+    {
+        kuro::mat4 R = kuro::mat4_rotation_z((kuro::f32)kuro::PI_OVER_2);
+        kuro::vec4 a = {1.0f, 1.0f, 1.0f, 1.0f};
+
+        kuro::vec4 b = a * R;
+        CHECK(b.x == doctest::Approx(-a.x));
+        CHECK(b.y == doctest::Approx(a.y));
+        CHECK(b.z == doctest::Approx(a.z));
+        CHECK(b.w == doctest::Approx(1.0f));
+
+        kuro::vec4 c = b * kuro::mat4_inverse(R);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+        CHECK(c.w == doctest::Approx(1.0f));
+    }
+
+    SUBCASE("rotation zxy")
+    {
+        // TODO[Waleed]: implement
+    }
+
+    SUBCASE("scaling")
+    {
+        kuro::vec3 s = {10.0f, 20.0f, 30.0f};
+
+        kuro::mat4 S = kuro::mat4_scaling(s.x, s.y, s.z);
+        kuro::vec4 a = kuro::vec4{1.0f, 2.0f, 3.0f, 1.0f};
+
+        kuro::vec4 b = a * S;
+        CHECK(b.x == a.x * s.x);
+        CHECK(b.y == a.y * s.y);
+        CHECK(b.z == a.z * s.z);
+        CHECK(b.w == doctest::Approx(1.0f));
+
+        S = kuro::mat4_scaling(s);
+
+        b = a * S;
+        CHECK(b.x == a.x * s.x);
+        CHECK(b.y == a.y * s.y);
+        CHECK(b.z == a.z * s.z);
+        CHECK(b.w == doctest::Approx(1.0f));
+
+        kuro::vec4 c = b * kuro::mat4_inverse(S);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+        CHECK(c.w == doctest::Approx(1.0f));
+    }
+
+    SUBCASE("transform")
+    {
+        // TODO[Waleed]: implement
+    }
+
+    SUBCASE("look at")
+    {
+        // TODO[Waleed]: implement
+    }
+
+    SUBCASE("orthographic projection")
+    {
+        // TODO[Waleed]: implement
+    }
+
+    SUBCASE("perspective projection")
+    {
+        // TODO[Waleed]: implement
+    }
+}
 
 // =================================================================================================
 // == INTERSECTIONS ================================================================================
