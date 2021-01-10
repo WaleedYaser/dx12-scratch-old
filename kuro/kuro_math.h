@@ -1233,7 +1233,8 @@ namespace kuro
             // m33
             + M.m00 * (M.m11 * M.m22 - M.m12 * M.m21)
             - M.m01 * (M.m10 * M.m22 - M.m12 * M.m20)
-            + M.m02 * (M.m10 * M.m21 - M.m11 * M.m20)};
+            + M.m02 * (M.m10 * M.m21 - M.m11 * M.m20)
+        };
     }
 
     inline mat4
