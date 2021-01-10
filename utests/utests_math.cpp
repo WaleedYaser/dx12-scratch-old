@@ -1200,6 +1200,21 @@ TEST_CASE("[kuro_math]: mat3")
         CHECK(kuro::mat3_det(B) == -87.0f);
     }
 
+    SUBCASE("adjoint")
+    {
+        kuro::mat3 A = {
+             3.0f, 2.0f, -1.0f,
+             2.0f, 1.0f,  5.0f,
+             0.0f, 5.0f,  2.0f
+        };
+
+        kuro::mat3 B = kuro::mat3_adj(A);
+        CHECK(B.m00 == -23.0f); CHECK(B.m01 ==  -9.0f); CHECK(B.m02 ==  11.0f);
+        CHECK(B.m10 ==  -4.0f); CHECK(B.m11 ==   6.0f); CHECK(B.m12 == -17.0f);
+        CHECK(B.m20 ==  10.0f); CHECK(B.m21 == -15.0f); CHECK(B.m22 ==  -1.0f);
+    }
+
+
     SUBCASE("invertible")
     {
         kuro::mat3 A = {
@@ -1754,9 +1769,10 @@ TEST_CASE("[kuro_math]: mat4")
         };
 
         kuro::mat4 B = kuro::mat4_transpose(A);
-        CHECK(B.m00 == A.m00); CHECK(B.m01 == A.m10); CHECK(B.m02 == A.m20);
-        CHECK(B.m10 == A.m01); CHECK(B.m11 == A.m11); CHECK(B.m12 == A.m21);
-        CHECK(B.m20 == A.m02); CHECK(B.m21 == A.m12); CHECK(B.m22 == A.m22);
+        CHECK(B.m00 == A.m00); CHECK(B.m01 == A.m10); CHECK(B.m02 == A.m20); CHECK(B.m03 == A.m30);
+        CHECK(B.m10 == A.m01); CHECK(B.m11 == A.m11); CHECK(B.m12 == A.m21); CHECK(B.m13 == A.m31);
+        CHECK(B.m20 == A.m02); CHECK(B.m21 == A.m12); CHECK(B.m22 == A.m22); CHECK(B.m23 == A.m32);
+        CHECK(B.m30 == A.m03); CHECK(B.m31 == A.m13); CHECK(B.m32 == A.m23); CHECK(B.m33 == A.m33);
     }
 
     SUBCASE("trace")
@@ -1793,6 +1809,22 @@ TEST_CASE("[kuro_math]: mat4")
         };
 
         CHECK(kuro::mat4_det(B) == -418.0f);
+    }
+
+    SUBCASE("adjoint")
+    {
+        kuro::mat4 A = {
+             3.0f, 2.0f, -1.0f,  4.0f,
+             2.0f, 1.0f,  5.0f,  7.0f,
+             0.0f, 5.0f,  2.0f, -6.0f,
+            -1.0f, 2.0f,  1.0f,  0.0f
+        };
+
+        kuro::mat4 B = kuro::mat4_adj(A);
+        CHECK(B.m00 == -47.0f); CHECK(B.m01 == -28.0f); CHECK(B.m02 == -64.0f); CHECK(B.m03 ==  221.0f);
+        CHECK(B.m10 == -56.0f); CHECK(B.m11 ==  20.0f); CHECK(B.m12 == -14.0f); CHECK(B.m13 == -128.0f);
+        CHECK(B.m20 ==  65.0f); CHECK(B.m21 == -68.0f); CHECK(B.m22 == -36.0f); CHECK(B.m23 ==   59.0f);
+        CHECK(B.m30 == -25.0f); CHECK(B.m31 ==  -6.0f); CHECK(B.m32 ==  46.0f); CHECK(B.m33 ==  -87.0f);
     }
 
     SUBCASE("invertible")

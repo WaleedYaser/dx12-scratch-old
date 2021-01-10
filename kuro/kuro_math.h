@@ -795,29 +795,10 @@ namespace kuro
             + M.m02 * (M.m10 * M.m21 - M.m11 * M.m20);
     }
 
-    inline static bool
-    mat3_invertible(const mat3 &M)
-    {
-        return mat3_det(M) != 0.0f;
-    }
-
     inline static mat3
-    mat3_inverse(const mat3 &M)
+    mat3_adj(const mat3 &M)
     {
-        f32 d = mat3_det(M);
-        if (d == 0)
-            return mat3{};
-
-        /*
-         * 1- matrix of minors
-         * 2- matrix of cofactors
-         * 3- adjoint (transpose)
-         * 4- multiply by 1 / det
-         *
-         * link: https://www.mathsisfun.com/algebra/matrix-inverse-minors-cofactors-adjugate.html
-         */
-
-        return (1.0f / d) * mat3{
+        return mat3{
             // m00
             + (M.m11 * M.m22 - M.m12 * M.m21),
             // m10
@@ -839,6 +820,22 @@ namespace kuro
             // m22
             + (M.m00 * M.m11 - M.m01 * M.m10)
         };
+    }
+
+    inline static bool
+    mat3_invertible(const mat3 &M)
+    {
+        return mat3_det(M) != 0.0f;
+    }
+
+    inline static mat3
+    mat3_inverse(const mat3 &M)
+    {
+        f32 d = mat3_det(M);
+        if (d == 0)
+            return mat3{};
+
+        return (1.0f / d) * mat3_adj(M);
     }
 
     inline static mat3
@@ -1162,29 +1159,10 @@ namespace kuro
             (M.m02 * M.m13 - M.m03 * M.m12) * (M.m20 * M.m31 - M.m21 * M.m30);
     }
 
-    inline bool
-    mat4_invertible(const mat4 &M)
-    {
-        return mat4_det(M) != 0.0f;
-    }
-
     inline mat4
-    mat4_inverse(const mat4 &M)
+    mat4_adj(const mat4 &M)
     {
-        float d = mat4_det(M);
-        if (d == 0)
-            return mat4{};
-
-        /*
-        * 1- matrix of minors
-        * 2- matrix of cofactors
-        * 3- adjoint (transpose)
-        * 4- multiply by 1 / det
-        *
-        * link: https://www.mathsisfun.com/algebra/matrix-inverse-minors-cofactors-adjugate.html
-        */
-
-        return (1.0f / d) * mat4{
+        return mat4{
             // m00
             + M.m11 * (M.m22 * M.m33 - M.m23 * M.m32)
             - M.m12 * (M.m21 * M.m33 - M.m23 * M.m31)
@@ -1253,6 +1231,22 @@ namespace kuro
             - M.m01 * (M.m10 * M.m22 - M.m12 * M.m20)
             + M.m02 * (M.m10 * M.m21 - M.m11 * M.m20)
         };
+    }
+
+    inline bool
+    mat4_invertible(const mat4 &M)
+    {
+        return mat4_det(M) != 0.0f;
+    }
+
+    inline mat4
+    mat4_inverse(const mat4 &M)
+    {
+        float d = mat4_det(M);
+        if (d == 0)
+            return mat4{};
+
+        return (1.0f / d) * mat4_adj(M);
     }
 
     inline mat4
