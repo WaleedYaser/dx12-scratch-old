@@ -927,26 +927,34 @@ TEST_CASE("[kuro_math]: mat2")
         CHECK(c.y == doctest::Approx(a.y));
     }
 
-    SUBCASE("transform")
+    SUBCASE("shearing x")
     {
-        kuro::mat2 T = kuro::mat2_transform({10.0f, 10.0f}, (kuro::f32)kuro::PI_OVER_2);
-        kuro::vec2 a = {1.0f, 1.0f};
+        kuro::f32 s = 10.0f;
 
-        kuro::vec2 b = a * T;
-        CHECK(b.x == doctest::Approx(-10.0f));
-        CHECK(b.y == doctest::Approx(10.0f));
+        kuro::mat2 H = kuro::mat2_shearing_x(s);
+        kuro::vec2 a = kuro::vec2{1.0f, 2.0f};
 
-        kuro::vec2 c = b * kuro::mat2_inverse(T);
+        kuro::vec2 b = a * H;
+        CHECK(b.x == a.x + a.y*s);
+        CHECK(b.y == a.y);
+
+        kuro::vec2 c = b * kuro::mat2_inverse(H);
         CHECK(c.x == doctest::Approx(a.x));
         CHECK(c.y == doctest::Approx(a.y));
+    }
 
-        T = kuro::mat2_transform({10.0f, 20.0f}, (kuro::f32)kuro::PI_OVER_2);
+    SUBCASE("shearing y")
+    {
+        kuro::f32 s = 10.0f;
 
-        b = a * T;
-        CHECK(b.x == doctest::Approx(-20.0f));
-        CHECK(b.y == doctest::Approx(10.0f));
+        kuro::mat2 H = kuro::mat2_shearing_y(s);
+        kuro::vec2 a = kuro::vec2{1.0f, 2.0f};
 
-        c = b * kuro::mat2_inverse(T);
+        kuro::vec2 b = a * H;
+        CHECK(b.x == a.x);
+        CHECK(b.y == a.y + a.x*s);
+
+        kuro::vec2 c = b * kuro::mat2_inverse(H);
         CHECK(c.x == doctest::Approx(a.x));
         CHECK(c.y == doctest::Approx(a.y));
     }
@@ -1341,34 +1349,6 @@ TEST_CASE("[kuro_math]: mat3")
         CHECK(c.z == doctest::Approx(1.0f));
     }
 
-    SUBCASE("transform 2d")
-    {
-        kuro::mat3 T = kuro::mat3_transform_2d({10.0f, 10.0f}, (kuro::f32)kuro::PI_OVER_2, {-11.0f, 12.0f});
-        kuro::vec3 a = {1.0f, 1.0f, 1.0f};
-
-        kuro::vec3 b = a * T;
-        CHECK(b.x == doctest::Approx(-21.0f));
-        CHECK(b.y == doctest::Approx(22.0f));
-        CHECK(b.z == doctest::Approx(1.0f));
-
-        kuro::vec3 c = b * kuro::mat3_inverse(T);
-        CHECK(c.x == doctest::Approx(a.x));
-        CHECK(c.y == doctest::Approx(a.y));
-        CHECK(c.z == doctest::Approx(1.0f));
-
-        T = kuro::mat3_transform_2d({10.0f, 20.0f}, (kuro::f32)kuro::PI_OVER_2, {-100.0f, 200.0f});
-
-        b = a * T;
-        CHECK(b.x == doctest::Approx(-120.0f));
-        CHECK(b.y == doctest::Approx(210.0f));
-        CHECK(b.z == doctest::Approx(1.0f));
-
-        c = b * kuro::mat3_inverse(T);
-        CHECK(c.x == doctest::Approx(a.x));
-        CHECK(c.y == doctest::Approx(a.y));
-        CHECK(c.z == doctest::Approx(1.0f));
-    }
-
     SUBCASE("rotation x")
     {
         kuro::mat3 R = kuro::mat3_rotation_x((kuro::f32)kuro::PI_OVER_2);
@@ -1417,11 +1397,6 @@ TEST_CASE("[kuro_math]: mat3")
         CHECK(c.z == doctest::Approx(a.z));
     }
 
-    SUBCASE("rotation zxy")
-    {
-        // TODO[Waleed]: implement
-    }
-
     SUBCASE("scaling")
     {
         kuro::vec3 s = {10.0f, 20.0f, 30.0f};
@@ -1447,9 +1422,112 @@ TEST_CASE("[kuro_math]: mat3")
         CHECK(c.z == doctest::Approx(a.z));
     }
 
-    SUBCASE("transform")
+    SUBCASE("shearing xy")
     {
-        // TODO[Waleed]: implement
+        kuro::f32 s = 10.0f;
+
+        kuro::mat3 H = kuro::mat3_shearing_xy(s);
+        kuro::vec3 a = kuro::vec3{1.0f, 2.0f, 3.0f};
+
+        kuro::vec3 b = a * H;
+        CHECK(b.x == a.x + a.y*s);
+        CHECK(b.y == a.y);
+        CHECK(b.z == a.z);
+
+        kuro::vec3 c = b * kuro::mat3_inverse(H);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+    }
+
+    SUBCASE("shearing xz")
+    {
+        kuro::f32 s = 10.0f;
+
+        kuro::mat3 H = kuro::mat3_shearing_xz(s);
+        kuro::vec3 a = kuro::vec3{1.0f, 2.0f, 3.0f};
+
+        kuro::vec3 b = a * H;
+        CHECK(b.x == a.x + a.z*s);
+        CHECK(b.y == a.y);
+        CHECK(b.z == a.z);
+
+        kuro::vec3 c = b * kuro::mat3_inverse(H);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+    }
+
+    SUBCASE("shearing yx")
+    {
+        kuro::f32 s = 10.0f;
+
+        kuro::mat3 H = kuro::mat3_shearing_yx(s);
+        kuro::vec3 a = kuro::vec3{1.0f, 2.0f, 3.0f};
+
+        kuro::vec3 b = a * H;
+        CHECK(b.x == a.x);
+        CHECK(b.y == a.y + a.x*s);
+        CHECK(b.z == a.z);
+
+        kuro::vec3 c = b * kuro::mat3_inverse(H);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+    }
+
+    SUBCASE("shearing yz")
+    {
+        kuro::f32 s = 10.0f;
+
+        kuro::mat3 H = kuro::mat3_shearing_yz(s);
+        kuro::vec3 a = kuro::vec3{1.0f, 2.0f, 3.0f};
+
+        kuro::vec3 b = a * H;
+        CHECK(b.x == a.x);
+        CHECK(b.y == a.y + a.z*s);
+        CHECK(b.z == a.z);
+
+        kuro::vec3 c = b * kuro::mat3_inverse(H);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+    }
+
+    SUBCASE("shearing zx")
+    {
+        kuro::f32 s = 10.0f;
+
+        kuro::mat3 H = kuro::mat3_shearing_zx(s);
+        kuro::vec3 a = kuro::vec3{1.0f, 2.0f, 3.0f};
+
+        kuro::vec3 b = a * H;
+        CHECK(b.x == a.x);
+        CHECK(b.y == a.y);
+        CHECK(b.z == a.z + a.x*s);
+
+        kuro::vec3 c = b * kuro::mat3_inverse(H);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+    }
+
+    SUBCASE("shearing zy")
+    {
+        kuro::f32 s = 10.0f;
+
+        kuro::mat3 H = kuro::mat3_shearing_zy(s);
+        kuro::vec3 a = kuro::vec3{1.0f, 2.0f, 3.0f};
+
+        kuro::vec3 b = a * H;
+        CHECK(b.x == a.x);
+        CHECK(b.y == a.y);
+        CHECK(b.z == a.z + a.y*s);
+
+        kuro::vec3 c = b * kuro::mat3_inverse(H);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
     }
 }
 
@@ -1911,26 +1989,26 @@ TEST_CASE("[kuro_math]: mat4")
 
     SUBCASE("translation")
     {
-        kuro::vec3 p = {10.0f, 20.0f, 30.0f};
+        kuro::vec3 t = {10.0f, 20.0f, 30.0f};
 
-        kuro::mat4 P = kuro::mat4_translation(p.x, p.y, p.z);
+        kuro::mat4 T = kuro::mat4_translation(t.x, t.y, t.z);
         kuro::vec4 a = kuro::vec4{1.0f, 1.0f, 1.0f, 1.0f};
 
-        kuro::vec4 b = a * P;
-        CHECK(b.x == a.x + p.x);
-        CHECK(b.y == a.y + p.y);
-        CHECK(b.z == a.z + p.z);
+        kuro::vec4 b = a * T;
+        CHECK(b.x == a.x + t.x);
+        CHECK(b.y == a.y + t.y);
+        CHECK(b.z == a.z + t.z);
         CHECK(b.w == 1.0f);
 
-        P = kuro::mat4_translation(p);
+        T = kuro::mat4_translation(t);
 
-        b = a * P;
-        CHECK(b.x == a.x + p.x);
-        CHECK(b.y == a.y + p.y);
-        CHECK(b.z == a.z + p.z);
+        b = a * T;
+        CHECK(b.x == a.x + t.x);
+        CHECK(b.y == a.y + t.y);
+        CHECK(b.z == a.z + t.z);
         CHECK(b.w == 1.0f);
 
-        kuro::vec4 c = b * kuro::mat4_inverse(P);
+        kuro::vec4 c = b * kuro::mat4_inverse(T);
         CHECK(c.x == a.x);
         CHECK(c.y == a.y);
         CHECK(c.z == a.z);
@@ -1991,11 +2069,6 @@ TEST_CASE("[kuro_math]: mat4")
         CHECK(c.w == doctest::Approx(1.0f));
     }
 
-    SUBCASE("rotation zxy")
-    {
-        // TODO[Waleed]: implement
-    }
-
     SUBCASE("scaling")
     {
         kuro::vec3 s = {10.0f, 20.0f, 30.0f};
@@ -2024,9 +2097,124 @@ TEST_CASE("[kuro_math]: mat4")
         CHECK(c.w == doctest::Approx(1.0f));
     }
 
-    SUBCASE("transform")
+    SUBCASE("shearing xy")
     {
-        // TODO[Waleed]: implement
+        kuro::f32 s = 10.0f;
+
+        kuro::mat4 H = kuro::mat4_shearing_xy(s);
+        kuro::vec4 a = kuro::vec4{1.0f, 2.0f, 3.0f, 1.0f};
+
+        kuro::vec4 b = a * H;
+        CHECK(b.x == a.x + a.y*s);
+        CHECK(b.y == a.y);
+        CHECK(b.z == a.z);
+        CHECK(b.w == 1.0f);
+
+        kuro::vec4 c = b * kuro::mat4_inverse(H);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+        CHECK(c.w == doctest::Approx(1.0f));
+    }
+
+    SUBCASE("shearing xz")
+    {
+        kuro::f32 s = 10.0f;
+
+        kuro::mat4 H = kuro::mat4_shearing_xz(s);
+        kuro::vec4 a = kuro::vec4{1.0f, 2.0f, 3.0f, 1.0f};
+
+        kuro::vec4 b = a * H;
+        CHECK(b.x == a.x + a.z*s);
+        CHECK(b.y == a.y);
+        CHECK(b.z == a.z);
+        CHECK(b.w == 1.0f);
+
+        kuro::vec4 c = b * kuro::mat4_inverse(H);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+        CHECK(c.w == doctest::Approx(1.0f));
+    }
+
+    SUBCASE("shearing yx")
+    {
+        kuro::f32 s = 10.0f;
+
+        kuro::mat4 H = kuro::mat4_shearing_yx(s);
+        kuro::vec4 a = kuro::vec4{1.0f, 2.0f, 3.0f, 1.0f};
+
+        kuro::vec4 b = a * H;
+        CHECK(b.x == a.x);
+        CHECK(b.y == a.y + a.x*s);
+        CHECK(b.z == a.z);
+        CHECK(b.w == 1.0f);
+
+        kuro::vec4 c = b * kuro::mat4_inverse(H);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+        CHECK(c.w == doctest::Approx(1.0f));
+    }
+
+    SUBCASE("shearing yz")
+    {
+        kuro::f32 s = 10.0f;
+
+        kuro::mat4 H = kuro::mat4_shearing_yz(s);
+        kuro::vec4 a = kuro::vec4{1.0f, 2.0f, 3.0f, 1.0f};
+
+        kuro::vec4 b = a * H;
+        CHECK(b.x == a.x);
+        CHECK(b.y == a.y + a.z*s);
+        CHECK(b.z == a.z);
+        CHECK(b.w == 1.0f);
+
+        kuro::vec4 c = b * kuro::mat4_inverse(H);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+        CHECK(c.w == doctest::Approx(1.0f));
+    }
+
+    SUBCASE("shearing zx")
+    {
+        kuro::f32 s = 10.0f;
+
+        kuro::mat4 H = kuro::mat4_shearing_zx(s);
+        kuro::vec4 a = kuro::vec4{1.0f, 2.0f, 3.0f, 1.0f};
+
+        kuro::vec4 b = a * H;
+        CHECK(b.x == a.x);
+        CHECK(b.y == a.y);
+        CHECK(b.z == a.z + a.x*s);
+        CHECK(b.w == 1.0f);
+
+        kuro::vec4 c = b * kuro::mat4_inverse(H);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+        CHECK(c.w == doctest::Approx(1.0f));
+    }
+
+    SUBCASE("shearing zy")
+    {
+        kuro::f32 s = 10.0f;
+
+        kuro::mat4 H = kuro::mat4_shearing_zy(s);
+        kuro::vec4 a = kuro::vec4{1.0f, 2.0f, 3.0f, 1.0f};
+
+        kuro::vec4 b = a * H;
+        CHECK(b.x == a.x);
+        CHECK(b.y == a.y);
+        CHECK(b.z == a.z + a.y*s);
+        CHECK(b.w == 1.0f);
+
+        kuro::vec4 c = b * kuro::mat4_inverse(H);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+        CHECK(c.w == doctest::Approx(1.0f));
     }
 
     SUBCASE("look at")

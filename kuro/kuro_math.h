@@ -5,6 +5,7 @@
 //
 // TODO[Waleed]:
 // * add equal and not equal operator
+// * implement sqrt, sin, cos, tan
 
 #pragma once
 
@@ -630,10 +631,21 @@ namespace kuro
     }
 
     inline static mat2
-    mat2_transform(const vec2 &scaling, float rotation)
+    mat2_shearing_x(f32 s)
     {
-        // TODO[Waleed]: unroll this
-        return mat2_scaling(scaling.x, scaling.y) * mat2_rotation(rotation);
+        return mat2{
+            1, 0,
+            s, 1
+        };
+    }
+
+    inline static mat2
+    mat2_shearing_y(f32 s)
+    {
+        return mat2{
+            1, s,
+            0, 1
+        };
     }
 
     // =================================================================================================
@@ -884,13 +896,6 @@ namespace kuro
     }
 
     inline static mat3
-    mat3_transform_2d(const vec2 &scaling, float rotation, const vec2 &translation)
-    {
-        // TODO[Waleed]: unroll this
-        return mat3_scaling_2d(scaling) * mat3_rotation_2d(rotation) * mat3_translation_2d(translation);
-    }
-
-    inline static mat3
     mat3_rotation_x(f32 pitch)
     {
         f32 c = cos(pitch);
@@ -927,19 +932,6 @@ namespace kuro
     }
 
     inline static mat3
-    mat3_rotation_zxy(f32 pitch, f32 yaw, f32 roll)
-    {
-        // TODO[Waleed]: unroll this
-        return mat3_rotation_z(roll) * mat3_rotation_y(yaw) * mat3_rotation_x(pitch);
-    }
-
-    inline static mat3
-    mat3_rotation_zxy(const vec3 &euler_angles)
-    {
-        return mat3_rotation_zxy(euler_angles.x, euler_angles.y, euler_angles.z);
-    }
-
-    inline static mat3
     mat3_scaling(f32 sx, f32 sy, f32 sz)
     {
         return mat3{
@@ -954,11 +946,64 @@ namespace kuro
         return mat3_scaling(scaling.x, scaling.y, scaling.z);
     }
 
-    inline static mat3
-    mat3_transform(const vec3 &scaling, const vec3 &euler_angles)
+    inline mat3
+    mat3_shearing_xy(f32 s)
     {
-        // TODO[Waleed]: unroll this
-        return mat3_scaling(scaling) * mat3_rotation_zxy(euler_angles);
+        return mat3{
+            1, 0, 0,
+            s, 1, 0,
+            0, 0, 1
+        };
+    }
+
+    inline mat3
+    mat3_shearing_xz(f32 s)
+    {
+        return mat3{
+            1, 0, 0,
+            0, 1, 0,
+            s, 0, 1
+        };
+    }
+
+    inline mat3
+    mat3_shearing_yx(f32 s)
+    {
+        return mat3{
+            1, s, 0,
+            0, 1, 0,
+            0, 0, 1
+        };
+    }
+
+    inline mat3
+    mat3_shearing_yz(f32 s)
+    {
+        return mat3{
+            1, 0, 0,
+            0, 1, 0,
+            0, s, 1
+        };
+    }
+
+    inline mat3
+    mat3_shearing_zx(f32 s)
+    {
+        return mat3{
+            1, 0, s,
+            0, 1, 0,
+            0, 0, 1
+        };
+    }
+
+    inline mat3
+    mat3_shearing_zy(f32 s)
+    {
+        return mat3{
+            1, 0, 0,
+            0, 1, s,
+            0, 0, 1
+        };
     }
 
     // =================================================================================================
@@ -1013,7 +1058,7 @@ namespace kuro
     }
 
     inline mat4
-    operator*(const mat4 &M, float f)
+    operator*(const mat4 &M, f32 f)
     {
         return mat4{
             M.m00 * f, M.m01 * f, M.m02 * f, M.m03 * f,
@@ -1024,13 +1069,13 @@ namespace kuro
     }
 
     inline mat4
-    operator*(float f, const mat4 &M)
+    operator*(f32 f, const mat4 &M)
     {
         return M * f;
     }
 
     inline mat4 &
-    operator*=(mat4 &M, float f)
+    operator*=(mat4 &M, f32 f)
     {
         M = M * f;
         return M;
@@ -1077,7 +1122,7 @@ namespace kuro
 
 
     inline mat4
-    operator/(const mat4 &M, float f)
+    operator/(const mat4 &M, f32 f)
     {
         return mat4{
             M.m00 / f, M.m01 / f, M.m02 / f, M.m03 / f,
@@ -1088,13 +1133,13 @@ namespace kuro
     }
 
     inline mat4
-    operator/(float f, const mat4 &M)
+    operator/(f32 f, const mat4 &M)
     {
         return M / f;
     }
 
     inline mat4 &
-    operator/=(mat4 &M, float f)
+    operator/=(mat4 &M, f32 f)
     {
         M = M / f;
         return M;
@@ -1128,7 +1173,7 @@ namespace kuro
         return M.m00 + M.m11 + M.m22 + M.m33;
     }
 
-    inline float
+    inline f32
     mat4_det(const mat4 &M)
     {
         /*
@@ -1242,7 +1287,7 @@ namespace kuro
     inline mat4
     mat4_inverse(const mat4 &M)
     {
-        float d = mat4_det(M);
+        f32 d = mat4_det(M);
         if (d == 0)
             return mat4{};
 
@@ -1250,13 +1295,13 @@ namespace kuro
     }
 
     inline mat4
-    mat4_translation(float dx, float dy, float dz)
+    mat4_translation(f32 tx, f32 ty, f32 tz)
     {
         return mat4{
             1,  0,  0, 0,
             0,  1,  0, 0,
             0,  0,  1, 0,
-            dx, dy, dz, 1
+            tx, ty, tz, 1
         };
     }
 
@@ -1267,10 +1312,10 @@ namespace kuro
     }
 
     inline mat4
-    mat4_rotation_x(float pitch)
+    mat4_rotation_x(f32 pitch)
     {
-        float c = cos(pitch);
-        float s = sin(pitch);
+        f32 c = cos(pitch);
+        f32 s = sin(pitch);
 
         return mat4{
             1,  0, 0, 0,
@@ -1281,10 +1326,10 @@ namespace kuro
     }
 
     inline mat4
-    mat4_rotation_y(float yaw)
+    mat4_rotation_y(f32 yaw)
     {
-        float c = cos(yaw);
-        float s = sin(yaw);
+        f32 c = cos(yaw);
+        f32 s = sin(yaw);
 
         return mat4{
             c, 0, -s, 0,
@@ -1295,10 +1340,10 @@ namespace kuro
     }
 
     inline mat4
-    mat4_rotation_z(float roll)
+    mat4_rotation_z(f32 roll)
     {
-        float c = cos(roll);
-        float s = sin(roll);
+        f32 c = cos(roll);
+        f32 s = sin(roll);
 
         return mat4{
              c, s, 0, 0,
@@ -1309,7 +1354,7 @@ namespace kuro
     }
 
     inline mat4
-    mat4_scaling(float sx, float sy, float sz)
+    mat4_scaling(f32 sx, f32 sy, f32 sz)
     {
         return mat4{
             sx,  0,  0, 0,
@@ -1323,6 +1368,72 @@ namespace kuro
     mat4_scaling(const vec3 &scaling)
     {
         return mat4_scaling(scaling.x, scaling.y, scaling.z);
+    }
+
+    inline mat4
+    mat4_shearing_xy(f32 s)
+    {
+        return mat4{
+            1, 0, 0, 0,
+            s, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        };
+    }
+
+    inline mat4
+    mat4_shearing_xz(f32 s)
+    {
+        return mat4{
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            s, 0, 1, 0,
+            0, 0, 0, 1
+        };
+    }
+
+    inline mat4
+    mat4_shearing_yx(f32 s)
+    {
+        return mat4{
+            1, s, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        };
+    }
+
+    inline mat4
+    mat4_shearing_yz(f32 s)
+    {
+        return mat4{
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, s, 1, 0,
+            0, 0, 0, 1
+        };
+    }
+
+    inline mat4
+    mat4_shearing_zx(f32 s)
+    {
+        return mat4{
+            1, 0, s, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        };
+    }
+
+    inline mat4
+    mat4_shearing_zy(f32 s)
+    {
+        return mat4{
+            1, 0, 0, 0,
+            0, 1, s, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        };
     }
 
     // TODO[Waleed]: add unittests
@@ -1345,7 +1456,7 @@ namespace kuro
 
     // TODO[Waleed]: add unittests
     inline mat4
-    mat4_ortho(float left, float right, float bottom, float top, float znear, float zfar)
+    mat4_ortho(f32 left, f32 right, f32 bottom, f32 top, f32 znear, f32 zfar)
     {
         mat4 M{};
 
@@ -1368,12 +1479,12 @@ namespace kuro
 
     // TODO[Waleed]: add unittests
     inline mat4
-    mat4_prespective(float fovy, float aspect, float znear, float zfar)
+    mat4_prespective(f32 fovy, f32 aspect, f32 znear, f32 zfar)
     {
         mat4 M{};
 
-        float h = tan(fovy / 2.0f);
-        float w = aspect * h;
+        f32 h = tan(fovy / 2.0f);
+        f32 w = aspect * h;
 
         M.m00 = 1.0f / w;
         M.m11 = 1.0f / h;
