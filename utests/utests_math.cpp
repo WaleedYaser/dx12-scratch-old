@@ -828,6 +828,16 @@ TEST_CASE("[kuro_math]: mat2")
         CHECK(B.m10 == A.m01); CHECK(B.m11 == A.m11);
     }
 
+    SUBCASE("trace")
+    {
+        kuro::mat2 M = {
+            0.0f, 2.0f,
+            3.0f, 4.0f
+        };
+
+        CHECK(kuro::mat2_trace(M) == 4.0f);
+    }
+
     SUBCASE("determinant")
     {
         kuro::mat2 I = kuro::mat2_identity();
@@ -1155,6 +1165,17 @@ TEST_CASE("[kuro_math]: mat3")
         CHECK(B.m00 == A.m00); CHECK(B.m01 == A.m10); CHECK(B.m02 == A.m20);
         CHECK(B.m10 == A.m01); CHECK(B.m11 == A.m11); CHECK(B.m12 == A.m21);
         CHECK(B.m20 == A.m02); CHECK(B.m21 == A.m12); CHECK(B.m22 == A.m22);
+    }
+
+    SUBCASE("trace")
+    {
+        kuro::mat3 M = {
+            0.0f, 2.0f, 3.0f,
+            4.0f, 5.0f, 6.0f,
+            7.0f, 8.0f, 9.0f
+        };
+
+        CHECK(kuro::mat3_trace(M) == 14.0f);
     }
 
     SUBCASE("determinant")
@@ -1736,6 +1757,18 @@ TEST_CASE("[kuro_math]: mat4")
         CHECK(B.m00 == A.m00); CHECK(B.m01 == A.m10); CHECK(B.m02 == A.m20);
         CHECK(B.m10 == A.m01); CHECK(B.m11 == A.m11); CHECK(B.m12 == A.m21);
         CHECK(B.m20 == A.m02); CHECK(B.m21 == A.m12); CHECK(B.m22 == A.m22);
+    }
+
+    SUBCASE("trace")
+    {
+        kuro::mat4 M = {
+             0.0f,  2.0f,  3.0f,  4.0f,
+             5.0f,  6.0f,  7.0f,  8.0f,
+             9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f
+        };
+
+        CHECK(kuro::mat4_trace(M) == 33.0f);
     }
 
     SUBCASE("determinant")

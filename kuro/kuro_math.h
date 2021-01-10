@@ -575,6 +575,12 @@ namespace kuro
     }
 
     inline static f32
+    mat2_trace(const mat2 &M)
+    {
+        return M.m00 + M.m11;
+    }
+
+    inline static f32
     mat2_det(const mat2 &M)
     {
         return M.m00 * M.m11 - M.m01 * M.m10;
@@ -772,6 +778,12 @@ namespace kuro
             M.m01, M.m11, M.m21,
             M.m02, M.m12, M.m22
         };
+    }
+
+    inline static f32
+    mat3_trace(const mat3 &M)
+    {
+        return M.m00 + M.m11 + M.m22;
     }
 
     inline static f32
@@ -1111,6 +1123,12 @@ namespace kuro
             M.m02, M.m12, M.m22, M.m32,
             M.m03, M.m13, M.m23, M.m33
         };
+    }
+
+    inline static f32
+    mat4_trace(const mat4 &M)
+    {
+        return M.m00 + M.m11 + M.m22 + M.m33;
     }
 
     inline float
