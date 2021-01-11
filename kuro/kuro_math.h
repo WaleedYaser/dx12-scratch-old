@@ -11,10 +11,20 @@
 
 extern "C" {
     // forward declaration (cmath)
+#if defined(_WIN32) || defined(_WIN64)
     double sqrt(double);
     double sin(double);
     double cos(double);
     double tan(double);
+#elif defined(__linux__)
+    // TODO[Waleed]: invistigate about throw()
+    double sqrt(double) throw();
+    double sin(double) throw();
+    double cos(double) throw();
+    double tan(double) throw();
+#else
+    #error "Unhandled operating system"
+#endif
 }
 
 namespace kuro
