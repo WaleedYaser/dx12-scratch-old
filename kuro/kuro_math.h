@@ -1454,21 +1454,24 @@ namespace kuro
         };
     }
 
-    // TODO[Waleed]: add unittests
-    inline mat4
-    mat4_look_at(vec3 eye, vec3 target, vec3 up)
+    inline static mat4
+    mat4_look_at(const vec3 &eye, const vec3 &target, const vec3 &up)
     {
-        vec3 v = normalize(eye - target);
-        vec3 r = normalize(cross(up, v));
-        vec3 u = cross(v, r);
+        vec3 axis_z = normalize(eye - target);
+        vec3 axis_x = normalize(cross(up, axis_z));
+        vec3 axis_y = cross(axis_z, axis_x);
 
-        // TODO: documentation
-        // TODO: translation?!
+        vec3 t = {
+            -dot(eye, axis_x),
+            -dot(eye, axis_y),
+            -dot(eye, axis_z)
+        };
+
         return mat4{
-               r.x,    u.x,    v.x, 0.0f,
-               r.y,    u.y,    v.y, 0.0f,
-               r.z,    u.z,    v.z, 0.0f,
-            -eye.x, -eye.y, -eye.z, 1.0f
+            axis_x.x, axis_y.x, axis_z.x, 0.0f,
+            axis_x.y, axis_y.y, axis_z.y, 0.0f,
+            axis_x.z, axis_y.z, axis_z.z, 0.0f,
+                 t.x,      t.y,      t.z, 1.0f
         };
     }
 
