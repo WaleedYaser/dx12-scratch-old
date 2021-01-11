@@ -9,6 +9,14 @@
 
 #pragma once
 
+extern "C" {
+    // forward declation (cmath)
+    double cdecl sqrt(double);
+    double cdecl sin(double);
+    double cdecl cos(double);
+    double cdecl tan(double);
+}
+
 namespace kuro
 {
     // =================================================================================================
@@ -109,7 +117,7 @@ namespace kuro
     inline static f32
     sqrt(f32 f)
     {
-        return ::sqrtf(f);
+        return (kuro::f32)::sqrt(f);
     }
 
     inline static f64
@@ -121,7 +129,7 @@ namespace kuro
     inline static f32
     sin(f32 f)
     {
-        return ::sinf(f);
+        return (kuro::f32)::sin(f);
     }
 
     inline static f64
@@ -133,7 +141,7 @@ namespace kuro
     inline static f32
     cos(f32 f)
     {
-        return ::cosf(f);
+        return (kuro::f32)::cos(f);
     }
 
     inline static f64
@@ -145,7 +153,7 @@ namespace kuro
     inline static f32
     tan(f32 f)
     {
-        return ::tanf(f);
+        return (kuro::f32)::tan(f);
     }
 
     inline static f64
