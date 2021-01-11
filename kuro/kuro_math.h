@@ -11,10 +11,10 @@
 
 extern "C" {
     // forward declaration (cmath)
-    double cdecl sqrt(double);
-    double cdecl sin(double);
-    double cdecl cos(double);
-    double cdecl tan(double);
+    double __cdecl sqrt(double);
+    double __cdecl sin(double);
+    double __cdecl cos(double);
+    double __cdecl tan(double);
 }
 
 namespace kuro
