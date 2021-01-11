@@ -10,7 +10,7 @@
 #pragma once
 
 extern "C" {
-    // forward declation (cmath)
+    // forward declaration (cmath)
     double cdecl sqrt(double);
     double cdecl sin(double);
     double cdecl cos(double);
