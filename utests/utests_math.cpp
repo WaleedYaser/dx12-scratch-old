@@ -2070,6 +2070,21 @@ TEST_CASE("[kuro_math]: mat4")
         CHECK(c.w == doctest::Approx(1.0f));
     }
 
+    // TODO[Waleed]: invistigate euler test case
+    SUBCASE("euler")
+    {
+        // kuro::vec3 e = kuro::f32(kuro::TO_RADIAN) * kuro::vec3{30.0f, 45.0f, 0.0f};
+
+        // kuro::mat4 E = kuro::mat4_euler(e.x, e.y, e.z);
+        // kuro::vec4 a = {0.0f, 0.0f, 1.0f, 1.0f};
+
+        // kuro::vec4 b = a * E;
+        // CHECK(b.x == 0.0f);
+        // CHECK(b.y == doctest::Approx(-0.5f));
+        // CHECK(b.z == 0.0f);
+        // CHECK(b.w == 1.0f);
+    }
+
     SUBCASE("scaling")
     {
         kuro::vec3 s = {10.0f, 20.0f, 30.0f};

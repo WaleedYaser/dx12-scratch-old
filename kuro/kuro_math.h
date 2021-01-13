@@ -16,12 +16,16 @@ extern "C" {
     double sin(double);
     double cos(double);
     double tan(double);
+    double asin(double);
+    double atan2(double, double);
 #elif defined(__linux__)
     // TODO[Waleed]: invistigate about throw()
     double sqrt(double) throw();
     double sin(double) throw();
     double cos(double) throw();
     double tan(double) throw();
+    double asin(double) throw();
+    double atan2(double, double) throw();
 #else
     #error "Unhandled operating system"
 #endif
@@ -127,7 +131,7 @@ namespace kuro
     inline static f32
     sqrt(f32 f)
     {
-        return (kuro::f32)::sqrt(f);
+        return (f32)::sqrt(f);
     }
 
     inline static f64
@@ -139,7 +143,7 @@ namespace kuro
     inline static f32
     sin(f32 f)
     {
-        return (kuro::f32)::sin(f);
+        return (f32)::sin(f);
     }
 
     inline static f64
@@ -151,7 +155,7 @@ namespace kuro
     inline static f32
     cos(f32 f)
     {
-        return (kuro::f32)::cos(f);
+        return (f32)::cos(f);
     }
 
     inline static f64
@@ -163,13 +167,37 @@ namespace kuro
     inline static f32
     tan(f32 f)
     {
-        return (kuro::f32)::tan(f);
+        return (f32)::tan(f);
     }
 
     inline static f64
     tan(f64 f)
     {
         return ::tan(f);
+    }
+
+    inline static f32
+    asin(f32 f)
+    {
+        return (f32)::asin(f);
+    }
+
+    inline static f64
+    asin(f64 f)
+    {
+        return ::asin(f);
+    }
+
+    inline static f32
+    atan2(f32 y, f32 x)
+    {
+        return (f32)::atan2(y, x);
+    }
+
+    inline static f64
+    atan2(f64 y, f64 x)
+    {
+        return ::atan2(y, x);
     }
 
     // =================================================================================================
@@ -950,6 +978,40 @@ namespace kuro
     }
 
     inline static mat3
+    mat3_euler(f32 pitch, f32 head, f32 roll)
+    {
+        f32 sh = sin(head);
+        f32 ch = cos(head);
+        f32 sp = sin(pitch);
+        f32 cp = cos(pitch);
+        f32 sr = sin(roll);
+        f32 cr = cos(roll);
+
+        // order yxz
+        return mat3{
+             cr*ch - sr*sp*sh, sr*ch + cr*sp*sh, -cp*sh,
+            -sr*cp           , cr*cp           ,  sp   ,
+             cr*sh + sr*sp*ch, sr*sh - cr*sp*ch,  cp*ch
+        };
+    }
+
+    inline static mat3
+    mat3_euler(const vec3 &rotation)
+    {
+        return mat3_euler(rotation.x, rotation.y, rotation.z);
+    }
+
+    inline static vec3
+    mat3_euler_angles(const mat3 &E)
+    {
+        return vec3{
+            asin(E.m12),
+            atan2(-E.m02, E.m22),
+            atan2(-E.m10, E.m11)
+        };
+    }
+
+    inline static mat3
     mat3_scaling(f32 sx, f32 sy, f32 sz)
     {
         return mat3{
@@ -964,7 +1026,7 @@ namespace kuro
         return mat3_scaling(scaling.x, scaling.y, scaling.z);
     }
 
-    inline mat3
+    inline static mat3
     mat3_shearing_xy(f32 s)
     {
         return mat3{
@@ -974,7 +1036,7 @@ namespace kuro
         };
     }
 
-    inline mat3
+    inline static mat3
     mat3_shearing_xz(f32 s)
     {
         return mat3{
@@ -984,7 +1046,7 @@ namespace kuro
         };
     }
 
-    inline mat3
+    inline static mat3
     mat3_shearing_yx(f32 s)
     {
         return mat3{
@@ -994,7 +1056,7 @@ namespace kuro
         };
     }
 
-    inline mat3
+    inline static mat3
     mat3_shearing_yz(f32 s)
     {
         return mat3{
@@ -1004,7 +1066,7 @@ namespace kuro
         };
     }
 
-    inline mat3
+    inline static mat3
     mat3_shearing_zx(f32 s)
     {
         return mat3{
@@ -1014,7 +1076,7 @@ namespace kuro
         };
     }
 
-    inline mat3
+    inline static mat3
     mat3_shearing_zy(f32 s)
     {
         return mat3{
@@ -1028,7 +1090,7 @@ namespace kuro
     // == MAT4 =========================================================================================
     // =================================================================================================
 
-    inline mat4
+    inline static mat4
     operator+(const mat4 &A, const mat4 &B)
     {
         return mat4{
@@ -1039,14 +1101,14 @@ namespace kuro
         };
     }
 
-    inline mat4 &
+    inline static mat4 &
     operator+=(mat4 &A, const mat4 &B)
     {
         A = A + B;
         return A;
     }
 
-    inline mat4
+    inline static mat4
     operator-(const mat4 &M)
     {
         return mat4{
@@ -1057,7 +1119,7 @@ namespace kuro
         };
     }
 
-    inline mat4
+    inline static mat4
     operator-(const mat4 &A, const mat4 &B)
     {
         return mat4{
@@ -1068,14 +1130,14 @@ namespace kuro
         };
     }
 
-    inline mat4 &
+    inline static mat4 &
     operator-=(mat4 &A, const mat4 &B)
     {
         A = A - B;
         return A;
     }
 
-    inline mat4
+    inline static mat4
     operator*(const mat4 &M, f32 f)
     {
         return mat4{
@@ -1086,20 +1148,20 @@ namespace kuro
         };
     }
 
-    inline mat4
+    inline static mat4
     operator*(f32 f, const mat4 &M)
     {
         return M * f;
     }
 
-    inline mat4 &
+    inline static mat4 &
     operator*=(mat4 &M, f32 f)
     {
         M = M * f;
         return M;
     }
 
-    inline vec4
+    inline static vec4
     operator*(const vec4 &v, const mat4 &M)
     {
         return vec4{
@@ -1110,7 +1172,7 @@ namespace kuro
         };
     }
 
-    inline mat4
+    inline static mat4
     operator*(const mat4 &A, const mat4 &B)
     {
         mat4 C;
@@ -1139,7 +1201,7 @@ namespace kuro
     }
 
 
-    inline mat4
+    inline static mat4
     operator/(const mat4 &M, f32 f)
     {
         return mat4{
@@ -1150,20 +1212,20 @@ namespace kuro
         };
     }
 
-    inline mat4
+    inline static mat4
     operator/(f32 f, const mat4 &M)
     {
         return M / f;
     }
 
-    inline mat4 &
+    inline static mat4 &
     operator/=(mat4 &M, f32 f)
     {
         M = M / f;
         return M;
     }
 
-    inline mat4
+    inline static mat4
     mat4_identity()
     {
         return mat4{
@@ -1174,7 +1236,7 @@ namespace kuro
         };
     }
 
-    inline mat4
+    inline static mat4
     mat4_transpose(const mat4 &M)
     {
         return mat4{
@@ -1191,7 +1253,7 @@ namespace kuro
         return M.m00 + M.m11 + M.m22 + M.m33;
     }
 
-    inline f32
+    inline static f32
     mat4_det(const mat4 &M)
     {
         /*
@@ -1222,7 +1284,7 @@ namespace kuro
             (M.m02 * M.m13 - M.m03 * M.m12) * (M.m20 * M.m31 - M.m21 * M.m30);
     }
 
-    inline mat4
+    inline static mat4
     mat4_adj(const mat4 &M)
     {
         return mat4{
@@ -1296,13 +1358,13 @@ namespace kuro
         };
     }
 
-    inline bool
+    inline static bool
     mat4_invertible(const mat4 &M)
     {
         return mat4_det(M) != 0.0f;
     }
 
-    inline mat4
+    inline static mat4
     mat4_inverse(const mat4 &M)
     {
         f32 d = mat4_det(M);
@@ -1312,7 +1374,7 @@ namespace kuro
         return (1.0f / d) * mat4_adj(M);
     }
 
-    inline mat4
+    inline static mat4
     mat4_translation(f32 tx, f32 ty, f32 tz)
     {
         return mat4{
@@ -1323,13 +1385,13 @@ namespace kuro
         };
     }
 
-    inline mat4
+    inline static mat4
     mat4_translation(const vec3 &translation)
     {
         return mat4_translation(translation.x, translation.y, translation.z);
     }
 
-    inline mat4
+    inline static mat4
     mat4_rotation_x(f32 pitch)
     {
         f32 c = cos(pitch);
@@ -1343,11 +1405,11 @@ namespace kuro
         };
     }
 
-    inline mat4
-    mat4_rotation_y(f32 yaw)
+    inline static mat4
+    mat4_rotation_y(f32 head)
     {
-        f32 c = cos(yaw);
-        f32 s = sin(yaw);
+        f32 c = cos(head);
+        f32 s = sin(head);
 
         return mat4{
             c, 0, -s, 0,
@@ -1357,7 +1419,7 @@ namespace kuro
         };
     }
 
-    inline mat4
+    inline static mat4
     mat4_rotation_z(f32 roll)
     {
         f32 c = cos(roll);
@@ -1371,7 +1433,42 @@ namespace kuro
         };
     }
 
-    inline mat4
+    inline static mat4
+    mat4_euler(f32 pitch, f32 head, f32 roll)
+    {
+        f32 sh = sin(head);
+        f32 ch = cos(head);
+        f32 sp = sin(pitch);
+        f32 cp = cos(pitch);
+        f32 sr = sin(roll);
+        f32 cr = cos(roll);
+
+        // order yxz
+        return mat4{
+             cr*ch - sr*sp*sh, sr*ch + cr*sp*sh, -cp*sh, 0.0f,
+            -sr*cp           , cr*cp           ,  sp   , 0.0f,
+             cr*sh + sr*sp*ch, sr*sh - cr*sp*ch,  cp*ch, 0.0f,
+             0.0f            , 0.0f            ,  0.0f  ,1.0f
+        };
+    }
+
+    inline static mat4
+    mat4_euler(const vec3 &rotation)
+    {
+        return mat4_euler(rotation.x, rotation.y, rotation.z);
+    }
+
+    inline static vec3
+    mat4_euler_angles(const mat4 &E)
+    {
+        return vec3{
+            asin(E.m12),
+            atan2(-E.m02, E.m22),
+            atan2(-E.m10, E.m11)
+        };
+    }
+
+    inline static mat4
     mat4_scaling(f32 sx, f32 sy, f32 sz)
     {
         return mat4{
@@ -1382,13 +1479,13 @@ namespace kuro
         };
     }
 
-    inline mat4
+    inline static mat4
     mat4_scaling(const vec3 &scaling)
     {
         return mat4_scaling(scaling.x, scaling.y, scaling.z);
     }
 
-    inline mat4
+    inline static mat4
     mat4_shearing_xy(f32 s)
     {
         return mat4{
@@ -1399,7 +1496,7 @@ namespace kuro
         };
     }
 
-    inline mat4
+    inline static mat4
     mat4_shearing_xz(f32 s)
     {
         return mat4{
@@ -1410,7 +1507,7 @@ namespace kuro
         };
     }
 
-    inline mat4
+    inline static mat4
     mat4_shearing_yx(f32 s)
     {
         return mat4{
@@ -1421,7 +1518,7 @@ namespace kuro
         };
     }
 
-    inline mat4
+    inline static mat4
     mat4_shearing_yz(f32 s)
     {
         return mat4{
@@ -1432,7 +1529,7 @@ namespace kuro
         };
     }
 
-    inline mat4
+    inline static mat4
     mat4_shearing_zx(f32 s)
     {
         return mat4{
@@ -1443,7 +1540,7 @@ namespace kuro
         };
     }
 
-    inline mat4
+    inline static mat4
     mat4_shearing_zy(f32 s)
     {
         return mat4{
@@ -1476,7 +1573,7 @@ namespace kuro
     }
 
     // TODO[Waleed]: add unittests
-    inline mat4
+    inline static mat4
     mat4_ortho(f32 left, f32 right, f32 bottom, f32 top, f32 znear, f32 zfar)
     {
         mat4 M{};
@@ -1499,7 +1596,7 @@ namespace kuro
     }
 
     // TODO[Waleed]: add unittests
-    inline mat4
+    inline static mat4
     mat4_prespective(f32 fovy, f32 aspect, f32 znear, f32 zfar)
     {
         mat4 M{};
