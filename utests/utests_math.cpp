@@ -149,6 +149,16 @@ TEST_CASE("[kuro_math]: vec2")
         CHECK(v.y == 2.0f);
     }
 
+    SUBCASE("equal")
+    {
+        kuro::vec2 a = { 1.0f,  2.0f};
+        kuro::vec2 b = { 1.0f,  2.0f};
+        kuro::vec2 c = {11.0f, 12.0f};
+
+        CHECK(a == b);
+        CHECK(a != c);
+    }
+
     SUBCASE("add")
     {
         kuro::vec2 a = {1.0f, 2.0f};
@@ -159,8 +169,7 @@ TEST_CASE("[kuro_math]: vec2")
         CHECK(c.y == a.y + b.y);
 
         a += b;
-        CHECK(a.x == c.x);
-        CHECK(a.y == c.y);
+        CHECK(a == c);
     }
 
     SUBCASE("unary minus")
@@ -182,8 +191,7 @@ TEST_CASE("[kuro_math]: vec2")
         CHECK(c.y == a.y - b.y);
 
         a -= b;
-        CHECK(a.x == c.x);
-        CHECK(a.y == c.y);
+        CHECK(a == c);
     }
 
     SUBCASE("multiply")
@@ -200,8 +208,7 @@ TEST_CASE("[kuro_math]: vec2")
         CHECK(b.y == a.y * f);
 
         a *= f;
-        CHECK(b.x == b.x);
-        CHECK(a.y == b.y);
+        CHECK(b == b);
     }
 
     SUBCASE("divide")
@@ -214,8 +221,7 @@ TEST_CASE("[kuro_math]: vec2")
         CHECK(b.y == a.y / f);
 
         a /= f;
-        CHECK(b.x == b.x);
-        CHECK(a.y == b.y);
+        CHECK(a == b);
     }
 
     SUBCASE("dot")
@@ -306,6 +312,16 @@ TEST_CASE("[kuro_math]: vec3")
         CHECK(v.z == 3.0f);
     }
 
+    SUBCASE("equal")
+    {
+        kuro::vec3 a = { 1.0f,  2.0f,  3.0f};
+        kuro::vec3 b = { 1.0f,  2.0f,  3.0f};
+        kuro::vec3 c = {11.0f, 12.0f, 13.0f};
+
+        CHECK(a == b);
+        CHECK(a != c);
+    }
+
     SUBCASE("add")
     {
         kuro::vec3 a = {1.0f, 2.0f, 3.0f};
@@ -317,9 +333,7 @@ TEST_CASE("[kuro_math]: vec3")
         CHECK(c.z == a.z + b.z);
 
         a += b;
-        CHECK(a.x == c.x);
-        CHECK(a.y == c.y);
-        CHECK(a.z == c.z);
+        CHECK(a == c);
     }
 
     SUBCASE("unary minus")
@@ -343,9 +357,7 @@ TEST_CASE("[kuro_math]: vec3")
         CHECK(c.z == a.z - b.z);
 
         a -= b;
-        CHECK(a.x == c.x);
-        CHECK(a.y == c.y);
-        CHECK(a.z == c.z);
+        CHECK(a == c);
     }
 
     SUBCASE("multiply")
@@ -364,9 +376,7 @@ TEST_CASE("[kuro_math]: vec3")
         CHECK(b.z == a.z * f);
 
         a *= f;
-        CHECK(a.x == b.x);
-        CHECK(a.y == b.y);
-        CHECK(a.z == b.z);
+        CHECK(a == b);
     }
 
     SUBCASE("divide")
@@ -380,9 +390,7 @@ TEST_CASE("[kuro_math]: vec3")
         CHECK(b.z == a.z / f);
 
         a /= f;
-        CHECK(a.x == b.x);
-        CHECK(a.y == b.y);
-        CHECK(a.z == a.z);
+        CHECK(a == b);
     }
 
     SUBCASE("dot")
@@ -500,6 +508,16 @@ TEST_CASE("[kuro_math]: vec4")
         CHECK(v.w == 4.0f);
     }
 
+    SUBCASE("equal")
+    {
+        kuro::vec4 a = { 1.0f,  2.0f,  3.0f,  4.0f};
+        kuro::vec4 b = { 1.0f,  2.0f,  3.0f,  4.0f};
+        kuro::vec4 c = {11.0f, 12.0f, 13.0f, 14.0f};
+
+        CHECK(a == b);
+        CHECK(a != c);
+    }
+
     SUBCASE("add")
     {
         kuro::vec4 a = {1.0f, 2.0f, 3.0f, 4.0f};
@@ -512,10 +530,7 @@ TEST_CASE("[kuro_math]: vec4")
         CHECK(c.w == a.w + b.w);
 
         a += b;
-        CHECK(a.x == c.x);
-        CHECK(a.y == c.y);
-        CHECK(a.z == c.z);
-        CHECK(a.w == c.w);
+        CHECK(a == c);
     }
 
     SUBCASE("unary minus")
@@ -541,10 +556,7 @@ TEST_CASE("[kuro_math]: vec4")
         CHECK(c.w == a.w - b.w);
 
         a -= b;
-        CHECK(a.x == c.x);
-        CHECK(a.y == c.y);
-        CHECK(a.z == c.z);
-        CHECK(a.w == c.w);
+        CHECK(a == c);
     }
 
     SUBCASE("multiply")
@@ -565,10 +577,7 @@ TEST_CASE("[kuro_math]: vec4")
         CHECK(b.w == a.w * f);
 
         a *= f;
-        CHECK(a.x == b.x);
-        CHECK(a.y == b.y);
-        CHECK(a.z == b.z);
-        CHECK(a.w == b.w);
+        CHECK(a == b);
     }
 
     SUBCASE("divide")
@@ -583,10 +592,7 @@ TEST_CASE("[kuro_math]: vec4")
         CHECK(b.w == a.w / f);
 
         a /= f;
-        CHECK(a.x == b.x);
-        CHECK(a.y == b.y);
-        CHECK(a.z == b.z);
-        CHECK(a.w == b.w);
+        CHECK(a == b);
     }
 
     SUBCASE("dot")
@@ -668,6 +674,27 @@ TEST_CASE("[kuro_math]: mat2")
         CHECK(M.m10 == 3.0f); CHECK(M.m11 == 4.0f);
     }
 
+    SUBCASE("equal")
+    {
+        kuro::mat2 A = {
+            1.0f, 2.0f,
+            3.0f, 4.0f
+        };
+
+        kuro::mat2 B = {
+            1.0f, 2.0f,
+            3.0f, 4.0f
+        };
+
+        kuro::mat2 C = {
+            11.0f, 12.0f,
+            13.0f, 14.0f
+        };
+
+        CHECK(A == B);
+        CHECK(A != C);
+    }
+
     SUBCASE("add")
     {
         kuro::mat2 A = {
@@ -685,8 +712,7 @@ TEST_CASE("[kuro_math]: mat2")
         CHECK(C.m10 == A.m10 + B.m10); CHECK(C.m11 == A.m11 + B.m11);
 
         A += B;
-        CHECK(A.m00 == C.m00); CHECK(A.m01 == C.m01);
-        CHECK(A.m10 == C.m10); CHECK(A.m11 == C.m11);
+        CHECK(A == C);
     }
 
     SUBCASE("unary minus")
@@ -718,8 +744,7 @@ TEST_CASE("[kuro_math]: mat2")
         CHECK(C.m10 == A.m10 - B.m10); CHECK(C.m11 == A.m11 - B.m11);
 
         A -= B;
-        CHECK(A.m00 == C.m00); CHECK(A.m01 == C.m01);
-        CHECK(A.m10 == C.m10); CHECK(A.m11 == C.m11);
+        CHECK(A == C);
     }
 
     SUBCASE("multiply scalar")
@@ -740,8 +765,7 @@ TEST_CASE("[kuro_math]: mat2")
         CHECK(B.m10 == f * A.m10); CHECK(B.m11 == f * A.m11);
 
         A *= f;
-        CHECK(A.m00 == B.m00); CHECK(A.m01 == B.m01);
-        CHECK(A.m10 == B.m10); CHECK(A.m11 == B.m11);
+        CHECK(A == B);
     }
 
     SUBCASE("multiply vector")
@@ -788,8 +812,7 @@ TEST_CASE("[kuro_math]: mat2")
         CHECK(C.m10 == A.m10 / f); CHECK(C.m11 == A.m11 / f);
 
         A /= f;
-        CHECK(A.m00 == C.m00); CHECK(A.m01 == C.m01);
-        CHECK(A.m10 == C.m10); CHECK(A.m11 == C.m11);
+        CHECK(A == C);
     }
 
     SUBCASE("identity")
@@ -813,8 +836,7 @@ TEST_CASE("[kuro_math]: mat2")
         CHECK(B.m10 == A.m10); CHECK(B.m11 == A.m11);
 
         B = A * I;
-        CHECK(B.m00 == A.m00); CHECK(B.m01 == A.m01);
-        CHECK(B.m10 == A.m10); CHECK(B.m11 == A.m11);
+        CHECK(B == A);
     }
 
     SUBCASE("transpose")
@@ -888,8 +910,7 @@ TEST_CASE("[kuro_math]: mat2")
 
         kuro::vec2 a = {11.0f, 12.0f};
         kuro::vec2 b = a * A * B;
-        CHECK(b.x == a.x);
-        CHECK(b.y == a.y);
+        CHECK(b == a);
     }
 
     SUBCASE("rotation")
@@ -986,6 +1007,30 @@ TEST_CASE("[kuro_math]: mat3")
         CHECK(M.m20 == 7.0f); CHECK(M.m21 == 8.0f); CHECK(M.m22 == 9.0f);
     }
 
+    SUBCASE("equal")
+    {
+        kuro::mat3 A = {
+            1.0f, 2.0f, 3.0f,
+            4.0f, 5.0f, 6.0f,
+            7.0f, 8.0f, 9.0f
+        };
+
+        kuro::mat3 B = {
+            1.0f, 2.0f, 3.0f,
+            4.0f, 5.0f, 6.0f,
+            7.0f, 8.0f, 9.0f
+        };
+
+        kuro::mat3 C = {
+            11.0f, 12.0f, 13.0f,
+            14.0f, 15.0f, 16.0f,
+            17.0f, 18.0f, 19.0f
+        };
+
+        CHECK(A == B);
+        CHECK(A != C);
+    }
+
     SUBCASE("add")
     {
         kuro::mat3 A = {
@@ -1006,9 +1051,7 @@ TEST_CASE("[kuro_math]: mat3")
         CHECK(C.m20 == A.m20 + B.m20); CHECK(C.m21 == A.m21 + B.m21); CHECK(C.m22 == A.m22 + B.m22);
 
         A += B;
-        CHECK(A.m00 == C.m00); CHECK(A.m01 == C.m01); CHECK(A.m02 == C.m02);
-        CHECK(A.m10 == C.m10); CHECK(A.m11 == C.m11); CHECK(A.m12 == C.m12);
-        CHECK(A.m20 == C.m20); CHECK(A.m21 == C.m21); CHECK(A.m22 == C.m22);
+        CHECK(A == C);
     }
 
     SUBCASE("unary minus")
@@ -1045,9 +1088,7 @@ TEST_CASE("[kuro_math]: mat3")
         CHECK(C.m20 == A.m20 - B.m20); CHECK(C.m21 == A.m21 - B.m21); CHECK(C.m22 == A.m22 - B.m22);
 
         A -= B;
-        CHECK(A.m00 == C.m00); CHECK(A.m01 == C.m01); CHECK(A.m02 == C.m02);
-        CHECK(A.m10 == C.m10); CHECK(A.m11 == C.m11); CHECK(A.m12 == C.m12);
-        CHECK(A.m20 == C.m20); CHECK(A.m21 == C.m21); CHECK(A.m22 == C.m22);
+        CHECK(A == C);
     }
 
     SUBCASE("multiply scalar")
@@ -1071,9 +1112,7 @@ TEST_CASE("[kuro_math]: mat3")
         CHECK(B.m20 == f * A.m20); CHECK(B.m21 == f * A.m21); CHECK(B.m22 == f * A.m22);
 
         A *= f;
-        CHECK(A.m00 == B.m00); CHECK(A.m01 == B.m01); CHECK(A.m02 == B.m02);
-        CHECK(A.m10 == B.m10); CHECK(A.m11 == B.m11); CHECK(A.m12 == B.m12);
-        CHECK(A.m20 == B.m20); CHECK(A.m21 == B.m21); CHECK(A.m22 == B.m22);
+        CHECK(A == B);
     }
 
     SUBCASE("multiply vector")
@@ -1127,9 +1166,7 @@ TEST_CASE("[kuro_math]: mat3")
         CHECK(B.m20 == A.m20 / f); CHECK(B.m21 == A.m21 / f); CHECK(B.m22 == A.m22 / f);
 
         A /= f;
-        CHECK(A.m00 == B.m00); CHECK(A.m01 == B.m01); CHECK(A.m02 == B.m02);
-        CHECK(A.m10 == B.m10); CHECK(A.m11 == B.m11); CHECK(A.m12 == B.m12);
-        CHECK(A.m20 == B.m20); CHECK(A.m21 == B.m21); CHECK(A.m22 == B.m22);
+        CHECK(A == B);
     }
 
     SUBCASE("identity")
@@ -1141,9 +1178,7 @@ TEST_CASE("[kuro_math]: mat3")
 
         kuro::vec3 a = {1.0f, 2.0f, 3.0f};
         kuro::vec3 b = a * I;
-        CHECK(b.x == a.x);
-        CHECK(b.y == a.y);
-        CHECK(b.z == a.z);
+        CHECK(b == a);
 
         kuro::mat3 A = {
             1.0f, 2.0f, 3.0f,
@@ -1152,14 +1187,10 @@ TEST_CASE("[kuro_math]: mat3")
         };
 
         kuro::mat3 B = I * A;
-        CHECK(B.m00 == A.m00); CHECK(B.m01 == A.m01); CHECK(B.m02 == A.m02);
-        CHECK(B.m10 == A.m10); CHECK(B.m11 == A.m11); CHECK(B.m12 == A.m12);
-        CHECK(B.m20 == A.m20); CHECK(B.m21 == A.m21); CHECK(B.m22 == A.m22);
+        CHECK(B == A);
 
         B = A * I;
-        CHECK(B.m00 == A.m00); CHECK(B.m01 == A.m01); CHECK(B.m02 == A.m02);
-        CHECK(B.m10 == A.m10); CHECK(B.m11 == A.m11); CHECK(B.m12 == A.m12);
-        CHECK(B.m20 == A.m20); CHECK(B.m21 == A.m21); CHECK(B.m22 == A.m22);
+        CHECK(B == A);
     }
 
     SUBCASE("transpose")
@@ -1281,9 +1312,7 @@ TEST_CASE("[kuro_math]: mat3")
 
         kuro::vec3 a = {11.0f, 12.0f, 13.0f};
         kuro::vec3 b = a * A * B;
-        CHECK(b.x == a.x);
-        CHECK(b.y == a.y);
-        CHECK(b.z == a.z);
+        CHECK(b == a);
     }
 
     SUBCASE("translation 2d")
@@ -1306,9 +1335,7 @@ TEST_CASE("[kuro_math]: mat3")
         CHECK(b.z == 1.0f);
 
         kuro::vec3 c = b * kuro::mat3_inverse(P);
-        CHECK(c.x == a.x);
-        CHECK(c.y == a.y);
-        CHECK(c.z == 1.0f);
+        CHECK(c == a);
     }
 
     SUBCASE("rotation 2d")
@@ -1560,6 +1587,33 @@ TEST_CASE("[kuro_math]: mat4")
         CHECK(M.m30 == 13.0f); CHECK(M.m31 == 14.0f); CHECK(M.m32 == 15.0f); CHECK(M.m33 == 16.0f);
     }
 
+    SUBCASE("equal")
+    {
+        kuro::mat4 A = {
+             1.0f,  2.0f,  3.0f,  4.0f,
+             5.0f,  6.0f,  7.0f,  8.0f,
+             9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f
+        };
+
+        kuro::mat4 B = {
+             1.0f,  2.0f,  3.0f,  4.0f,
+             5.0f,  6.0f,  7.0f,  8.0f,
+             9.0f, 10.0f, 11.0f, 12.0f,
+            13.0f, 14.0f, 15.0f, 16.0f
+        };
+
+        kuro::mat4 C = {
+            21.0f, 22.0f, 23.0f, 24.0f,
+            25.0f, 26.0f, 27.0f, 28.0f,
+            29.0f, 30.0f, 31.0f, 32.0f,
+            33.0f, 34.0f, 35.0f, 36.0f
+        };
+
+        CHECK(A == B);
+        CHECK(A != C);
+    }
+
     SUBCASE("add")
     {
         kuro::mat4 A = {
@@ -1598,10 +1652,7 @@ TEST_CASE("[kuro_math]: mat4")
         CHECK(C.m33 == A.m33 + B.m33);
 
         A += B;
-        CHECK(A.m00 == C.m00); CHECK(A.m01 == C.m01); CHECK(A.m02 == C.m02); CHECK(A.m03 == C.m03);
-        CHECK(A.m10 == C.m10); CHECK(A.m11 == C.m11); CHECK(A.m12 == C.m12); CHECK(A.m13 == C.m13);
-        CHECK(A.m20 == C.m20); CHECK(A.m21 == C.m21); CHECK(A.m22 == C.m22); CHECK(A.m23 == C.m23);
-        CHECK(A.m30 == C.m30); CHECK(A.m31 == C.m31); CHECK(A.m32 == C.m32); CHECK(A.m33 == C.m33);
+        CHECK(A == C);
     }
 
     SUBCASE("unary minus")
@@ -1658,10 +1709,7 @@ TEST_CASE("[kuro_math]: mat4")
         CHECK(C.m33 == A.m33 - B.m33);
 
         A -= B;
-        CHECK(A.m00 == C.m00); CHECK(A.m01 == C.m01); CHECK(A.m02 == C.m02); CHECK(A.m03 == C.m03);
-        CHECK(A.m10 == C.m10); CHECK(A.m11 == C.m11); CHECK(A.m12 == C.m12); CHECK(A.m13 == C.m13);
-        CHECK(A.m20 == C.m20); CHECK(A.m21 == C.m21); CHECK(A.m22 == C.m22); CHECK(A.m23 == C.m23);
-        CHECK(A.m30 == C.m30); CHECK(A.m31 == C.m31); CHECK(A.m32 == C.m32); CHECK(A.m33 == C.m33);
+        CHECK(A == C);
     }
 
     SUBCASE("multiply scalar")
@@ -1718,10 +1766,7 @@ TEST_CASE("[kuro_math]: mat4")
         CHECK(B.m33 == f * A.m33);
 
         A *= f;
-        CHECK(A.m00 == B.m00); CHECK(A.m01 == B.m01); CHECK(A.m02 == B.m02); CHECK(A.m03 == B.m03);
-        CHECK(A.m10 == B.m10); CHECK(A.m11 == B.m11); CHECK(A.m12 == B.m12); CHECK(A.m13 == B.m13);
-        CHECK(A.m20 == B.m20); CHECK(A.m21 == B.m21); CHECK(A.m22 == B.m22); CHECK(A.m23 == B.m23);
-        CHECK(A.m30 == B.m30); CHECK(A.m31 == B.m31); CHECK(A.m32 == B.m32); CHECK(A.m33 == B.m33);
+        CHECK(A == B);
     }
 
     SUBCASE("multiply vector")
@@ -1797,10 +1842,7 @@ TEST_CASE("[kuro_math]: mat4")
         CHECK(B.m33 == A.m33 / f);
 
         A /= f;
-        CHECK(A.m00 == B.m00); CHECK(A.m01 == B.m01); CHECK(A.m02 == B.m02); CHECK(A.m03 == B.m03);
-        CHECK(A.m10 == B.m10); CHECK(A.m11 == B.m11); CHECK(A.m12 == B.m12); CHECK(A.m13 == B.m13);
-        CHECK(A.m20 == B.m20); CHECK(A.m21 == B.m21); CHECK(A.m22 == B.m22); CHECK(A.m23 == B.m23);
-        CHECK(A.m30 == B.m30); CHECK(A.m31 == B.m31); CHECK(A.m32 == B.m32); CHECK(A.m33 == B.m33);
+        CHECK(A == B);
     }
 
     SUBCASE("identity")
@@ -1813,10 +1855,7 @@ TEST_CASE("[kuro_math]: mat4")
 
         kuro::vec4 a = {1.0f, 2.0f, 3.0f, 4.0f};
         kuro::vec4 b = a * I;
-        CHECK(b.x == a.x);
-        CHECK(b.y == a.y);
-        CHECK(b.z == a.z);
-        CHECK(b.w == a.w);
+        CHECK(b == a);
 
         kuro::mat4 A = {
              1.0f,  2.0f,  3.0f,  4.0f,
@@ -1826,16 +1865,10 @@ TEST_CASE("[kuro_math]: mat4")
         };
 
         kuro::mat4 B = I * A;
-        CHECK(B.m00 == A.m00); CHECK(B.m01 == A.m01); CHECK(B.m02 == A.m02); CHECK(B.m03 == A.m03);
-        CHECK(B.m10 == A.m10); CHECK(B.m11 == A.m11); CHECK(B.m12 == A.m12); CHECK(B.m13 == A.m13);
-        CHECK(B.m20 == A.m20); CHECK(B.m21 == A.m21); CHECK(B.m22 == A.m22); CHECK(B.m23 == A.m23);
-        CHECK(B.m30 == A.m30); CHECK(B.m31 == A.m31); CHECK(B.m32 == A.m32); CHECK(B.m33 == A.m33);
+        CHECK(B == A);
 
         B = A * I;
-        CHECK(B.m00 == A.m00); CHECK(B.m01 == A.m01); CHECK(B.m02 == A.m02); CHECK(B.m03 == A.m03);
-        CHECK(B.m10 == A.m10); CHECK(B.m11 == A.m11); CHECK(B.m12 == A.m12); CHECK(B.m13 == A.m13);
-        CHECK(B.m20 == A.m20); CHECK(B.m21 == A.m21); CHECK(B.m22 == A.m22); CHECK(B.m23 == A.m23);
-        CHECK(B.m30 == A.m30); CHECK(B.m31 == A.m31); CHECK(B.m32 == A.m32); CHECK(B.m33 == A.m33);
+        CHECK(B == A);
     }
 
     SUBCASE("transpose")
@@ -2010,10 +2043,7 @@ TEST_CASE("[kuro_math]: mat4")
         CHECK(b.w == 1.0f);
 
         kuro::vec4 c = b * kuro::mat4_inverse(T);
-        CHECK(c.x == a.x);
-        CHECK(c.y == a.y);
-        CHECK(c.z == a.z);
-        CHECK(c.w == 1.0f);
+        CHECK(c == a);
     }
 
     SUBCASE("rotation x")

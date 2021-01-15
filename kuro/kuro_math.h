@@ -4,7 +4,6 @@
 // Copyright (c) 2020-2021 Waleed Yaser
 //
 // TODO[Waleed]:
-// * add equal and not equal operator
 // * implement sqrt, sin, cos, tan
 
 #pragma once
@@ -204,6 +203,18 @@ namespace kuro
     // == VEC2 =========================================================================================
     // =================================================================================================
 
+    inline static bool
+    operator==(const vec2 &a, const vec2 &b)
+    {
+        return a.x == b.x && a.y == b.y;
+    }
+
+    inline static bool
+    operator!=(const vec2 &a, const vec2 &b)
+    {
+        return !(a == b);
+    }
+
     inline static vec2
     operator+(const vec2 &a, const vec2 &b)
     {
@@ -301,6 +312,18 @@ namespace kuro
     // =================================================================================================
     // == VEC3 =========================================================================================
     // =================================================================================================
+
+    inline static bool
+    operator==(const vec3 &a, const vec3 &b)
+    {
+        return a.x == b.x && a.y == b.y && a.z == b.z;
+    }
+
+    inline static bool
+    operator!=(const vec3 &a, const vec3 &b)
+    {
+        return !(a == b);
+    }
 
     inline static vec3
     operator+(const vec3 &a, const vec3 &b)
@@ -403,6 +426,18 @@ namespace kuro
     // == VEC4 =========================================================================================
     // =================================================================================================
 
+    inline static bool
+    operator==(const vec4 &a, const vec4 &b)
+    {
+        return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
+    }
+
+    inline static bool
+    operator!=(const vec4 &a, const vec4 &b)
+    {
+        return !(a == b);
+    }
+
     inline static vec4
     operator+(const vec4 &a, const vec4 &b)
     {
@@ -494,6 +529,20 @@ namespace kuro
     // =================================================================================================
     // == MAT2 =========================================================================================
     // =================================================================================================
+
+    inline static bool
+    operator==(const mat2 &A, const mat2 &B)
+    {
+        return
+            A.m00 == B.m00 && A.m01 == B.m01 &&
+            A.m10 == B.m10 && A.m11 == B.m11;
+    }
+
+    inline static bool
+    operator!=(const mat2 &A, const mat2 &B)
+    {
+        return !(A == B);
+    }
 
     inline static mat2
     operator+(const mat2 &A, const mat2 &B)
@@ -697,6 +746,21 @@ namespace kuro
     // =================================================================================================
     // == MAT3 =========================================================================================
     // =================================================================================================
+
+    inline static bool
+    operator==(const mat3 &A, const mat3 &B)
+    {
+        return
+            A.m00 == B.m00 && A.m01 == B.m01 && A.m02 == B.m02 &&
+            A.m10 == B.m10 && A.m11 == B.m11 && A.m12 == B.m12 &&
+            A.m20 == B.m20 && A.m21 == B.m21 && A.m22 == B.m22;
+    }
+
+    inline static bool
+    operator!=(const mat3 &A, const mat3 &B)
+    {
+        return !(A == B);
+    }
 
     inline static mat3
     operator+(const mat3 &A, const mat3 &B)
@@ -1089,6 +1153,22 @@ namespace kuro
     // =================================================================================================
     // == MAT4 =========================================================================================
     // =================================================================================================
+
+    inline static bool
+    operator==(const mat4 &A, const mat4 &B)
+    {
+        return
+            A.m00 == B.m00 && A.m01 == B.m01 && A.m02 == B.m02 && A.m03 == B.m03 &&
+            A.m10 == B.m10 && A.m11 == B.m11 && A.m12 == B.m12 && A.m13 == B.m13 &&
+            A.m20 == B.m20 && A.m21 == B.m21 && A.m22 == B.m22 && A.m23 == B.m23 &&
+            A.m30 == B.m30 && A.m31 == B.m31 && A.m32 == B.m32 && A.m33 == B.m33;
+    }
+
+    inline static bool
+    operator!=(const mat4 &A, const mat4 &B)
+    {
+        return !(A == B);
+    }
 
     inline static mat4
     operator+(const mat4 &A, const mat4 &B)
