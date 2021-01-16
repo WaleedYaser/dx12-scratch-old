@@ -4,6 +4,7 @@
 // Copyright (c) 2020-2021 Waleed Yaser
 //
 // TODO[Waleed]:
+// * SIMD
 // * implement sqrt, sin, cos, tan
 
 #pragma once
@@ -78,7 +79,7 @@ namespace kuro
     // =================================================================================================
 
     static constexpr f64 PI        = 3.14159265358979323846;
-    static constexpr f64 PI_OVER_2 = PI * 0.5;
+    static constexpr f64 PI_DIV_2  = PI * 0.5;
     static constexpr f64 TAU       = 2.0 * PI;
     static constexpr f64 TO_DEGREE = 360.0 / TAU;
     static constexpr f64 TO_RADIAN = TAU / 360.0;
@@ -1042,6 +1043,23 @@ namespace kuro
     }
 
     inline static mat3
+    mat3_rotation_about_axis(const vec3 &axis, float angle)
+    {
+        f32 c = cos(angle);
+        f32 s = sin(angle);
+
+        f32 x = axis.x;
+        f32 y = axis.y;
+        f32 z = axis.z;
+
+        return mat3{
+            c + (1-c)*x*x  , (1-c)*x*y + s*z, (1-c)*x*z - s*y,
+            (1-c)*x*y - s*z, c + (1-c)*y*y  , (1-c)*y*z + s*x,
+            (1-c)*x*z + s*y, (1-c)*y*z - s*x, c + (1-c)*z*z
+        };
+    }
+
+    inline static mat3
     mat3_euler(f32 pitch, f32 head, f32 roll)
     {
         f32 sh = sin(head);
@@ -1514,6 +1532,24 @@ namespace kuro
     }
 
     inline static mat4
+    mat4_rotation_about_axis(const vec3 &axis, float angle)
+    {
+        f32 c = cos(angle);
+        f32 s = sin(angle);
+
+        f32 x = axis.x;
+        f32 y = axis.y;
+        f32 z = axis.z;
+
+        return mat4{
+            c + (1-c)*x*x  , (1-c)*x*y + s*z, (1-c)*x*z - s*y, 0.0f,
+            (1-c)*x*y - s*z, c + (1-c)*y*y  , (1-c)*y*z + s*x, 0.0f,
+            (1-c)*x*z + s*y, (1-c)*y*z - s*x, c + (1-c)*z*z  , 0.0f,
+            0.0f           ,            0.0f,            0.0f, 1.0f
+        };
+    }
+
+    inline static mat4
     mat4_euler(f32 pitch, f32 head, f32 roll)
     {
         f32 sh = sin(head);
@@ -1696,6 +1732,10 @@ namespace kuro
 
         return M;
     }
+
+    // =================================================================================================
+    // == SIMD =========================================================================================
+    // =================================================================================================
 
     // =================================================================================================
     // == INTERSECTIONS ================================================================================

@@ -79,7 +79,7 @@ TEST_CASE("[kuro_math]: limits")
 TEST_CASE("[kuro_math]: consts")
 {
     CHECK(doctest::Approx(kuro::PI) == 3.14159265358979323846);
-    CHECK(doctest::Approx(kuro::PI_OVER_2) == (3.14159265358979323846 / 2.0));
+    CHECK(doctest::Approx(kuro::PI_DIV_2) == (3.14159265358979323846 / 2.0));
     CHECK(doctest::Approx(kuro::TAU) == (3.14159265358979323846 * 2.0));
 
     CHECK(doctest::Approx(kuro::TO_DEGREE * kuro::PI) == 180.0);
@@ -915,7 +915,7 @@ TEST_CASE("[kuro_math]: mat2")
 
     SUBCASE("rotation")
     {
-        kuro::mat2 R = kuro::mat2_rotation((kuro::f32)kuro::PI_OVER_2);
+        kuro::mat2 R = kuro::mat2_rotation((kuro::f32)kuro::PI_DIV_2);
         kuro::vec2 a = {1.0f, 1.0f};
 
         kuro::vec2 b = a * R;
@@ -1340,7 +1340,7 @@ TEST_CASE("[kuro_math]: mat3")
 
     SUBCASE("rotation 2d")
     {
-        kuro::mat3 R = kuro::mat3_rotation_2d((kuro::f32)kuro::PI_OVER_2);
+        kuro::mat3 R = kuro::mat3_rotation_2d((kuro::f32)kuro::PI_DIV_2);
         kuro::vec3 a = {1.0f, 1.0f, 1.0f};
 
         kuro::vec3 b = a * R;
@@ -1379,7 +1379,7 @@ TEST_CASE("[kuro_math]: mat3")
 
     SUBCASE("rotation x")
     {
-        kuro::mat3 R = kuro::mat3_rotation_x((kuro::f32)kuro::PI_OVER_2);
+        kuro::mat3 R = kuro::mat3_rotation_x((kuro::f32)kuro::PI_DIV_2);
         kuro::vec3 a = {1.0f, 1.0f, 1.0f};
 
         kuro::vec3 b = a * R;
@@ -1395,7 +1395,7 @@ TEST_CASE("[kuro_math]: mat3")
 
     SUBCASE("rotation y")
     {
-        kuro::mat3 R = kuro::mat3_rotation_y((kuro::f32)kuro::PI_OVER_2);
+        kuro::mat3 R = kuro::mat3_rotation_y((kuro::f32)kuro::PI_DIV_2);
         kuro::vec3 a = {1.0f, 1.0f, 1.0f};
 
         kuro::vec3 b = a * R;
@@ -1411,13 +1411,75 @@ TEST_CASE("[kuro_math]: mat3")
 
     SUBCASE("rotation z")
     {
-        kuro::mat3 R = kuro::mat3_rotation_z((kuro::f32)kuro::PI_OVER_2);
+        kuro::mat3 R = kuro::mat3_rotation_z((kuro::f32)kuro::PI_DIV_2);
         kuro::vec3 a = {1.0f, 1.0f, 1.0f};
 
         kuro::vec3 b = a * R;
         CHECK(b.x == doctest::Approx(-a.x));
         CHECK(b.y == doctest::Approx(a.y));
         CHECK(b.z == doctest::Approx(a.z));
+
+        kuro::vec3 c = b * kuro::mat3_inverse(R);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+    }
+
+    SUBCASE("rotation about axis")
+    {
+        kuro::mat3 RX = kuro::mat3_rotation_x((kuro::f32)kuro::PI_DIV_2);
+        kuro::mat3 R = kuro::mat3_rotation_about_axis(kuro::vec3{1.0f, 0.0f, 0.0f}, (kuro::f32)kuro::PI_DIV_2);
+        CHECK(R.m00 == doctest::Approx(RX.m00));
+        CHECK(R.m01 == doctest::Approx(RX.m01));
+        CHECK(R.m02 == doctest::Approx(RX.m02));
+
+        CHECK(R.m10 == doctest::Approx(RX.m10));
+        CHECK(R.m11 == doctest::Approx(RX.m11));
+        CHECK(R.m12 == doctest::Approx(RX.m12));
+
+        CHECK(R.m20 == doctest::Approx(RX.m20));
+        CHECK(R.m21 == doctest::Approx(RX.m21));
+        CHECK(R.m22 == doctest::Approx(RX.m22));
+
+        kuro::mat3 RY = kuro::mat3_rotation_y((kuro::f32)kuro::PI_DIV_2);
+        R = kuro::mat3_rotation_about_axis(kuro::vec3{0.0f, 1.0f, 0.0f}, (kuro::f32)kuro::PI_DIV_2);
+        CHECK(R.m00 == doctest::Approx(RY.m00));
+        CHECK(R.m01 == doctest::Approx(RY.m01));
+        CHECK(R.m02 == doctest::Approx(RY.m02));
+
+        CHECK(R.m10 == doctest::Approx(RY.m10));
+        CHECK(R.m11 == doctest::Approx(RY.m11));
+        CHECK(R.m12 == doctest::Approx(RY.m12));
+
+        CHECK(R.m20 == doctest::Approx(RY.m20));
+        CHECK(R.m21 == doctest::Approx(RY.m21));
+        CHECK(R.m22 == doctest::Approx(RY.m22));
+
+        kuro::mat3 RZ = kuro::mat3_rotation_z((kuro::f32)kuro::PI_DIV_2);
+        R = kuro::mat3_rotation_about_axis(kuro::vec3{0.0f, 0.0f, 1.0f}, (kuro::f32)kuro::PI_DIV_2);
+        CHECK(R.m00 == doctest::Approx(RZ.m00));
+        CHECK(R.m01 == doctest::Approx(RZ.m01));
+        CHECK(R.m02 == doctest::Approx(RZ.m02));
+
+        CHECK(R.m10 == doctest::Approx(RZ.m10));
+        CHECK(R.m11 == doctest::Approx(RZ.m11));
+        CHECK(R.m12 == doctest::Approx(RZ.m12));
+
+        CHECK(R.m20 == doctest::Approx(RZ.m20));
+        CHECK(R.m21 == doctest::Approx(RZ.m21));
+        CHECK(R.m22 == doctest::Approx(RZ.m22));
+
+        kuro::vec3 a = {0.0f ,1.0f, 2.0f};
+        R = kuro::mat3_rotation_about_axis(
+                kuro::normalize(kuro::vec3{1.0f, 1.0f, 1.0f}),
+                (kuro::f32)kuro::PI / 4.0f
+            );
+
+        // online calculator: https://www.vcalc.com/wiki/vCalc/V3+-+Vector+Rotation
+        kuro::vec3 b = a * R;
+        CHECK(b.x == doctest::Approx(0.70114f));
+        CHECK(b.y == doctest::Approx(0.1835f));
+        CHECK(b.z == doctest::Approx(2.11536f));
 
         kuro::vec3 c = b * kuro::mat3_inverse(R);
         CHECK(c.x == doctest::Approx(a.x));
@@ -2048,7 +2110,7 @@ TEST_CASE("[kuro_math]: mat4")
 
     SUBCASE("rotation x")
     {
-        kuro::mat4 R = kuro::mat4_rotation_x((kuro::f32)kuro::PI_OVER_2);
+        kuro::mat4 R = kuro::mat4_rotation_x((kuro::f32)kuro::PI_DIV_2);
         kuro::vec4 a = {1.0f, 1.0f, 1.0f, 1.0f};
 
         kuro::vec4 b = a * R;
@@ -2066,7 +2128,7 @@ TEST_CASE("[kuro_math]: mat4")
 
     SUBCASE("rotation y")
     {
-        kuro::mat4 R = kuro::mat4_rotation_y((kuro::f32)kuro::PI_OVER_2);
+        kuro::mat4 R = kuro::mat4_rotation_y((kuro::f32)kuro::PI_DIV_2);
         kuro::vec4 a = {1.0f, 1.0f, 1.0f, 1.0f};
 
         kuro::vec4 b = a * R;
@@ -2084,7 +2146,7 @@ TEST_CASE("[kuro_math]: mat4")
 
     SUBCASE("rotation z")
     {
-        kuro::mat4 R = kuro::mat4_rotation_z((kuro::f32)kuro::PI_OVER_2);
+        kuro::mat4 R = kuro::mat4_rotation_z((kuro::f32)kuro::PI_DIV_2);
         kuro::vec4 a = {1.0f, 1.0f, 1.0f, 1.0f};
 
         kuro::vec4 b = a * R;
@@ -2098,6 +2160,94 @@ TEST_CASE("[kuro_math]: mat4")
         CHECK(c.y == doctest::Approx(a.y));
         CHECK(c.z == doctest::Approx(a.z));
         CHECK(c.w == doctest::Approx(1.0f));
+    }
+
+    SUBCASE("rotation about axis")
+    {
+        kuro::mat4 RX = kuro::mat4_rotation_x((kuro::f32)kuro::PI_DIV_2);
+        kuro::mat4 R = kuro::mat4_rotation_about_axis(kuro::vec3{1.0f, 0.0f, 0.0f}, (kuro::f32)kuro::PI_DIV_2);
+        CHECK(R.m00 == doctest::Approx(RX.m00));
+        CHECK(R.m01 == doctest::Approx(RX.m01));
+        CHECK(R.m02 == doctest::Approx(RX.m02));
+        CHECK(R.m03 == doctest::Approx(RX.m03));
+
+        CHECK(R.m10 == doctest::Approx(RX.m10));
+        CHECK(R.m11 == doctest::Approx(RX.m11));
+        CHECK(R.m12 == doctest::Approx(RX.m12));
+        CHECK(R.m13 == doctest::Approx(RX.m13));
+
+        CHECK(R.m20 == doctest::Approx(RX.m20));
+        CHECK(R.m21 == doctest::Approx(RX.m21));
+        CHECK(R.m22 == doctest::Approx(RX.m22));
+        CHECK(R.m23 == doctest::Approx(RX.m23));
+
+        CHECK(R.m30 == doctest::Approx(RX.m30));
+        CHECK(R.m31 == doctest::Approx(RX.m31));
+        CHECK(R.m32 == doctest::Approx(RX.m32));
+        CHECK(R.m33 == doctest::Approx(RX.m33));
+
+        kuro::mat4 RY = kuro::mat4_rotation_y((kuro::f32)kuro::PI_DIV_2);
+        R = kuro::mat4_rotation_about_axis(kuro::vec3{0.0f, 1.0f, 0.0f}, (kuro::f32)kuro::PI_DIV_2);
+        CHECK(R.m00 == doctest::Approx(RY.m00));
+        CHECK(R.m01 == doctest::Approx(RY.m01));
+        CHECK(R.m02 == doctest::Approx(RY.m02));
+        CHECK(R.m03 == doctest::Approx(RY.m03));
+
+        CHECK(R.m10 == doctest::Approx(RY.m10));
+        CHECK(R.m11 == doctest::Approx(RY.m11));
+        CHECK(R.m12 == doctest::Approx(RY.m12));
+        CHECK(R.m13 == doctest::Approx(RY.m13));
+
+        CHECK(R.m20 == doctest::Approx(RY.m20));
+        CHECK(R.m21 == doctest::Approx(RY.m21));
+        CHECK(R.m22 == doctest::Approx(RY.m22));
+        CHECK(R.m23 == doctest::Approx(RY.m23));
+
+        CHECK(R.m30 == doctest::Approx(RY.m30));
+        CHECK(R.m31 == doctest::Approx(RY.m31));
+        CHECK(R.m32 == doctest::Approx(RY.m32));
+        CHECK(R.m33 == doctest::Approx(RY.m33));
+
+        kuro::mat4 RZ = kuro::mat4_rotation_z((kuro::f32)kuro::PI_DIV_2);
+        R = kuro::mat4_rotation_about_axis(kuro::vec3{0.0f, 0.0f, 1.0f}, (kuro::f32)kuro::PI_DIV_2);
+        CHECK(R.m00 == doctest::Approx(RZ.m00));
+        CHECK(R.m01 == doctest::Approx(RZ.m01));
+        CHECK(R.m02 == doctest::Approx(RZ.m02));
+        CHECK(R.m03 == doctest::Approx(RZ.m03));
+
+        CHECK(R.m10 == doctest::Approx(RZ.m10));
+        CHECK(R.m11 == doctest::Approx(RZ.m11));
+        CHECK(R.m12 == doctest::Approx(RZ.m12));
+        CHECK(R.m13 == doctest::Approx(RZ.m13));
+
+        CHECK(R.m20 == doctest::Approx(RZ.m20));
+        CHECK(R.m21 == doctest::Approx(RZ.m21));
+        CHECK(R.m22 == doctest::Approx(RZ.m22));
+        CHECK(R.m23 == doctest::Approx(RZ.m23));
+
+        CHECK(R.m30 == doctest::Approx(RZ.m30));
+        CHECK(R.m31 == doctest::Approx(RZ.m31));
+        CHECK(R.m32 == doctest::Approx(RZ.m32));
+        CHECK(R.m33 == doctest::Approx(RZ.m33));
+
+        kuro::vec4 a = {0.0f ,1.0f, 2.0f};
+        R = kuro::mat4_rotation_about_axis(
+                kuro::normalize(kuro::vec3{1.0f, 1.0f, 1.0f}),
+                (kuro::f32)kuro::PI / 4.0f
+            );
+
+        // online calculator: https://www.vcalc.com/wiki/vCalc/V3+-+Vector+Rotation
+        kuro::vec4 b = a * R;
+        CHECK(b.x == doctest::Approx(0.70114f));
+        CHECK(b.y == doctest::Approx(0.1835f));
+        CHECK(b.z == doctest::Approx(2.11536f));
+        CHECK(b.w == doctest::Approx(0.0f));
+
+        kuro::vec4 c = b * kuro::mat4_inverse(R);
+        CHECK(c.x == doctest::Approx(a.x));
+        CHECK(c.y == doctest::Approx(a.y));
+        CHECK(c.z == doctest::Approx(a.z));
+        CHECK(c.w == doctest::Approx(a.w));
     }
 
     // TODO[Waleed]: invistigate euler test case
