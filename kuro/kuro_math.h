@@ -19,7 +19,7 @@ extern "C" {
     double asin(double);
     double atan2(double, double);
 #elif defined(__linux__)
-    // TODO[Waleed]: invistigate about throw()
+    // TODO[Waleed]: investigate about throw()
     double sqrt(double) throw();
     double sin(double) throw();
     double cos(double) throw();
@@ -1043,7 +1043,7 @@ namespace kuro
     }
 
     inline static mat3
-    mat3_rotation_about_axis(const vec3 &axis, float angle)
+    mat3_rotation_axis(const vec3 &axis, float angle)
     {
         f32 c = cos(angle);
         f32 s = sin(angle);
@@ -1532,7 +1532,7 @@ namespace kuro
     }
 
     inline static mat4
-    mat4_rotation_about_axis(const vec3 &axis, float angle)
+    mat4_rotation_axis(const vec3 &axis, float angle)
     {
         f32 c = cos(angle);
         f32 s = sin(angle);

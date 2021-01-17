@@ -28,12 +28,12 @@ jobs:
       - name: configure debug
         run: cmake . -B build -DCMAKE_BUILD_TYPE=Debug
       - name: build debug
-        run: cmake --build build --config Debug
+        run: cmake --build build --config Debug --target utests
       - name: unittests debug
         run: ./build/bin/Debug/utests
       - name: configure release
         run: cmake . -B build -DCMAKE_BUILD_TYPE=Release
       - name: build release
-        run: cmake --build build --config Release
+        run: cmake --build build --config Release --target utests
       - name: unittests release
         run: ./build/bin/Release/utests
