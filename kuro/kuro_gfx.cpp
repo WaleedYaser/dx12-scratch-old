@@ -22,13 +22,16 @@ namespace kuro
     {
         IDXGIFactory4 *factory;
         ID3D12Device *device;
+
         ID3D12Fence *fence;
+        u64 current_fence;
 
         u32 rtv_descriptor_size;
         u32 dsv_descriptor_size;
         u32 cbv_srv_descriptor_size;
 
         DXGI_FORMAT backbuffer_format;
+        DXGI_FORMAT depth_stencil_format;
 
         bool msaa_state;
         u32 msaa_x4_quality;
@@ -42,6 +45,34 @@ namespace kuro
 
         i32 current_back_buffer;
     };
+
+    void
+    _gfx_command_queue_flush(Gfx self)
+    {
+        // advance fence value to mark commands up to this fence point
+        self->current_fence++;
+
+        // add an instruction to command queue to set a new fence point, because we
+        // are on GPU timeline, the new fence point won't be set until GPU finishes
+        // processing all commands prior to Signal()
+        self->command_queue->Signal(self->fence, self->current_fence);
+
+        // wait until GPU has completed commands up to this fence point
+        if (self->fence->GetCompletedValue() < self->current_fence)
+        {
+            HANDLE event_handle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+
+            // fire event when GPU hits current fence
+            HRESULT hr = self->fence->SetEventOnCompletion(self->current_fence, event_handle);
+            assert(SUCCEEDED(hr));
+
+            // wait until GPU hits current fence event is fired
+            WaitForSingleObject(event_handle, INFINITE);
+            CloseHandle(event_handle);
+        }
+    }
+
+    // API
 
     Gfx
     gfx_init()
@@ -92,8 +123,9 @@ namespace kuro
         self.cbv_srv_descriptor_size =
             self.device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-        // set backbuffer format
+        // set backbuffer and depth stencil format
         self.backbuffer_format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        self.depth_stencil_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
         // check 4x MSAA quality support
         D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS ms_quality_levles = {};
@@ -140,7 +172,7 @@ namespace kuro
 
         D3D12_DESCRIPTOR_HEAP_DESC dsv_heap_desc = {};
         dsv_heap_desc.NumDescriptors = 1;
-        rtv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+        dsv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
         hr = self.device->CreateDescriptorHeap(&dsv_heap_desc, IID_PPV_ARGS(&self.dsv_heap));
         assert(SUCCEEDED(hr));
 
@@ -161,12 +193,14 @@ namespace kuro
     }
 
     Swapchain
-    gfx_swapchain_new(Gfx self, void *window)
+    gfx_swapchain_new(Gfx self, void *window, u32 width, u32 height)
     {
         // TODO[Waleed]: allocate on heap
         static _Swapchain swapchain = {};
 
         DXGI_SWAP_CHAIN_DESC swapchain_desc = {};
+        swapchain_desc.BufferDesc.Width = width;
+        swapchain_desc.BufferDesc.Height = height;
         swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
         swapchain_desc.BufferDesc.RefreshRate.Denominator = 1;
         swapchain_desc.BufferDesc.Format = self->backbuffer_format;
@@ -183,18 +217,7 @@ namespace kuro
         HRESULT hr = self->factory->CreateSwapChain(self->command_queue, &swapchain_desc, &swapchain.swapchain);
         assert(SUCCEEDED(hr));
 
-        // create render target view
-        D3D12_CPU_DESCRIPTOR_HANDLE rtv_heap_handle = self->rtv_heap->GetCPUDescriptorHandleForHeapStart();
-        for (u32 i = 0; i < _swapchain_buffer_count; ++i)
-        {
-            hr = swapchain.swapchain->GetBuffer(i, IID_PPV_ARGS(&swapchain.swapchain_buffers[i]));
-            assert(SUCCEEDED(hr));
-            self->device->CreateRenderTargetView(swapchain.swapchain_buffers[i], nullptr, rtv_heap_handle);
-            rtv_heap_handle.ptr += self->rtv_descriptor_size;
-        }
-
-        // create depth stencil buffer and view
-        D3D12_RESOURCE_DESC depth_stencil_desc = {};
+        gfx_swapchain_resize(self, &swapchain, width, height);
 
         return &swapchain;
     }
@@ -203,10 +226,98 @@ namespace kuro
     gfx_swapchain_free(Gfx self, Swapchain swapchain)
     {
         (self);
+        swapchain->depth_stencil_buffer->Release();
         for (int i = 0; i < _swapchain_buffer_count; ++i)
         {
             swapchain->swapchain_buffers[i]->Release();
         }
         swapchain->swapchain->Release();
+    }
+
+    void
+    gfx_swapchain_resize(Gfx self, Swapchain swapchain, u32 width, u32 height)
+    {
+        assert(self->device);
+        assert(swapchain->swapchain);
+        assert(self->command_allocator);
+
+        // flush before changing any resource
+        _gfx_command_queue_flush(self);
+
+        HRESULT hr = self->command_list->Reset(self->command_allocator, nullptr);
+        assert(SUCCEEDED(hr));
+
+        // release previous resources we will create
+        for (int i = 0; i < _swapchain_buffer_count; ++i)
+            if (swapchain->swapchain_buffers[i]) swapchain->swapchain_buffers[i]->Release();
+        if (swapchain->depth_stencil_buffer) swapchain->depth_stencil_buffer->Release();
+
+        // create render target view
+        D3D12_CPU_DESCRIPTOR_HANDLE rtv_heap_handle = self->rtv_heap->GetCPUDescriptorHandleForHeapStart();
+        for (u32 i = 0; i < _swapchain_buffer_count; ++i)
+        {
+            hr = swapchain->swapchain->GetBuffer(i, IID_PPV_ARGS(&swapchain->swapchain_buffers[i]));
+            assert(SUCCEEDED(hr));
+            self->device->CreateRenderTargetView(swapchain->swapchain_buffers[i], nullptr, rtv_heap_handle);
+            rtv_heap_handle.ptr += self->rtv_descriptor_size;
+        }
+
+        // create depth stencil buffer
+        D3D12_HEAP_PROPERTIES dsv_heap_properties = {};
+        dsv_heap_properties.Type = D3D12_HEAP_TYPE_DEFAULT;
+        dsv_heap_properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+        dsv_heap_properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+
+        D3D12_RESOURCE_DESC depth_stencil_desc = {};
+        depth_stencil_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        depth_stencil_desc.Width = width;
+        depth_stencil_desc.Height = height;
+        depth_stencil_desc.DepthOrArraySize = 1;
+        depth_stencil_desc.MipLevels = 1;
+        depth_stencil_desc.Format = self->depth_stencil_format;
+        depth_stencil_desc.SampleDesc.Count = self->msaa_state ? 4 : 1;
+        depth_stencil_desc.SampleDesc.Quality = self->msaa_state ? (self->msaa_x4_quality - 1) : 0;
+        depth_stencil_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+        D3D12_CLEAR_VALUE optimized_clear_value = {};
+        optimized_clear_value.Format = self->depth_stencil_format;
+        optimized_clear_value.DepthStencil.Depth = 1.0f;
+        optimized_clear_value.DepthStencil.Stencil = 0;
+
+        hr = self->device->CreateCommittedResource(
+            &dsv_heap_properties,
+            D3D12_HEAP_FLAG_NONE,
+            &depth_stencil_desc,
+            D3D12_RESOURCE_STATE_COMMON,
+            &optimized_clear_value,
+            IID_PPV_ARGS(&swapchain->depth_stencil_buffer));
+        assert(SUCCEEDED(hr));
+
+        // create depth stencil view
+        self->device->CreateDepthStencilView(
+            swapchain->depth_stencil_buffer,
+            nullptr,
+            self->dsv_heap->GetCPUDescriptorHandleForHeapStart());
+
+        // transition resource from initial state to be usec as a depth buffer
+        D3D12_RESOURCE_BARRIER resource_barrier = {};
+        resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        resource_barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+        resource_barrier.Transition.pResource = swapchain->depth_stencil_buffer;
+        resource_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+        resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+        self->command_list->ResourceBarrier(1, &resource_barrier);
+
+        // close command list
+        hr = self->command_list->Close();
+        assert(SUCCEEDED(hr));
+
+        // execute commands
+        ID3D12CommandList *cmd_lists[] = {self->command_list};
+        self->command_queue->ExecuteCommandLists(1, cmd_lists);
+
+        // wait until creation is completed
+        _gfx_command_queue_flush(self);
     }
 }

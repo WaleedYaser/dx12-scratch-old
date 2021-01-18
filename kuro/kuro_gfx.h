@@ -32,8 +32,8 @@ namespace kuro
     Gfx gfx_init();
     void gfx_deinit(Gfx self);
 
-    Swapchain gfx_swapchain_new(Gfx self, void *window);
+    Swapchain gfx_swapchain_new(Gfx self, void *window, u32 width, u32 height);
     void gfx_swapchain_free(Gfx self, Swapchain swapchain);
     void gfx_swapchain_present(Gfx self, Swapchain swapchain);
-    void gfx_swapchain_resize(Gfx self, Swapchain swapchain, i32 width, i32 height);
+    void gfx_swapchain_resize(Gfx self, Swapchain swapchain, u32 width, u32 height);
 }

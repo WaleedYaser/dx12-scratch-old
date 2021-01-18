@@ -57,8 +57,14 @@ main()
         return GetLastError();
     }
 
+    // get window width and height
+    RECT rect;
+    GetClientRect(hwnd, &rect);
+    int window_width = rect.right - rect.left;
+    int window_height = rect.bottom - rect.top;
+
     kuro::Gfx gfx = kuro::gfx_init();
-    kuro::Swapchain swapchain = kuro::gfx_swapchain_new(gfx, hwnd);
+    kuro::Swapchain swapchain = kuro::gfx_swapchain_new(gfx, hwnd, window_width, window_height);
 
     bool running = true;
     while (running)
@@ -73,6 +79,18 @@ main()
             case WM_QUIT:
                 running = false;
                 break;
+        }
+
+        GetClientRect(hwnd, &rect);
+        int current_width = rect.right - rect.left;
+        int current_height = rect.bottom - rect.top;
+
+        if (current_width != window_width || current_height != window_height)
+        {
+            window_width = current_width;
+            window_height = current_height;
+
+            kuro::gfx_swapchain_resize(gfx, swapchain, window_width, window_height);
         }
     }
 
