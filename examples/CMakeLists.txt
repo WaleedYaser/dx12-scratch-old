@@ -9,3 +9,13 @@ target_compile_options(playground PRIVATE
 )
 
 target_link_libraries(playground PRIVATE kuro)
+
+add_executable(clear clear.cpp)
+
+# turns all warnings into errors
+target_compile_options(clear PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic -Werror>
+)
+
+target_link_libraries(clear PRIVATE kuro)

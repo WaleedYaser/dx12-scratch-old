@@ -22,5 +22,4 @@ if (KURO_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif(KURO_BUILD_EXAMPLES)
 
-add_library(kuro INTERFACE)
-target_include_directories(kuro INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/kuro)
+add_subdirectory(kuro)

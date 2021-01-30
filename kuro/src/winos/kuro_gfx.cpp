@@ -1,5 +1,6 @@
 #pragma comment(lib, "DXGI.lib")
 #pragma comment(lib, "D3D12.lib")
+#pragma comment(lib, "d3dcompiler.lib")
 
 #include "kuro_gfx.h"
 
@@ -16,6 +17,8 @@ namespace kuro
         IDXGISwapChain *swapchain;
         ID3D12Resource *swapchain_buffers[_swapchain_buffer_count];
         ID3D12Resource *depth_stencil_buffer;
+        i32 current_back_buffer;
+        i32 width, height;
     };
 
     struct _Gfx
@@ -42,8 +45,6 @@ namespace kuro
 
         ID3D12DescriptorHeap *rtv_heap;
         ID3D12DescriptorHeap *dsv_heap;
-
-        i32 current_back_buffer;
     };
 
     void
@@ -182,6 +183,10 @@ namespace kuro
     void
     gfx_deinit(Gfx self)
     {
+        // wait until GPU is done processing commands in the queue
+        // before we destroy any resources
+        _gfx_command_queue_flush(self);
+
         self->dsv_heap->Release();
         self->rtv_heap->Release();
         self->command_list->Release();
@@ -252,6 +257,11 @@ namespace kuro
             if (swapchain->swapchain_buffers[i]) swapchain->swapchain_buffers[i]->Release();
         if (swapchain->depth_stencil_buffer) swapchain->depth_stencil_buffer->Release();
 
+        // resize swapchain
+        hr = swapchain->swapchain->ResizeBuffers(_swapchain_buffer_count, width, height, self->backbuffer_format, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+        assert(SUCCEEDED(hr));
+        swapchain->current_back_buffer = 0;
+
         // create render target view
         D3D12_CPU_DESCRIPTOR_HANDLE rtv_heap_handle = self->rtv_heap->GetCPUDescriptorHandleForHeapStart();
         for (u32 i = 0; i < _swapchain_buffer_count; ++i)
@@ -318,6 +328,71 @@ namespace kuro
         self->command_queue->ExecuteCommandLists(1, cmd_lists);
 
         // wait until creation is completed
+        _gfx_command_queue_flush(self);
+
+        swapchain->width  = width;
+        swapchain->height = height;
+    }
+
+    void
+    gfx_draw(Gfx self, Swapchain swapchain)
+    {
+        // reuse memory assotiated with command recording
+        HRESULT hr = self->command_allocator->Reset();
+        assert(SUCCEEDED(hr));
+
+        // can be reset after it has been added to command queue
+        hr = self->command_list->Reset(self->command_allocator, nullptr);
+        assert(SUCCEEDED(hr));
+
+        // indicate state transition on the resource usage
+        D3D12_RESOURCE_BARRIER resource_barrier = {};
+        resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        resource_barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+        resource_barrier.Transition.pResource = swapchain->swapchain_buffers[swapchain->current_back_buffer];
+        resource_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+        resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+        self->command_list->ResourceBarrier(1, &resource_barrier);
+
+        // set viewport and scissor rect, needs to be reset whenever command list is reset
+        D3D12_VIEWPORT viewport = {};
+        viewport.Width = (f32)swapchain->width;
+        viewport.Height = (f32)swapchain->height;
+        viewport.MaxDepth = 1.0f;
+        self->command_list->RSSetViewports(1, &viewport);
+
+        D3D12_RECT scissor_rect = {0, 0, swapchain->width, swapchain->height};
+        self->command_list->RSSetScissorRects(1, &scissor_rect);
+
+        // clear back buffer and depth buffer
+        D3D12_CPU_DESCRIPTOR_HANDLE rtv_descriptor = self->rtv_heap->GetCPUDescriptorHandleForHeapStart();
+        D3D12_CPU_DESCRIPTOR_HANDLE dsv_descriptor = self->dsv_heap->GetCPUDescriptorHandleForHeapStart();
+        rtv_descriptor.ptr += swapchain->current_back_buffer * self->rtv_descriptor_size;
+        float color[4] = {1.0f, 0.0f, 0.0f, 1.0f};
+        self->command_list->ClearRenderTargetView(rtv_descriptor, color, 0, nullptr);
+        self->command_list->ClearDepthStencilView(dsv_descriptor, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+        // specify the buffers we are going to render to
+        self->command_list->OMSetRenderTargets(1, &rtv_descriptor, true, &dsv_descriptor);
+
+        resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+        resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+        self->command_list->ResourceBarrier(1, &resource_barrier);
+
+        // done recording commands
+        hr = self->command_list->Close();
+        assert(SUCCEEDED(hr));
+
+        // add command list to queue for execution
+        ID3D12CommandList *cmd_lists[] = { self->command_list };
+        self->command_queue->ExecuteCommandLists(_countof(cmd_lists), cmd_lists);
+
+        // swap back and front buffers
+        hr = swapchain->swapchain->Present(0, 0);
+        assert(SUCCEEDED(hr));
+        swapchain->current_back_buffer = (swapchain->current_back_buffer + 1) % _swapchain_buffer_count;
+
         _gfx_command_queue_flush(self);
     }
 }
