@@ -8,7 +8,7 @@ set(HEADER_FILES
 
 if (WIN32)
     set(SOURCE_FILES
-        src/winos/kuro_gfx.cpp
+        # src/winos/kuro_gfx.cpp
         src/winos/kuro_os.cpp
     )
 elseif(UNIX)

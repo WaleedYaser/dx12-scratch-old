@@ -8,6 +8,9 @@
 #include <dxgi1_4.h>
 #include <assert.h>
 
+// notes:
+// * 16 input slot
+
 namespace kuro
 {
     static constexpr i32 _swapchain_buffer_count = 2;
