@@ -18,7 +18,7 @@ KURO_GFX_API void kuro_gfx_destroy(Kuro_Gfx gfx);
 
 KURO_GFX_API Kuro_Gfx_Swapchain kuro_gfx_swapchain_create(Kuro_Gfx gfx, uint32_t width, uint32_t height, void *window_handle);
 KURO_GFX_API void kuro_gfx_swapchain_destroy(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain);
-KURO_GFX_API void kuro_gfx_swapchain_resize(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain);
+KURO_GFX_API void kuro_gfx_swapchain_resize(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height);
 KURO_GFX_API void kuro_gfx_swapchain_present(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain);
 
 KURO_GFX_API Kuro_Gfx_Buffer kuro_gfx_buffer_create(Kuro_Gfx gfx);
@@ -38,6 +38,8 @@ KURO_GFX_API void kuro_gfx_flush(Kuro_Gfx gfx);
 #include <dxgi1_6.h>
 #include <assert.h>
 
+static const int MAX_SWAPCHAIN_BUFFER_COUNT = 3;
+
 typedef struct _Kuro_Gfx {
     IDXGIFactory4 *factory;
     ID3D12Device *device;
@@ -46,15 +48,63 @@ typedef struct _Kuro_Gfx {
 
 typedef struct _Kuro_Gfx_Swapchain {
     DXGI_FORMAT backbuffer_format;
+    DXGI_FORMAT depth_stencil_format;
     uint32_t buffer_count;
+    uint32_t current_buffer_index;
     bool msaa_state;
     uint32_t msaa_x4_quality;
     IDXGISwapChain *swapchain;
+    ID3D12Resource *buffers[MAX_SWAPCHAIN_BUFFER_COUNT];
+    ID3D12Resource *depth_stencil_buffer;
+    ID3D12DescriptorHeap *rtv_heap;
+    ID3D12DescriptorHeap *dsv_heap;
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv_descriptor;
+    D3D12_CPU_DESCRIPTOR_HANDLE dsv_descriptor;
 } _Kuro_Gfx_Swapchain;
 
 typedef struct _Kuro_Gfx_Buffer {
 
 } _Kuro_Gfx_Buffer;
+
+static inline void
+_kuro_gfx_swapchain_init(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height)
+{
+    HRESULT hr = {};
+
+    for (uint32_t i = 0; i < swapchain->buffer_count; ++i)
+    {
+        hr = swapchain->swapchain->GetBuffer(i, IID_PPV_ARGS(&swapchain->buffers[i]));
+        assert(SUCCEEDED(hr));
+    }
+
+    D3D12_HEAP_PROPERTIES dsv_heap_properties = {};
+    dsv_heap_properties.Type = D3D12_HEAP_TYPE_DEFAULT;
+
+    D3D12_RESOURCE_DESC depth_stencil_desc = {};
+    depth_stencil_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    depth_stencil_desc.Width = width;
+    depth_stencil_desc.Height = height;
+    depth_stencil_desc.DepthOrArraySize = 1;
+    depth_stencil_desc.MipLevels = 1;
+    depth_stencil_desc.Format = swapchain->depth_stencil_format;
+    depth_stencil_desc.SampleDesc.Count = swapchain->msaa_state ? 4 : 1;
+    depth_stencil_desc.SampleDesc.Quality = swapchain->msaa_state ? (swapchain->msaa_x4_quality - 1) : 0;
+    depth_stencil_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+    D3D12_CLEAR_VALUE optimized_clear_value = {};
+    optimized_clear_value.Format = swapchain->depth_stencil_format;
+    optimized_clear_value.DepthStencil.Depth = 1.0f;
+    optimized_clear_value.DepthStencil.Stencil = 0;
+
+    hr = gfx->device->CreateCommittedResource(
+        &dsv_heap_properties,
+        D3D12_HEAP_FLAG_NONE,
+        &depth_stencil_desc,
+        D3D12_RESOURCE_STATE_COMMON,
+        &optimized_clear_value,
+        IID_PPV_ARGS(&swapchain->depth_stencil_buffer));
+    assert(SUCCEEDED(hr));
+}
 
 
 Kuro_Gfx
@@ -129,7 +179,9 @@ kuro_gfx_swapchain_create(Kuro_Gfx gfx, uint32_t width, uint32_t height, void *w
 
     Kuro_Gfx_Swapchain swapchain = (Kuro_Gfx_Swapchain)malloc(sizeof(_Kuro_Gfx_Swapchain));
     swapchain->backbuffer_format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchain->depth_stencil_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
     swapchain->buffer_count = 2;
+    swapchain->current_buffer_index = 0;
     swapchain->msaa_state = false;
 
     if (swapchain->msaa_state)
@@ -163,18 +215,62 @@ kuro_gfx_swapchain_create(Kuro_Gfx gfx, uint32_t width, uint32_t height, void *w
     swapchain_desc.Windowed = true;
     swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapchain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-
     // swapchain needs the queue so that it can force a flush on it
     hr = gfx->factory->CreateSwapChain(gfx->command_queue, &swapchain_desc, &swapchain->swapchain);
     assert(SUCCEEDED(hr));
+
+    D3D12_DESCRIPTOR_HEAP_DESC rtv_heap_desc = {};
+    rtv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+    rtv_heap_desc.NumDescriptors = swapchain->buffer_count;
+    hr = gfx->device->CreateDescriptorHeap(&rtv_heap_desc, IID_PPV_ARGS(&swapchain->rtv_heap));
+    assert(SUCCEEDED(hr));
+
+    D3D12_DESCRIPTOR_HEAP_DESC dsv_heap_desc = {};
+    dsv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    dsv_heap_desc.NumDescriptors = 1;
+    hr = gfx->device->CreateDescriptorHeap(&dsv_heap_desc, IID_PPV_ARGS(&swapchain->dsv_heap));
+    assert(SUCCEEDED(hr));
+
+    _kuro_gfx_swapchain_init(gfx, swapchain, width, height);
 
     return swapchain;
 }
 
 void
-kuro_gfx_swapchain_destroy(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain)
+kuro_gfx_swapchain_destroy(Kuro_Gfx, Kuro_Gfx_Swapchain swapchain)
 {
-    gfx = gfx;
+    swapchain->dsv_heap->Release();
+    swapchain->rtv_heap->Release();
+    swapchain->depth_stencil_buffer->Release();
+    for (uint32_t i = 0; i < swapchain->buffer_count; ++i)
+        swapchain->buffers[i]->Release();
     swapchain->swapchain->Release();
     free(swapchain);
+}
+
+void
+kuro_gfx_swapchain_resize(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height)
+{
+    HRESULT hr = {};
+
+    swapchain->depth_stencil_buffer->Release();
+    for (uint32_t i = 0; i < swapchain->buffer_count; ++i)
+        swapchain->buffers[i]->Release();
+
+    hr = swapchain->swapchain->ResizeBuffers(
+        swapchain->buffer_count,
+        width, height,
+        swapchain->backbuffer_format,
+        DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+    assert(SUCCEEDED(hr));
+
+    _kuro_gfx_swapchain_init(gfx, swapchain, width, height);
+}
+
+void
+kuro_gfx_swapchain_present(Kuro_Gfx, Kuro_Gfx_Swapchain swapchain)
+{
+    HRESULT hr = swapchain->swapchain->Present(0, 0);
+    assert(SUCCEEDED(hr));
+    swapchain->current_buffer_index = (swapchain->current_buffer_index + 1) % swapchain->buffer_count;
 }
