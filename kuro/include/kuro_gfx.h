@@ -44,6 +44,8 @@ typedef struct _Kuro_Gfx {
     IDXGIFactory4 *factory;
     ID3D12Device *device;
     ID3D12CommandQueue *command_queue;
+    uint32_t rtv_desctiptor_size;
+    uint32_t dsv_descriptor_size;
 } _Kuro_Gfx;
 
 typedef struct _Kuro_Gfx_Swapchain {
@@ -58,7 +60,7 @@ typedef struct _Kuro_Gfx_Swapchain {
     ID3D12Resource *depth_stencil_buffer;
     ID3D12DescriptorHeap *rtv_heap;
     ID3D12DescriptorHeap *dsv_heap;
-    D3D12_CPU_DESCRIPTOR_HANDLE rtv_descriptor;
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv_descriptor[MAX_SWAPCHAIN_BUFFER_COUNT];
     D3D12_CPU_DESCRIPTOR_HANDLE dsv_descriptor;
 } _Kuro_Gfx_Swapchain;
 
@@ -71,10 +73,16 @@ _kuro_gfx_swapchain_init(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t wi
 {
     HRESULT hr = {};
 
+    swapchain->current_buffer_index = 0;
+
     for (uint32_t i = 0; i < swapchain->buffer_count; ++i)
     {
         hr = swapchain->swapchain->GetBuffer(i, IID_PPV_ARGS(&swapchain->buffers[i]));
         assert(SUCCEEDED(hr));
+        gfx->device->CreateRenderTargetView(
+            swapchain->buffers[i],
+            nullptr,
+            swapchain->rtv_descriptor[i]);
     }
 
     D3D12_HEAP_PROPERTIES dsv_heap_properties = {};
@@ -104,6 +112,11 @@ _kuro_gfx_swapchain_init(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t wi
         &optimized_clear_value,
         IID_PPV_ARGS(&swapchain->depth_stencil_buffer));
     assert(SUCCEEDED(hr));
+
+    gfx->device->CreateDepthStencilView(
+        swapchain->depth_stencil_buffer,
+        nullptr,
+        swapchain->dsv_descriptor);
 }
 
 
@@ -159,6 +172,13 @@ kuro_gfx_create()
     D3D12_COMMAND_QUEUE_DESC queue_desc = {};
     queue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
     hr = gfx->device->CreateCommandQueue(&queue_desc, IID_PPV_ARGS(&gfx->command_queue));
+    assert(SUCCEEDED(hr));
+
+    // query descriptor size as it can vary accross GPUs
+    gfx->rtv_desctiptor_size =
+        gfx->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    gfx->dsv_descriptor_size =
+        gfx->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
     return gfx;
 }
@@ -181,7 +201,6 @@ kuro_gfx_swapchain_create(Kuro_Gfx gfx, uint32_t width, uint32_t height, void *w
     swapchain->backbuffer_format = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapchain->depth_stencil_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
     swapchain->buffer_count = 2;
-    swapchain->current_buffer_index = 0;
     swapchain->msaa_state = false;
 
     if (swapchain->msaa_state)
@@ -225,11 +244,19 @@ kuro_gfx_swapchain_create(Kuro_Gfx gfx, uint32_t width, uint32_t height, void *w
     hr = gfx->device->CreateDescriptorHeap(&rtv_heap_desc, IID_PPV_ARGS(&swapchain->rtv_heap));
     assert(SUCCEEDED(hr));
 
+    for (uint32_t i = 0; i < swapchain->buffer_count; ++i)
+    {
+        swapchain->rtv_descriptor[i] = swapchain->rtv_heap->GetCPUDescriptorHandleForHeapStart();
+        swapchain->rtv_descriptor[i].ptr += (i * gfx->rtv_desctiptor_size);
+    }
+
     D3D12_DESCRIPTOR_HEAP_DESC dsv_heap_desc = {};
     dsv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
     dsv_heap_desc.NumDescriptors = 1;
     hr = gfx->device->CreateDescriptorHeap(&dsv_heap_desc, IID_PPV_ARGS(&swapchain->dsv_heap));
     assert(SUCCEEDED(hr));
+
+    swapchain->dsv_descriptor = swapchain->dsv_heap->GetCPUDescriptorHandleForHeapStart();
 
     _kuro_gfx_swapchain_init(gfx, swapchain, width, height);
 
