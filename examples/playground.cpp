@@ -64,6 +64,7 @@ main()
     int window_height = rect.bottom - rect.top;
 
     Kuro_Gfx gfx = kuro_gfx_create();
+    Kuro_Gfx_Swapchain swapcdhain = kuro_gfx_swapchain_create(gfx, window_width, window_height, hwnd);
 
     bool running = true;
     while (running)
@@ -92,6 +93,7 @@ main()
     }
 
     // release resources
+    kuro_gfx_swapchain_destroy(gfx, swapcdhain);
     kuro_gfx_destroy(gfx);
     DestroyWindow(hwnd);
 
