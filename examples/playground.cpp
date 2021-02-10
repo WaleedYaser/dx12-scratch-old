@@ -65,6 +65,7 @@ main()
 
     Kuro_Gfx gfx = kuro_gfx_create();
     Kuro_Gfx_Swapchain swapchain = kuro_gfx_swapchain_create(gfx, window_width, window_height, hwnd);
+    Kuro_Gfx_Pass pass =kuro_gfx_pass_from_swapchain(gfx, swapchain);
     Kuro_Gfx_Commands commands = kuro_gfx_commands_create(gfx);
 
     bool running = true;
@@ -96,9 +97,9 @@ main()
 
         kuro_gfx_commands_begin(gfx, commands);
         {
-            kuro_gfx_commands_swapchain_begin(gfx, commands, swapchain);
-            kuro_gfx_commands_swapchain_clear(gfx, commands, swapchain, {1.0f, 1.0f, 0.0f, 1.0f});
-            kuro_gfx_commands_swapchain_end(gfx, commands, swapchain);
+            kuro_gfx_commands_pass_begin(gfx, commands, pass);
+            kuro_gfx_commands_pass_clear(gfx, commands, pass, {1.0f, 1.0f, 0.0f, 1.0f});
+            kuro_gfx_commands_pass_end(gfx, commands, pass);
         }
         kuro_gfx_commands_end(gfx, commands);
         kuro_gfx_flush(gfx);
@@ -108,6 +109,7 @@ main()
 
     // release resources
     kuro_gfx_commands_destroy(gfx, commands);
+    kuro_gfx_pass_free(gfx, pass);
     kuro_gfx_swapchain_destroy(gfx, swapchain);
     kuro_gfx_destroy(gfx);
     DestroyWindow(hwnd);
