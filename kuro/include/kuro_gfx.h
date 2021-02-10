@@ -11,7 +11,11 @@ extern "C" {
 
 typedef struct _Kuro_Gfx *Kuro_Gfx;
 typedef struct _Kuro_Gfx_Swapchain *Kuro_Gfx_Swapchain;
-typedef struct _Kuro_Gfx_Buffer *Kuro_Gfx_Buffer;
+typedef struct _Kuro_Gfx_Commands *Kuro_Gfx_Commands;
+
+typedef struct Kuro_Gfx_Color {
+    float r, g, b, a;
+} Kuro_Gfx_Color;
 
 KURO_GFX_API Kuro_Gfx kuro_gfx_create();
 KURO_GFX_API void kuro_gfx_destroy(Kuro_Gfx gfx);
@@ -21,8 +25,13 @@ KURO_GFX_API void kuro_gfx_swapchain_destroy(Kuro_Gfx gfx, Kuro_Gfx_Swapchain sw
 KURO_GFX_API void kuro_gfx_swapchain_resize(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height);
 KURO_GFX_API void kuro_gfx_swapchain_present(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain);
 
-KURO_GFX_API Kuro_Gfx_Buffer kuro_gfx_buffer_create(Kuro_Gfx gfx);
-KURO_GFX_API void kuro_gfx_buffer_destroy(Kuro_Gfx gfx, Kuro_Gfx_Buffer buffer);
+KURO_GFX_API Kuro_Gfx_Commands kuro_gfx_commands_create(Kuro_Gfx gfx);
+KURO_GFX_API void kuro_gfx_commands_destroy(Kuro_Gfx gfx, Kuro_Gfx_Commands commands);
+KURO_GFX_API void kuro_gfx_commands_begin(Kuro_Gfx gfx, Kuro_Gfx_Commands commands);
+KURO_GFX_API void kuro_gfx_commands_end(Kuro_Gfx gfx, Kuro_Gfx_Commands commands);
+KURO_GFX_API void kuro_gfx_commands_swapchain_begin(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Swapchain swapchain);
+KURO_GFX_API void kuro_gfx_commands_swapchain_end(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Swapchain swapchain);
+KURO_GFX_API void kuro_gfx_commands_swapchain_clear(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Swapchain swapchain, Kuro_Gfx_Color color);
 
 KURO_GFX_API void kuro_gfx_flush(Kuro_Gfx gfx);
 
@@ -46,6 +55,8 @@ typedef struct _Kuro_Gfx {
     ID3D12CommandQueue *command_queue;
     uint32_t rtv_desctiptor_size;
     uint32_t dsv_descriptor_size;
+    ID3D12Fence *fence;
+    uint64_t current_fence;
 } _Kuro_Gfx;
 
 typedef struct _Kuro_Gfx_Swapchain {
@@ -64,9 +75,10 @@ typedef struct _Kuro_Gfx_Swapchain {
     D3D12_CPU_DESCRIPTOR_HANDLE dsv_descriptor;
 } _Kuro_Gfx_Swapchain;
 
-typedef struct _Kuro_Gfx_Buffer {
-
-} _Kuro_Gfx_Buffer;
+typedef struct _Kuro_Gfx_Commands {
+    ID3D12CommandAllocator *command_allocator;
+    ID3D12GraphicsCommandList *command_list;
+} _Kuro_Gfx_Commands;
 
 static inline void
 _kuro_gfx_swapchain_init(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height)
@@ -180,12 +192,17 @@ kuro_gfx_create()
     gfx->dsv_descriptor_size =
         gfx->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
+    hr = gfx->device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&gfx->fence));
+    assert(SUCCEEDED(hr));
+    gfx->current_fence = 0;
+
     return gfx;
 }
 
 void
 kuro_gfx_destroy(Kuro_Gfx gfx)
 {
+    gfx->fence->Release();
     gfx->command_queue->Release();
     gfx->device->Release();
     gfx->factory->Release();
@@ -300,4 +317,117 @@ kuro_gfx_swapchain_present(Kuro_Gfx, Kuro_Gfx_Swapchain swapchain)
     HRESULT hr = swapchain->swapchain->Present(0, 0);
     assert(SUCCEEDED(hr));
     swapchain->current_buffer_index = (swapchain->current_buffer_index + 1) % swapchain->buffer_count;
+}
+
+Kuro_Gfx_Commands
+kuro_gfx_commands_create(Kuro_Gfx gfx)
+{
+    HRESULT hr = {};
+
+    Kuro_Gfx_Commands commands = (Kuro_Gfx_Commands)malloc(sizeof(_Kuro_Gfx_Commands));
+
+    hr = gfx->device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commands->command_allocator));
+    assert(SUCCEEDED(hr));
+
+    hr = gfx->device->CreateCommandList(
+        0,
+        D3D12_COMMAND_LIST_TYPE_DIRECT,
+        commands->command_allocator,
+        nullptr,
+        IID_PPV_ARGS(&commands->command_list));
+    assert(SUCCEEDED(hr));
+
+    hr = commands->command_list->Close();
+    assert(SUCCEEDED(hr));
+
+    return commands;
+}
+
+void
+kuro_gfx_commands_destroy(Kuro_Gfx, Kuro_Gfx_Commands commands)
+{
+    commands->command_list->Release();
+    commands->command_allocator->Release();
+}
+
+void
+kuro_gfx_commands_begin(Kuro_Gfx, Kuro_Gfx_Commands commands)
+{
+    HRESULT hr = commands->command_allocator->Reset();
+    assert(SUCCEEDED(hr));
+
+    hr = commands->command_list->Reset(commands->command_allocator, nullptr);
+    assert(SUCCEEDED(hr));
+}
+
+void
+kuro_gfx_commands_end(Kuro_Gfx gfx, Kuro_Gfx_Commands commands)
+{
+    HRESULT hr = commands->command_list->Close();
+    assert(SUCCEEDED(hr));
+
+    ID3D12CommandList *cmd_lists[] = { commands->command_list };
+    gfx->command_queue->ExecuteCommandLists(1, cmd_lists);
+}
+
+void
+kuro_gfx_commands_swapchain_begin(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Swapchain swapchain)
+{
+    D3D12_RESOURCE_BARRIER resource_barrier = {};
+    resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    resource_barrier.Transition.pResource = swapchain->buffers[swapchain->current_buffer_index];
+    resource_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+    resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    commands->command_list->ResourceBarrier(1, &resource_barrier);
+
+    commands->command_list->OMSetRenderTargets(
+        1,
+        &swapchain->rtv_descriptor[swapchain->current_buffer_index],
+        true,
+        nullptr);
+}
+
+void
+kuro_gfx_commands_swapchain_end(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Swapchain swapchain)
+{
+    D3D12_RESOURCE_BARRIER resource_barrier = {};
+    resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    resource_barrier.Transition.pResource = swapchain->buffers[swapchain->current_buffer_index];
+    resource_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+    resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+    commands->command_list->ResourceBarrier(1, &resource_barrier);
+}
+
+void
+kuro_gfx_commands_swapchain_clear(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Swapchain swapchain, Kuro_Gfx_Color color)
+{
+    commands->command_list->ClearRenderTargetView(swapchain->rtv_descriptor[swapchain->current_buffer_index], &color.r, 0, nullptr);
+}
+
+void
+kuro_gfx_flush(Kuro_Gfx gfx)
+{
+    // advance fence value to mark commands up to this fence point
+    gfx->current_fence++;
+
+    // add an instruction to command queue to set a new fence point, because we
+    // are on GPU timeline, the new fence point won't be set until GPU finishes
+    // processing all commands prior to Signal()
+    gfx->command_queue->Signal(gfx->fence, gfx->current_fence);
+
+    // wait until GPU has completed commands up to this fence point
+    if (gfx->fence->GetCompletedValue() < gfx->current_fence)
+    {
+        HANDLE event_handle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+
+        // fire event when GPU hits current fence
+        HRESULT hr = gfx->fence->SetEventOnCompletion(gfx->current_fence, event_handle);
+        assert(SUCCEEDED(hr));
+
+        // wait until GPU hits current fence event is fired
+        WaitForSingleObject(event_handle, INFINITE);
+        CloseHandle(event_handle);
+    }
 }

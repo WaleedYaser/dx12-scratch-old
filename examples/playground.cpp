@@ -43,7 +43,7 @@ main()
     HWND hwnd = CreateWindowEx(
         0,
         L"dx11_wnd_class",
-        L"example cubes",
+        L"playground",
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
         nullptr,
@@ -65,6 +65,7 @@ main()
 
     Kuro_Gfx gfx = kuro_gfx_create();
     Kuro_Gfx_Swapchain swapchain = kuro_gfx_swapchain_create(gfx, window_width, window_height, hwnd);
+    Kuro_Gfx_Commands commands = kuro_gfx_commands_create(gfx);
 
     bool running = true;
     while (running)
@@ -93,10 +94,20 @@ main()
             kuro_gfx_swapchain_resize(gfx, swapchain, window_width, window_height);
         }
 
+        kuro_gfx_commands_begin(gfx, commands);
+        {
+            kuro_gfx_commands_swapchain_begin(gfx, commands, swapchain);
+            kuro_gfx_commands_swapchain_clear(gfx, commands, swapchain, {1.0f, 1.0f, 0.0f, 1.0f});
+            kuro_gfx_commands_swapchain_end(gfx, commands, swapchain);
+        }
+        kuro_gfx_commands_end(gfx, commands);
+        kuro_gfx_flush(gfx);
+
         kuro_gfx_swapchain_present(gfx, swapchain);
     }
 
     // release resources
+    kuro_gfx_commands_destroy(gfx, commands);
     kuro_gfx_swapchain_destroy(gfx, swapchain);
     kuro_gfx_destroy(gfx);
     DestroyWindow(hwnd);
