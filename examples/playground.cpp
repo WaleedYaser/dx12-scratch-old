@@ -68,6 +68,29 @@ main()
     Kuro_Gfx_Pass pass =kuro_gfx_pass_from_swapchain(gfx, swapchain);
     Kuro_Gfx_Commands commands = kuro_gfx_commands_create(gfx);
 
+    const char shader[] = R"(
+        float4 vs_main(float3 pos : POSITION) : SV_POSITION
+        {
+            return float4(pos, 1.0f);
+        }
+
+        float4 ps_main() : SV_TARGET
+        {
+            return float4(1.0f, 0.0f, 0.0f, 1.0f);
+        }
+    )";
+
+    Kuro_Gfx_Pipeline pipeline = kuro_gfx_pipeline_create(gfx, shader, sizeof(shader));
+
+    float vertices[] = {
+        // position
+         0.0f,  0.5f, 0.0f,
+        -0.5f, -0.5f, 0.0f,
+         0.5f, -0.5f, 0.0f
+    };
+
+    Kuro_Gfx_Buffer vertex_buffer = kuro_gfx_buffer_create(gfx, &vertices, sizeof(vertices));
+
     bool running = true;
     while (running)
     {
@@ -95,10 +118,11 @@ main()
             kuro_gfx_swapchain_resize(gfx, swapchain, window_width, window_height);
         }
 
-        kuro_gfx_commands_begin(gfx, commands);
+        kuro_gfx_commands_begin(gfx, commands, pipeline);
         {
             kuro_gfx_commands_pass_begin(gfx, commands, pass);
             kuro_gfx_commands_pass_clear(gfx, commands, pass, {1.0f, 1.0f, 0.0f, 1.0f});
+            kuro_gfx_commands_draw(gfx, commands, vertex_buffer);
             kuro_gfx_commands_pass_end(gfx, commands, pass);
         }
         kuro_gfx_commands_end(gfx, commands);
@@ -108,6 +132,8 @@ main()
     }
 
     // release resources
+    kuro_gfx_buffer_destroy(gfx, vertex_buffer);
+    kuro_gfx_pipeline_destroy(gfx, pipeline);
     kuro_gfx_commands_destroy(gfx, commands);
     kuro_gfx_pass_free(gfx, pass);
     kuro_gfx_swapchain_destroy(gfx, swapchain);
