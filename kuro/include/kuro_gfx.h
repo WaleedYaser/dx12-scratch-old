@@ -24,6 +24,44 @@ typedef struct Kuro_Gfx_Color {
     float r, g, b, a;
 } Kuro_Gfx_Color;
 
+typedef enum KURO_GFX_FORMAT {
+    KURO_GFX_FORMAT_R32G32_FLOAT,
+    KURO_GFX_FORMAT_R32G32B32_FLOAT
+} KURO_GFX_FORMAT;
+
+typedef enum KURO_GFX_CLASS {
+    KURO_GFX_CLASS_PER_VERTEX,
+    KURO_GFX_CLASS_PER_INSTANCE,
+} KURO_GFX_CLASS;
+
+typedef enum KURO_GFX_PRIMITIVE {
+    KURO_GFX_PRIMITIVE_TRIANGLE
+} KURO_GFX_PRIMITIVE;
+
+typedef struct Kuro_Gfx_Input {
+    KURO_GFX_FORMAT format;
+    KURO_GFX_CLASS classification;
+} Kuro_Gfx_Input;
+
+typedef struct Kuro_Gfx_Vertex_Desc {
+    Kuro_Gfx_Buffer buffer;
+    uint32_t stride;
+} Kuro_Gfx_Vertex_Desc;
+
+typedef struct Kuro_Gfx_Pipeline_Desc {
+    const char *shader;
+    uint32_t shader_size;
+
+    Kuro_Gfx_Input *input;
+    uint32_t input_count;
+} Kuro_Gfx_Pipeline_Desc;
+
+typedef struct Kuro_Gfx_Draw_Desc {
+    KURO_GFX_PRIMITIVE primitive;
+    Kuro_Gfx_Vertex_Desc *vertex_buffers;
+    uint32_t vertex_buffers_count;
+} Kuro_Gfx_Draw_Desc;
+
 KURO_GFX_API Kuro_Gfx kuro_gfx_create();
 KURO_GFX_API void kuro_gfx_destroy(Kuro_Gfx gfx);
 
@@ -35,7 +73,7 @@ KURO_GFX_API void kuro_gfx_swapchain_present(Kuro_Gfx gfx, Kuro_Gfx_Swapchain sw
 KURO_GFX_API Kuro_Gfx_Buffer kuro_gfx_buffer_create(Kuro_Gfx gfx, void *initial_data, uint32_t size_in_bytes);
 KURO_GFX_API void kuro_gfx_buffer_destroy(Kuro_Gfx gfx, Kuro_Gfx_Buffer buffer);
 
-KURO_GFX_API Kuro_Gfx_Pipeline kuro_gfx_pipeline_create(Kuro_Gfx gfx, const char *shader, uint32_t shader_size);
+KURO_GFX_API Kuro_Gfx_Pipeline kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc);
 KURO_GFX_API void kuro_gfx_pipeline_destroy(Kuro_Gfx gfx, Kuro_Gfx_Pipeline pipeline);
 
 KURO_GFX_API Kuro_Gfx_Pass kuro_gfx_pass_from_swapchain(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain);
@@ -49,7 +87,7 @@ KURO_GFX_API void kuro_gfx_commands_end(Kuro_Gfx gfx, Kuro_Gfx_Commands commands
 KURO_GFX_API void kuro_gfx_commands_pass_begin(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass);
 KURO_GFX_API void kuro_gfx_commands_pass_end(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass);
 KURO_GFX_API void kuro_gfx_commands_pass_clear(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Color color);
-KURO_GFX_API void kuro_gfx_commands_draw(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Buffer vertex_buffer);
+KURO_GFX_API void kuro_gfx_commands_draw(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc);
 
 KURO_GFX_API void kuro_gfx_flush(Kuro_Gfx gfx);
 

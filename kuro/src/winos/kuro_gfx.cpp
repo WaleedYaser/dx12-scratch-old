@@ -56,6 +56,34 @@ typedef struct _Kuro_Gfx_Commands {
     ID3D12GraphicsCommandList *command_list;
 } _Kuro_Gfx_Commands;
 
+static inline DXGI_FORMAT
+_kuro_gfx_format_to_dx(KURO_GFX_FORMAT format)
+{
+    switch (format)
+    {
+        case KURO_GFX_FORMAT_R32G32_FLOAT:
+            return DXGI_FORMAT_R32G32_FLOAT;
+        case KURO_GFX_FORMAT_R32G32B32_FLOAT:
+            return DXGI_FORMAT_R32G32B32_FLOAT;
+        default:
+            assert(false); return DXGI_FORMAT_UNKNOWN;
+    }
+}
+
+static inline D3D12_INPUT_CLASSIFICATION
+_kuro_gfx_class_to_dx(KURO_GFX_CLASS classification)
+{
+    switch (classification)
+    {
+        case KURO_GFX_CLASS_PER_VERTEX:
+            return D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
+        case KURO_GFX_CLASS_PER_INSTANCE:
+            return D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
+        default:
+            assert(false); return D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
+    }
+}
+
 static inline void
 _kuro_gfx_swapchain_init(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height)
 {
@@ -342,7 +370,7 @@ kuro_gfx_buffer_destroy(Kuro_Gfx, Kuro_Gfx_Buffer buffer)
 }
 
 Kuro_Gfx_Pipeline
-kuro_gfx_pipeline_create(Kuro_Gfx gfx, const char *shader, uint32_t shader_size)
+kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc)
 {
     Kuro_Gfx_Pipeline pipeline = (Kuro_Gfx_Pipeline)malloc(sizeof(_Kuro_Gfx_Pipeline));
 
@@ -367,7 +395,7 @@ kuro_gfx_pipeline_create(Kuro_Gfx gfx, const char *shader, uint32_t shader_size)
     #endif
 
     ID3DBlob *vertex_shader = nullptr;
-    hr = D3DCompile(shader, shader_size, nullptr, nullptr, nullptr, "vs_main", "vs_5_0", compile_flags, 0, &vertex_shader, &error_blob);
+    hr = D3DCompile(desc.shader, desc.shader_size, nullptr, nullptr, nullptr, "vs_main", "vs_5_0", compile_flags, 0, &vertex_shader, &error_blob);
     if (FAILED(hr))
     {
         OutputDebugStringA("Failed to compile vertex shader");
@@ -377,7 +405,7 @@ kuro_gfx_pipeline_create(Kuro_Gfx gfx, const char *shader, uint32_t shader_size)
     }
 
     ID3DBlob *pixel_shader = nullptr;
-    hr = D3DCompile(shader, shader_size, nullptr, nullptr, nullptr, "ps_main", "ps_5_0", compile_flags, 0, &pixel_shader, &error_blob);
+    hr = D3DCompile(desc.shader, desc.shader_size, nullptr, nullptr, nullptr, "ps_main", "ps_5_0", compile_flags, 0, &pixel_shader, &error_blob);
     if (FAILED(hr))
     {
         OutputDebugStringA("Failed to compile pixel shader");
@@ -392,6 +420,7 @@ kuro_gfx_pipeline_create(Kuro_Gfx gfx, const char *shader, uint32_t shader_size)
 
     D3D12_SHADER_DESC shader_desc = {};
     reflection->GetDesc(&shader_desc);
+    assert(desc.input_count == shader_desc.InputParameters);
 
     D3D12_INPUT_ELEMENT_DESC *input_element_desc = (D3D12_INPUT_ELEMENT_DESC *)calloc(shader_desc.InputParameters, sizeof(D3D12_INPUT_ELEMENT_DESC));
     for (uint32_t i = 0; i < shader_desc.InputParameters; ++i)
@@ -401,12 +430,10 @@ kuro_gfx_pipeline_create(Kuro_Gfx gfx, const char *shader, uint32_t shader_size)
 
         input_element_desc[i].SemanticName = parameter_desc.SemanticName;
         input_element_desc[i].SemanticIndex = parameter_desc.SemanticIndex;
-        // TODO[Waleed]: pass format
-        input_element_desc[i].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+        input_element_desc[i].Format = _kuro_gfx_format_to_dx(desc.input[i].format);
         input_element_desc[i].InputSlot = i;
-        input_element_desc[i].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-        // TODO[Waleed]: pass class
-        input_element_desc[i].InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
+        input_element_desc[i].AlignedByteOffset = 8 * i;
+        input_element_desc[i].InputSlotClass = _kuro_gfx_class_to_dx(desc.input[i].classification);
         input_element_desc[i].InstanceDataStepRate = 0;
     }
 
@@ -609,14 +636,17 @@ kuro_gfx_flush(Kuro_Gfx gfx)
 }
 
 void
-kuro_gfx_commands_draw(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Buffer vertex_buffer)
+kuro_gfx_commands_draw(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc)
 {
     commands->command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view = {};
-    vertex_buffer_view.BufferLocation = vertex_buffer->buffer->GetGPUVirtualAddress();
-    vertex_buffer_view.SizeInBytes = vertex_buffer->size_in_bytes;
-    vertex_buffer_view.StrideInBytes = 3 * sizeof(float);
-    commands->command_list->IASetVertexBuffers(0, 1, &vertex_buffer_view);
+    for (uint32_t i = 0; i < desc.vertex_buffers_count; ++i)
+    {
+        D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view = {};
+        vertex_buffer_view.BufferLocation = desc.vertex_buffers[i].buffer->buffer->GetGPUVirtualAddress();
+        vertex_buffer_view.SizeInBytes = desc.vertex_buffers[i].buffer->size_in_bytes;
+        vertex_buffer_view.StrideInBytes = desc.vertex_buffers[i].stride;
+        commands->command_list->IASetVertexBuffers(i, 1, &vertex_buffer_view);
+    }
     commands->command_list->DrawInstanced(3, 1, 0, 0);
 }

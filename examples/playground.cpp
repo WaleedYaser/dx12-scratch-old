@@ -69,24 +69,43 @@ main()
     Kuro_Gfx_Commands commands = kuro_gfx_commands_create(gfx);
 
     const char shader[] = R"(
-        float4 vs_main(float3 pos : POSITION) : SV_POSITION
+        struct PS_Input
         {
-            return float4(pos, 1.0f);
+            float4 position : SV_POSITION;
+            float3 color : COLOR;
+        };
+
+        PS_Input vs_main(float2 pos : POSITION, float3 color : COLOR)
+        {
+            PS_Input output;
+            output.position = float4(pos, 0.0f, 1.0f);
+            output.color = color;
+            return output;
         }
 
-        float4 ps_main() : SV_TARGET
+        float4 ps_main(PS_Input input) : SV_TARGET
         {
-            return float4(1.0f, 0.0f, 0.0f, 1.0f);
+            return float4(input.color, 1.0f);
         }
     )";
 
-    Kuro_Gfx_Pipeline pipeline = kuro_gfx_pipeline_create(gfx, shader, sizeof(shader));
+    Kuro_Gfx_Input input[2] = {};
+    input[0].format = KURO_GFX_FORMAT_R32G32_FLOAT;
+    input[1].format = KURO_GFX_FORMAT_R32G32B32_FLOAT;
+
+    Kuro_Gfx_Pipeline_Desc pipeline_desc = {};
+    pipeline_desc.shader = shader;
+    pipeline_desc.shader_size = sizeof(shader);
+    pipeline_desc.input = input;
+    pipeline_desc.input_count = 2;
+
+    Kuro_Gfx_Pipeline pipeline = kuro_gfx_pipeline_create(gfx, pipeline_desc);
 
     float vertices[] = {
-        // position
-         0.0f,  0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f
+        // position     color
+         0.0f,  0.5f,  1.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
+         0.5f, -0.5f,  0.0f, 0.0f, 1.0f
     };
 
     Kuro_Gfx_Buffer vertex_buffer = kuro_gfx_buffer_create(gfx, &vertices, sizeof(vertices));
@@ -122,7 +141,17 @@ main()
         {
             kuro_gfx_commands_pass_begin(gfx, commands, pass);
             kuro_gfx_commands_pass_clear(gfx, commands, pass, {1.0f, 1.0f, 0.0f, 1.0f});
-            kuro_gfx_commands_draw(gfx, commands, vertex_buffer);
+
+            Kuro_Gfx_Vertex_Desc vertex_desc = {};
+            vertex_desc.buffer = vertex_buffer;
+            vertex_desc.stride = 5 * sizeof(float);
+
+            Kuro_Gfx_Draw_Desc draw_desc = {};
+            draw_desc.vertex_buffers = &vertex_desc;
+            draw_desc.vertex_buffers_count = 1;
+
+            kuro_gfx_commands_draw(gfx, commands, draw_desc);
+
             kuro_gfx_commands_pass_end(gfx, commands, pass);
         }
         kuro_gfx_commands_end(gfx, commands);
