@@ -41,6 +41,7 @@ typedef enum KURO_GFX_PRIMITIVE {
 typedef struct Kuro_Gfx_Input {
     KURO_GFX_FORMAT format;
     KURO_GFX_CLASS classification;
+    uint32_t input_slot;
 } Kuro_Gfx_Input;
 
 typedef struct Kuro_Gfx_Vertex_Desc {

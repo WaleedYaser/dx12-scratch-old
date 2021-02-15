@@ -25,10 +25,9 @@ typedef struct _Kuro_Gfx_Swapchain {
     DXGI_FORMAT backbuffer_format;
     DXGI_FORMAT depth_stencil_format;
     uint32_t buffer_count;
-    uint32_t current_buffer_index;
     bool msaa_state;
     uint32_t msaa_x4_quality;
-    IDXGISwapChain *swapchain;
+    IDXGISwapChain3 *swapchain;
     ID3D12Resource *buffers[MAX_SWAPCHAIN_BUFFER_COUNT];
     ID3D12Resource *depth_stencil_buffer;
     ID3D12DescriptorHeap *rtv_heap;
@@ -88,8 +87,6 @@ static inline void
 _kuro_gfx_swapchain_init(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height)
 {
     HRESULT hr = {};
-
-    swapchain->current_buffer_index = 0;
 
     for (uint32_t i = 0; i < swapchain->buffer_count; ++i)
     {
@@ -256,7 +253,11 @@ kuro_gfx_swapchain_create(Kuro_Gfx gfx, uint32_t width, uint32_t height, void *w
     swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapchain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
     // swapchain needs the queue so that it can force a flush on it
-    hr = gfx->factory->CreateSwapChain(gfx->command_queue, &swapchain_desc, &swapchain->swapchain);
+
+    IDXGISwapChain *swapchain_tmp = nullptr;
+    hr = gfx->factory->CreateSwapChain(gfx->command_queue, &swapchain_desc, &swapchain_tmp);
+    assert(SUCCEEDED(hr));
+    hr = swapchain_tmp->QueryInterface(&swapchain->swapchain);
     assert(SUCCEEDED(hr));
 
     D3D12_DESCRIPTOR_HEAP_DESC rtv_heap_desc = {};
@@ -320,7 +321,6 @@ kuro_gfx_swapchain_present(Kuro_Gfx, Kuro_Gfx_Swapchain swapchain)
 {
     HRESULT hr = swapchain->swapchain->Present(0, 0);
     assert(SUCCEEDED(hr));
-    swapchain->current_buffer_index = (swapchain->current_buffer_index + 1) % swapchain->buffer_count;
 }
 
 Kuro_Gfx_Buffer
@@ -431,8 +431,8 @@ kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc)
         input_element_desc[i].SemanticName = parameter_desc.SemanticName;
         input_element_desc[i].SemanticIndex = parameter_desc.SemanticIndex;
         input_element_desc[i].Format = _kuro_gfx_format_to_dx(desc.input[i].format);
-        input_element_desc[i].InputSlot = i;
-        input_element_desc[i].AlignedByteOffset = 8 * i;
+        input_element_desc[i].InputSlot = desc.input[i].input_slot;
+        input_element_desc[i].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
         input_element_desc[i].InputSlotClass = _kuro_gfx_class_to_dx(desc.input[i].classification);
         input_element_desc[i].InstanceDataStepRate = 0;
     }
@@ -578,7 +578,7 @@ kuro_gfx_commands_pass_begin(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass
 {
     D3D12_RESOURCE_BARRIER resource_barrier = {};
     resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    resource_barrier.Transition.pResource = pass->swapchain->buffers[pass->swapchain->current_buffer_index];
+    resource_barrier.Transition.pResource = pass->swapchain->buffers[pass->swapchain->swapchain->GetCurrentBackBufferIndex()];
     resource_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
     resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
     resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -586,7 +586,7 @@ kuro_gfx_commands_pass_begin(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass
 
     commands->command_list->OMSetRenderTargets(
         1,
-        &pass->swapchain->rtv_descriptor[pass->swapchain->current_buffer_index],
+        &pass->swapchain->rtv_descriptor[pass->swapchain->swapchain->GetCurrentBackBufferIndex()],
         true,
         nullptr);
 }
@@ -596,7 +596,7 @@ kuro_gfx_commands_pass_end(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass p
 {
     D3D12_RESOURCE_BARRIER resource_barrier = {};
     resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    resource_barrier.Transition.pResource = pass->swapchain->buffers[pass->swapchain->current_buffer_index];
+    resource_barrier.Transition.pResource = pass->swapchain->buffers[pass->swapchain->swapchain->GetCurrentBackBufferIndex()];
     resource_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
     resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
     resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
@@ -606,7 +606,7 @@ kuro_gfx_commands_pass_end(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass p
 void
 kuro_gfx_commands_pass_clear(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Color color)
 {
-    commands->command_list->ClearRenderTargetView(pass->swapchain->rtv_descriptor[pass->swapchain->current_buffer_index], &color.r, 0, nullptr);
+    commands->command_list->ClearRenderTargetView(pass->swapchain->rtv_descriptor[pass->swapchain->swapchain->GetCurrentBackBufferIndex()], &color.r, 0, nullptr);
 }
 
 void
