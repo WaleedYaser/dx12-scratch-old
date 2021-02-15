@@ -140,6 +140,7 @@ main()
         kuro_gfx_commands_begin(gfx, commands, pipeline);
         {
             kuro_gfx_commands_pass_begin(gfx, commands, pass);
+            kuro_gfx_commands_viewport(gfx, commands, window_width, window_height);
             kuro_gfx_commands_pass_clear(gfx, commands, pass, {1.0f, 1.0f, 0.0f, 1.0f});
 
             Kuro_Gfx_Vertex_Desc vertex_desc = {};

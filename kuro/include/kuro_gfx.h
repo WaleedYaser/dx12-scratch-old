@@ -87,6 +87,7 @@ KURO_GFX_API void kuro_gfx_commands_begin(Kuro_Gfx gfx, Kuro_Gfx_Commands comman
 KURO_GFX_API void kuro_gfx_commands_end(Kuro_Gfx gfx, Kuro_Gfx_Commands commands);
 KURO_GFX_API void kuro_gfx_commands_pass_begin(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass);
 KURO_GFX_API void kuro_gfx_commands_pass_end(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass);
+KURO_GFX_API void kuro_gfx_commands_viewport(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, uint32_t width, uint32_t height);
 KURO_GFX_API void kuro_gfx_commands_pass_clear(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Color color);
 KURO_GFX_API void kuro_gfx_commands_draw(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc);
 

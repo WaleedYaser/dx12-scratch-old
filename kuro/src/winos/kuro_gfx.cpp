@@ -549,18 +549,6 @@ kuro_gfx_commands_begin(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pipeline 
     assert(SUCCEEDED(hr));
 
     commands->command_list->SetGraphicsRootSignature(pipeline->root_signature);
-
-    D3D12_VIEWPORT viewport = {};
-    viewport.Width = 800;
-    viewport.Height = 600;
-    viewport.MaxDepth = 1;
-    commands->command_list->RSSetViewports(1, &viewport);
-
-    RECT scissor_rect = {};
-    scissor_rect.right = 800;
-    scissor_rect.bottom = 600;
-    commands->command_list->RSSetScissorRects(1, &scissor_rect);
-
 }
 
 void
@@ -601,6 +589,21 @@ kuro_gfx_commands_pass_end(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass p
     resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
     resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
     commands->command_list->ResourceBarrier(1, &resource_barrier);
+}
+
+void
+kuro_gfx_commands_viewport(Kuro_Gfx, Kuro_Gfx_Commands commands, uint32_t width, uint32_t height)
+{
+    D3D12_VIEWPORT viewport = {};
+    viewport.Width = (float)width;
+    viewport.Height = (float)height;
+    viewport.MaxDepth = 1;
+    commands->command_list->RSSetViewports(1, &viewport);
+
+    RECT scissor_rect = {};
+    scissor_rect.right = width;
+    scissor_rect.bottom = height;
+    commands->command_list->RSSetScissorRects(1, &scissor_rect);
 }
 
 void
