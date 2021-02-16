@@ -20,11 +20,12 @@ typedef struct _Kuro_Gfx_Pipeline *Kuro_Gfx_Pipeline;
 typedef struct _Kuro_Gfx_Pass *Kuro_Gfx_Pass;
 typedef struct _Kuro_Gfx_Commands *Kuro_Gfx_Commands;
 
-typedef struct Kuro_Gfx_Color {
-    float r, g, b, a;
-} Kuro_Gfx_Color;
+typedef enum KURO_CONSTANT {
+    KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES = 16
+} KURO_CONSTANT;
 
 typedef enum KURO_GFX_FORMAT {
+    KURO_GFX_FORMAT_NONE,
     KURO_GFX_FORMAT_R32G32_FLOAT,
     KURO_GFX_FORMAT_R32G32B32_FLOAT
 } KURO_GFX_FORMAT;
@@ -38,29 +39,30 @@ typedef enum KURO_GFX_PRIMITIVE {
     KURO_GFX_PRIMITIVE_TRIANGLE
 } KURO_GFX_PRIMITIVE;
 
-typedef struct Kuro_Gfx_Input {
+typedef struct Kuro_Gfx_Vertex_Attribute {
     KURO_GFX_FORMAT format;
     KURO_GFX_CLASS classification;
-    uint32_t input_slot;
-} Kuro_Gfx_Input;
+    uint32_t slot;
+} Kuro_Gfx_Vertex_Attribure;
 
-typedef struct Kuro_Gfx_Vertex_Desc {
+typedef struct Kuro_Gfx_Color {
+    float r, g, b, a;
+} Kuro_Gfx_Color;
+
+typedef struct Kuro_Gfx_Vertex_Buffer_Desc {
     Kuro_Gfx_Buffer buffer;
     uint32_t stride;
-} Kuro_Gfx_Vertex_Desc;
+} Kuro_Gfx_Vertex_Buffer_Desc;
 
 typedef struct Kuro_Gfx_Pipeline_Desc {
     const char *shader;
     uint32_t shader_size;
-
-    Kuro_Gfx_Input *input;
-    uint32_t input_count;
+    Kuro_Gfx_Vertex_Attribure vertex_attribures[KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES];
 } Kuro_Gfx_Pipeline_Desc;
 
 typedef struct Kuro_Gfx_Draw_Desc {
     KURO_GFX_PRIMITIVE primitive;
-    Kuro_Gfx_Vertex_Desc *vertex_buffers;
-    uint32_t vertex_buffers_count;
+    Kuro_Gfx_Vertex_Buffer_Desc vertex_buffers[KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES];
 } Kuro_Gfx_Draw_Desc;
 
 KURO_GFX_API Kuro_Gfx kuro_gfx_create();

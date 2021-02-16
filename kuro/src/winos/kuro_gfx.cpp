@@ -259,6 +259,7 @@ kuro_gfx_swapchain_create(Kuro_Gfx gfx, uint32_t width, uint32_t height, void *w
     assert(SUCCEEDED(hr));
     hr = swapchain_tmp->QueryInterface(&swapchain->swapchain);
     assert(SUCCEEDED(hr));
+    swapchain_tmp->Release();
 
     D3D12_DESCRIPTOR_HEAP_DESC rtv_heap_desc = {};
     rtv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -420,7 +421,6 @@ kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc)
 
     D3D12_SHADER_DESC shader_desc = {};
     reflection->GetDesc(&shader_desc);
-    assert(desc.input_count == shader_desc.InputParameters);
 
     D3D12_INPUT_ELEMENT_DESC *input_element_desc = (D3D12_INPUT_ELEMENT_DESC *)calloc(shader_desc.InputParameters, sizeof(D3D12_INPUT_ELEMENT_DESC));
     for (uint32_t i = 0; i < shader_desc.InputParameters; ++i)
@@ -430,10 +430,10 @@ kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc)
 
         input_element_desc[i].SemanticName = parameter_desc.SemanticName;
         input_element_desc[i].SemanticIndex = parameter_desc.SemanticIndex;
-        input_element_desc[i].Format = _kuro_gfx_format_to_dx(desc.input[i].format);
-        input_element_desc[i].InputSlot = desc.input[i].input_slot;
+        input_element_desc[i].Format = _kuro_gfx_format_to_dx(desc.vertex_attribures[i].format);
+        input_element_desc[i].InputSlot = desc.vertex_attribures[i].slot;
         input_element_desc[i].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-        input_element_desc[i].InputSlotClass = _kuro_gfx_class_to_dx(desc.input[i].classification);
+        input_element_desc[i].InputSlotClass = _kuro_gfx_class_to_dx(desc.vertex_attribures[i].classification);
         input_element_desc[i].InstanceDataStepRate = 0;
     }
 
@@ -643,8 +643,11 @@ kuro_gfx_commands_draw(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc 
 {
     commands->command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    for (uint32_t i = 0; i < desc.vertex_buffers_count; ++i)
+    for (uint32_t i = 0; i < KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES; ++i)
     {
+        if (desc.vertex_buffers[i].buffer == nullptr)
+            continue;
+
         D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view = {};
         vertex_buffer_view.BufferLocation = desc.vertex_buffers[i].buffer->buffer->GetGPUVirtualAddress();
         vertex_buffer_view.SizeInBytes = desc.vertex_buffers[i].buffer->size_in_bytes;

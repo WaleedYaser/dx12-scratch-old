@@ -89,16 +89,11 @@ main()
         }
     )";
 
-    Kuro_Gfx_Input input[2] = {};
-    input[0].format = KURO_GFX_FORMAT_R32G32_FLOAT;
-    input[1].format = KURO_GFX_FORMAT_R32G32B32_FLOAT;
-
     Kuro_Gfx_Pipeline_Desc pipeline_desc = {};
     pipeline_desc.shader = shader;
     pipeline_desc.shader_size = sizeof(shader);
-    pipeline_desc.input = input;
-    pipeline_desc.input_count = 2;
-
+    pipeline_desc.vertex_attribures[0].format = KURO_GFX_FORMAT_R32G32_FLOAT;
+    pipeline_desc.vertex_attribures[1].format = KURO_GFX_FORMAT_R32G32B32_FLOAT;
     Kuro_Gfx_Pipeline pipeline = kuro_gfx_pipeline_create(gfx, pipeline_desc);
 
     float vertices[] = {
@@ -143,14 +138,9 @@ main()
             kuro_gfx_commands_viewport(gfx, commands, window_width, window_height);
             kuro_gfx_commands_pass_clear(gfx, commands, pass, {1.0f, 1.0f, 0.0f, 1.0f});
 
-            Kuro_Gfx_Vertex_Desc vertex_desc = {};
-            vertex_desc.buffer = vertex_buffer;
-            vertex_desc.stride = 5 * sizeof(float);
-
             Kuro_Gfx_Draw_Desc draw_desc = {};
-            draw_desc.vertex_buffers = &vertex_desc;
-            draw_desc.vertex_buffers_count = 1;
-
+            draw_desc.vertex_buffers[0].buffer = vertex_buffer;
+            draw_desc.vertex_buffers[0].stride = 5 * sizeof(float);
             kuro_gfx_commands_draw(gfx, commands, draw_desc);
 
             kuro_gfx_commands_pass_end(gfx, commands, pass);
