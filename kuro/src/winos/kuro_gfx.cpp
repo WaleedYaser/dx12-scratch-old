@@ -41,6 +41,14 @@ typedef struct _Kuro_Gfx_Buffer {
     uint32_t size_in_bytes;
 } _Kuro_Gfx_Buffer;
 
+typedef struct _Kuro_Gfx_Vertex_Shader {
+    ID3DBlob *blob;
+} _Kuro_Gfx_Vertex_Shader;
+
+typedef struct _Kuro_Gfx_Pixel_Shader {
+    ID3DBlob *blob;
+} _Kuro_Gfx_Pixel_Shader;
+
 typedef struct _Kuro_Gfx_Pipeline {
     ID3D12PipelineState *pipeline_state;
     ID3D12RootSignature *root_signature;
@@ -370,9 +378,78 @@ kuro_gfx_buffer_destroy(Kuro_Gfx, Kuro_Gfx_Buffer buffer)
     buffer->buffer->Release();
 }
 
+Kuro_Gfx_Vertex_Shader
+kuro_gfx_vertex_shader_create(Kuro_Gfx, const char *shader, const char *entry_point)
+{
+    Kuro_Gfx_Vertex_Shader vertex_shader = (Kuro_Gfx_Vertex_Shader)malloc(sizeof(_Kuro_Gfx_Vertex_Shader));
+
+    UINT compile_flags = 0;
+    #if defined(DEBUG) || defined(_DEBUG)
+    {
+        compile_flags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+    }
+    #endif
+
+    ID3DBlob *error_blob = nullptr;
+    HRESULT hr = D3DCompile(shader, ::strlen(shader), nullptr, nullptr, nullptr, entry_point, "vs_5_0", compile_flags, 0, &vertex_shader->blob, &error_blob);
+    if (error_blob)
+    {
+        OutputDebugStringA("vertex shader error: ");
+        OutputDebugStringA((char *)error_blob->GetBufferPointer());
+        OutputDebugStringA("\n");
+        error_blob->Release();
+    }
+    assert(SUCCEEDED(hr));
+
+    return vertex_shader;
+}
+
+void
+kuro_gfx_vertex_shader_destroy(Kuro_Gfx, Kuro_Gfx_Vertex_Shader vertex_shader)
+{
+    vertex_shader->blob->Release();
+    free(vertex_shader);
+}
+
+Kuro_Gfx_Pixel_Shader
+kuro_gfx_pixel_shader_create(Kuro_Gfx, const char *shader, const char *entry_point)
+{
+    Kuro_Gfx_Pixel_Shader pixel_shader = (Kuro_Gfx_Pixel_Shader)malloc(sizeof(_Kuro_Gfx_Pixel_Shader));
+
+    UINT compile_flags = 0;
+    #if defined(DEBUG) || defined(_DEBUG)
+    {
+        compile_flags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+    }
+    #endif
+
+    ID3DBlob *error_blob = nullptr;
+    HRESULT hr = D3DCompile(shader, ::strlen(shader), nullptr, nullptr, nullptr, entry_point, "ps_5_0", compile_flags, 0, &pixel_shader->blob, &error_blob);
+    if (error_blob)
+    {
+        OutputDebugStringA("pixel shader error: ");
+        OutputDebugStringA((char *)error_blob->GetBufferPointer());
+        OutputDebugStringA("\n");
+        error_blob->Release();
+    }
+    assert(SUCCEEDED(hr));
+
+    return pixel_shader;
+}
+
+void
+kuro_gfx_pixel_shader_destroy(Kuro_Gfx, Kuro_Gfx_Pixel_Shader pixel_shader)
+{
+    pixel_shader->blob->Release();
+    free(pixel_shader);
+}
+
 Kuro_Gfx_Pipeline
 kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc)
 {
+    assert(desc.vertex_shader);
+    assert(desc.pixel_shader);
+
     Kuro_Gfx_Pipeline pipeline = (Kuro_Gfx_Pipeline)malloc(sizeof(_Kuro_Gfx_Pipeline));
 
     HRESULT hr = {};
@@ -388,35 +465,8 @@ kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc)
     assert(SUCCEEDED(hr));
     signature_blob->Release();
 
-    UINT compile_flags = 0;
-    #if defined(DEBUG) || defined(_DEBUG)
-    {
-        compile_flags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-    }
-    #endif
-
-    ID3DBlob *vertex_shader = nullptr;
-    hr = D3DCompile(desc.shader, desc.shader_size, nullptr, nullptr, nullptr, "vs_main", "vs_5_0", compile_flags, 0, &vertex_shader, &error_blob);
-    if (FAILED(hr))
-    {
-        OutputDebugStringA("Failed to compile vertex shader");
-        OutputDebugStringA((char *)error_blob->GetBufferPointer());
-        OutputDebugStringA("\n");
-        assert(false);
-    }
-
-    ID3DBlob *pixel_shader = nullptr;
-    hr = D3DCompile(desc.shader, desc.shader_size, nullptr, nullptr, nullptr, "ps_main", "ps_5_0", compile_flags, 0, &pixel_shader, &error_blob);
-    if (FAILED(hr))
-    {
-        OutputDebugStringA("Failed to compile pixel shader");
-        OutputDebugStringA((char *)error_blob->GetBufferPointer());
-        OutputDebugStringA("\n");
-        assert(false);
-    }
-
     ID3D12ShaderReflection *reflection = nullptr;
-    hr = D3DReflect(vertex_shader->GetBufferPointer(), vertex_shader->GetBufferSize(), IID_PPV_ARGS(&reflection));
+    hr = D3DReflect(desc.vertex_shader->blob->GetBufferPointer(), desc.vertex_shader->blob->GetBufferSize(), IID_PPV_ARGS(&reflection));
     assert(SUCCEEDED(hr));
 
     D3D12_SHADER_DESC shader_desc = {};
@@ -439,10 +489,10 @@ kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc)
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC pipeline_desc = {};
     pipeline_desc.pRootSignature = pipeline->root_signature;
-    pipeline_desc.VS.pShaderBytecode = vertex_shader->GetBufferPointer();
-    pipeline_desc.VS.BytecodeLength = vertex_shader->GetBufferSize();
-    pipeline_desc.PS.pShaderBytecode = pixel_shader->GetBufferPointer();
-    pipeline_desc.PS.BytecodeLength = pixel_shader->GetBufferSize();
+    pipeline_desc.VS.pShaderBytecode = desc.vertex_shader->blob->GetBufferPointer();
+    pipeline_desc.VS.BytecodeLength = desc.vertex_shader->blob->GetBufferSize();
+    pipeline_desc.PS.pShaderBytecode = desc.pixel_shader->blob->GetBufferPointer();
+    pipeline_desc.PS.BytecodeLength = desc.pixel_shader->blob->GetBufferSize();
     for (int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
     {
         pipeline_desc.BlendState.RenderTarget[i].BlendEnable = FALSE;
@@ -481,8 +531,6 @@ kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc)
 
     reflection->Release();
     free(input_element_desc);
-    pixel_shader->Release();
-    vertex_shader->Release();
 
     return pipeline;
 }

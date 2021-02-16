@@ -16,6 +16,8 @@ extern "C" {
 typedef struct _Kuro_Gfx *Kuro_Gfx;
 typedef struct _Kuro_Gfx_Swapchain *Kuro_Gfx_Swapchain;
 typedef struct _Kuro_Gfx_Buffer *Kuro_Gfx_Buffer;
+typedef struct _Kuro_Gfx_Vertex_Shader *Kuro_Gfx_Vertex_Shader;
+typedef struct _Kuro_Gfx_Pixel_Shader *Kuro_Gfx_Pixel_Shader;
 typedef struct _Kuro_Gfx_Pipeline *Kuro_Gfx_Pipeline;
 typedef struct _Kuro_Gfx_Pass *Kuro_Gfx_Pass;
 typedef struct _Kuro_Gfx_Commands *Kuro_Gfx_Commands;
@@ -55,8 +57,8 @@ typedef struct Kuro_Gfx_Vertex_Buffer_Desc {
 } Kuro_Gfx_Vertex_Buffer_Desc;
 
 typedef struct Kuro_Gfx_Pipeline_Desc {
-    const char *shader;
-    uint32_t shader_size;
+    Kuro_Gfx_Vertex_Shader vertex_shader;
+    Kuro_Gfx_Pixel_Shader pixel_shader;
     Kuro_Gfx_Vertex_Attribure vertex_attribures[KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES];
 } Kuro_Gfx_Pipeline_Desc;
 
@@ -75,6 +77,11 @@ KURO_GFX_API void kuro_gfx_swapchain_present(Kuro_Gfx gfx, Kuro_Gfx_Swapchain sw
 
 KURO_GFX_API Kuro_Gfx_Buffer kuro_gfx_buffer_create(Kuro_Gfx gfx, void *initial_data, uint32_t size_in_bytes);
 KURO_GFX_API void kuro_gfx_buffer_destroy(Kuro_Gfx gfx, Kuro_Gfx_Buffer buffer);
+
+KURO_GFX_API Kuro_Gfx_Vertex_Shader kuro_gfx_vertex_shader_create(Kuro_Gfx gfx, const char *shader, const char *entry_point);
+KURO_GFX_API void kuro_gfx_vertex_shader_destroy(Kuro_Gfx gfx, Kuro_Gfx_Vertex_Shader vertex_shader);
+KURO_GFX_API Kuro_Gfx_Pixel_Shader kuro_gfx_pixel_shader_create(Kuro_Gfx gfx, const char *shader, const char *entry_point);
+KURO_GFX_API void kuro_gfx_pixel_shader_destroy(Kuro_Gfx gfx, Kuro_Gfx_Pixel_Shader pixel_shader);
 
 KURO_GFX_API Kuro_Gfx_Pipeline kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc);
 KURO_GFX_API void kuro_gfx_pipeline_destroy(Kuro_Gfx gfx, Kuro_Gfx_Pipeline pipeline);

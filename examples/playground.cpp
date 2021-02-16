@@ -89,9 +89,12 @@ main()
         }
     )";
 
+    Kuro_Gfx_Vertex_Shader vertex_shader = kuro_gfx_vertex_shader_create(gfx, shader, "vs_main");
+    Kuro_Gfx_Pixel_Shader pixel_shader = kuro_gfx_pixel_shader_create(gfx, shader, "ps_main");
+
     Kuro_Gfx_Pipeline_Desc pipeline_desc = {};
-    pipeline_desc.shader = shader;
-    pipeline_desc.shader_size = sizeof(shader);
+    pipeline_desc.vertex_shader = vertex_shader;
+    pipeline_desc.pixel_shader = pixel_shader;
     pipeline_desc.vertex_attribures[0].format = KURO_GFX_FORMAT_R32G32_FLOAT;
     pipeline_desc.vertex_attribures[1].format = KURO_GFX_FORMAT_R32G32B32_FLOAT;
     Kuro_Gfx_Pipeline pipeline = kuro_gfx_pipeline_create(gfx, pipeline_desc);
@@ -154,6 +157,8 @@ main()
     // release resources
     kuro_gfx_buffer_destroy(gfx, vertex_buffer);
     kuro_gfx_pipeline_destroy(gfx, pipeline);
+    kuro_gfx_pixel_shader_destroy(gfx, pixel_shader);
+    kuro_gfx_vertex_shader_destroy(gfx, vertex_shader);
     kuro_gfx_commands_destroy(gfx, commands);
     kuro_gfx_pass_free(gfx, pass);
     kuro_gfx_swapchain_destroy(gfx, swapchain);
