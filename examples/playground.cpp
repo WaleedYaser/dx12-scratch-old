@@ -64,9 +64,14 @@ main()
     int window_height = rect.bottom - rect.top;
 
     Kuro_Gfx gfx = kuro_gfx_create();
-    Kuro_Gfx_Swapchain swapchain = kuro_gfx_swapchain_create(gfx, window_width, window_height, hwnd);
-    Kuro_Gfx_Pass pass =kuro_gfx_pass_from_swapchain(gfx, swapchain);
     Kuro_Gfx_Commands commands = kuro_gfx_commands_create(gfx);
+
+    kuro_gfx_commands_begin(gfx, commands);
+    Kuro_Gfx_Swapchain swapchain = kuro_gfx_swapchain_create(gfx, commands, window_width, window_height, hwnd);
+    kuro_gfx_commands_end(gfx, commands);
+    kuro_gfx_flush(gfx);
+
+    Kuro_Gfx_Pass pass =kuro_gfx_pass_from_swapchain(gfx, swapchain);
 
     const char shader[] = R"(
         struct PS_Input
@@ -132,7 +137,10 @@ main()
             window_width = current_width;
             window_height = current_height;
 
-            kuro_gfx_swapchain_resize(gfx, swapchain, window_width, window_height);
+            kuro_gfx_commands_begin(gfx, commands);
+            kuro_gfx_swapchain_resize(gfx, commands, swapchain, window_width, window_height);
+            kuro_gfx_commands_end(gfx, commands);
+            kuro_gfx_flush(gfx);
         }
 
         kuro_gfx_commands_begin(gfx, commands);

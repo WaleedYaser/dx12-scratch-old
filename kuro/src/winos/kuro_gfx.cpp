@@ -1,3 +1,10 @@
+/*
+    TODO[Waleed]:
+    * create swapchain without depth
+    * use pool
+    * create static buffer
+ */
+
 #pragma comment(lib, "DXGI.lib")
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "d3dcompiler.lib")
@@ -94,7 +101,7 @@ _kuro_gfx_class_to_dx(KURO_GFX_CLASS classification)
 }
 
 static inline void
-_kuro_gfx_swapchain_init(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height)
+_kuro_gfx_swapchain_init(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height)
 {
     HRESULT hr = {};
 
@@ -140,8 +147,15 @@ _kuro_gfx_swapchain_init(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t wi
         swapchain->depth_stencil_buffer,
         nullptr,
         swapchain->dsv_descriptor);
-}
 
+    D3D12_RESOURCE_BARRIER resource_barrier = {};
+    resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    resource_barrier.Transition.pResource = swapchain->depth_stencil_buffer;
+    resource_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+    resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+    commands->command_list->ResourceBarrier(1, &resource_barrier);
+}
 
 Kuro_Gfx
 kuro_gfx_create()
@@ -221,7 +235,7 @@ kuro_gfx_destroy(Kuro_Gfx gfx)
 }
 
 Kuro_Gfx_Swapchain
-kuro_gfx_swapchain_create(Kuro_Gfx gfx, uint32_t width, uint32_t height, void *window_handle)
+kuro_gfx_swapchain_create(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, uint32_t width, uint32_t height, void *window_handle)
 {
     HRESULT hr = {};
 
@@ -291,7 +305,7 @@ kuro_gfx_swapchain_create(Kuro_Gfx gfx, uint32_t width, uint32_t height, void *w
 
     swapchain->dsv_descriptor = swapchain->dsv_heap->GetCPUDescriptorHandleForHeapStart();
 
-    _kuro_gfx_swapchain_init(gfx, swapchain, width, height);
+    _kuro_gfx_swapchain_init(gfx, commands, swapchain, width, height);
 
     return swapchain;
 }
@@ -309,7 +323,7 @@ kuro_gfx_swapchain_destroy(Kuro_Gfx, Kuro_Gfx_Swapchain swapchain)
 }
 
 void
-kuro_gfx_swapchain_resize(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height)
+kuro_gfx_swapchain_resize(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height)
 {
     HRESULT hr = {};
 
@@ -324,7 +338,7 @@ kuro_gfx_swapchain_resize(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t w
         DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
     assert(SUCCEEDED(hr));
 
-    _kuro_gfx_swapchain_init(gfx, swapchain, width, height);
+    _kuro_gfx_swapchain_init(gfx, commands, swapchain, width, height);
 }
 
 void
@@ -658,7 +672,7 @@ kuro_gfx_commands_pass_begin(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass)
         1,
         &pass->swapchain->rtv_descriptor[pass->swapchain->swapchain->GetCurrentBackBufferIndex()],
         true,
-        nullptr);
+        &pass->swapchain->dsv_descriptor);
 }
 
 void
@@ -692,6 +706,7 @@ void
 kuro_gfx_commands_pass_clear(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Color color)
 {
     commands->command_list->ClearRenderTargetView(pass->swapchain->rtv_descriptor[pass->swapchain->swapchain->GetCurrentBackBufferIndex()], &color.r, 0, nullptr);
+    commands->command_list->ClearDepthStencilView(pass->swapchain->dsv_descriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 
 void
