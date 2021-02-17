@@ -135,18 +135,19 @@ main()
             kuro_gfx_swapchain_resize(gfx, swapchain, window_width, window_height);
         }
 
-        kuro_gfx_commands_begin(gfx, commands, pipeline);
+        kuro_gfx_commands_begin(gfx, commands);
         {
-            kuro_gfx_commands_pass_begin(gfx, commands, pass);
-            kuro_gfx_commands_viewport(gfx, commands, window_width, window_height);
-            kuro_gfx_commands_pass_clear(gfx, commands, pass, {1.0f, 1.0f, 0.0f, 1.0f});
+            kuro_gfx_commands_pipeline(commands, pipeline);
+            kuro_gfx_commands_pass_begin(commands, pass);
+            kuro_gfx_commands_viewport(commands, window_width, window_height);
+            kuro_gfx_commands_pass_clear(commands, pass, {1.0f, 1.0f, 0.0f, 1.0f});
 
             Kuro_Gfx_Draw_Desc draw_desc = {};
             draw_desc.vertex_buffers[0].buffer = vertex_buffer;
             draw_desc.vertex_buffers[0].stride = 5 * sizeof(float);
-            kuro_gfx_commands_draw(gfx, commands, draw_desc);
+            kuro_gfx_commands_draw(commands, draw_desc);
 
-            kuro_gfx_commands_pass_end(gfx, commands, pass);
+            kuro_gfx_commands_pass_end(commands, pass);
         }
         kuro_gfx_commands_end(gfx, commands);
         kuro_gfx_flush(gfx);

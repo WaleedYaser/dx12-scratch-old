@@ -617,15 +617,13 @@ kuro_gfx_commands_destroy(Kuro_Gfx, Kuro_Gfx_Commands commands)
 }
 
 void
-kuro_gfx_commands_begin(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pipeline pipeline)
+kuro_gfx_commands_begin(Kuro_Gfx, Kuro_Gfx_Commands commands)
 {
     HRESULT hr = commands->command_allocator->Reset();
     assert(SUCCEEDED(hr));
 
-    hr = commands->command_list->Reset(commands->command_allocator, pipeline->pipeline_state);
+    hr = commands->command_list->Reset(commands->command_allocator, nullptr);
     assert(SUCCEEDED(hr));
-
-    commands->command_list->SetGraphicsRootSignature(pipeline->root_signature);
 }
 
 void
@@ -639,7 +637,14 @@ kuro_gfx_commands_end(Kuro_Gfx gfx, Kuro_Gfx_Commands commands)
 }
 
 void
-kuro_gfx_commands_pass_begin(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass)
+kuro_gfx_commands_pipeline(Kuro_Gfx_Commands commands, Kuro_Gfx_Pipeline pipeline)
+{
+    commands->command_list->SetPipelineState(pipeline->pipeline_state);
+    commands->command_list->SetGraphicsRootSignature(pipeline->root_signature);
+}
+
+void
+kuro_gfx_commands_pass_begin(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass)
 {
     D3D12_RESOURCE_BARRIER resource_barrier = {};
     resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -657,7 +662,7 @@ kuro_gfx_commands_pass_begin(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass
 }
 
 void
-kuro_gfx_commands_pass_end(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass)
+kuro_gfx_commands_pass_end(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass)
 {
     D3D12_RESOURCE_BARRIER resource_barrier = {};
     resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -669,7 +674,7 @@ kuro_gfx_commands_pass_end(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass p
 }
 
 void
-kuro_gfx_commands_viewport(Kuro_Gfx, Kuro_Gfx_Commands commands, uint32_t width, uint32_t height)
+kuro_gfx_commands_viewport(Kuro_Gfx_Commands commands, uint32_t width, uint32_t height)
 {
     D3D12_VIEWPORT viewport = {};
     viewport.Width = (float)width;
@@ -684,9 +689,31 @@ kuro_gfx_commands_viewport(Kuro_Gfx, Kuro_Gfx_Commands commands, uint32_t width,
 }
 
 void
-kuro_gfx_commands_pass_clear(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Color color)
+kuro_gfx_commands_pass_clear(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Color color)
 {
     commands->command_list->ClearRenderTargetView(pass->swapchain->rtv_descriptor[pass->swapchain->swapchain->GetCurrentBackBufferIndex()], &color.r, 0, nullptr);
+}
+
+void
+kuro_gfx_commands_draw(Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc)
+{
+    commands->command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    for (uint32_t i = 0; i < KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES; ++i)
+    {
+        Kuro_Gfx_Buffer vertex_buffer = desc.vertex_buffers[i].buffer;
+        if (vertex_buffer == nullptr)
+            continue;
+
+        ID3D12Resource *buffer = vertex_buffer->usage == KURO_GFX_USAGE_STATIC ? vertex_buffer->default_buffer : vertex_buffer->upload_buffer;
+
+        D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view = {};
+        vertex_buffer_view.BufferLocation = buffer->GetGPUVirtualAddress();
+        vertex_buffer_view.SizeInBytes = vertex_buffer->size_in_bytes;
+        vertex_buffer_view.StrideInBytes = desc.vertex_buffers[i].stride;
+        commands->command_list->IASetVertexBuffers(i, 1, &vertex_buffer_view);
+    }
+    commands->command_list->DrawInstanced(3, 1, 0, 0);
 }
 
 void
@@ -713,26 +740,4 @@ kuro_gfx_flush(Kuro_Gfx gfx)
         WaitForSingleObject(event_handle, INFINITE);
         CloseHandle(event_handle);
     }
-}
-
-void
-kuro_gfx_commands_draw(Kuro_Gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc)
-{
-    commands->command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    for (uint32_t i = 0; i < KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES; ++i)
-    {
-        Kuro_Gfx_Buffer vertex_buffer = desc.vertex_buffers[i].buffer;
-        if (vertex_buffer == nullptr)
-            continue;
-
-        ID3D12Resource *buffer = vertex_buffer->usage == KURO_GFX_USAGE_STATIC ? vertex_buffer->default_buffer : vertex_buffer->upload_buffer;
-
-        D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view = {};
-        vertex_buffer_view.BufferLocation = buffer->GetGPUVirtualAddress();
-        vertex_buffer_view.SizeInBytes = vertex_buffer->size_in_bytes;
-        vertex_buffer_view.StrideInBytes = desc.vertex_buffers[i].stride;
-        commands->command_list->IASetVertexBuffers(i, 1, &vertex_buffer_view);
-    }
-    commands->command_list->DrawInstanced(3, 1, 0, 0);
 }
