@@ -150,9 +150,8 @@ main()
             kuro_gfx_commands_pass_end(commands, pass);
         }
         kuro_gfx_commands_end(gfx, commands);
-        kuro_gfx_flush(gfx);
-
         kuro_gfx_swapchain_present(gfx, swapchain);
+        kuro_gfx_flush(gfx);
     }
 
     // release resources
