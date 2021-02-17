@@ -106,7 +106,7 @@ main()
          0.5f, -0.5f,  0.0f, 0.0f, 1.0f
     };
 
-    Kuro_Gfx_Buffer vertex_buffer = kuro_gfx_buffer_create(gfx, &vertices, sizeof(vertices));
+    Kuro_Gfx_Buffer vertex_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_USAGE_DYNAMIC, &vertices, sizeof(vertices));
 
     bool running = true;
     while (running)

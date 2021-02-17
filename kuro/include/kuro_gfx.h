@@ -26,6 +26,11 @@ typedef enum KURO_CONSTANT {
     KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES = 16
 } KURO_CONSTANT;
 
+typedef enum KURO_GFX_USAGE {
+    KURO_GFX_USAGE_STATIC,
+    KURO_GFX_USAGE_DYNAMIC
+} KURO_GFX_USAGE;
+
 typedef enum KURO_GFX_FORMAT {
     KURO_GFX_FORMAT_NONE,
     KURO_GFX_FORMAT_R32G32_FLOAT,
@@ -75,7 +80,7 @@ KURO_GFX_API void kuro_gfx_swapchain_destroy(Kuro_Gfx gfx, Kuro_Gfx_Swapchain sw
 KURO_GFX_API void kuro_gfx_swapchain_resize(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height);
 KURO_GFX_API void kuro_gfx_swapchain_present(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain);
 
-KURO_GFX_API Kuro_Gfx_Buffer kuro_gfx_buffer_create(Kuro_Gfx gfx, void *initial_data, uint32_t size_in_bytes);
+KURO_GFX_API Kuro_Gfx_Buffer kuro_gfx_buffer_create(Kuro_Gfx gfx, KURO_GFX_USAGE usage, void *initial_data, uint32_t size_in_bytes);
 KURO_GFX_API void kuro_gfx_buffer_destroy(Kuro_Gfx gfx, Kuro_Gfx_Buffer buffer);
 
 KURO_GFX_API Kuro_Gfx_Vertex_Shader kuro_gfx_vertex_shader_create(Kuro_Gfx gfx, const char *shader, const char *entry_point);
@@ -94,6 +99,7 @@ KURO_GFX_API void kuro_gfx_commands_destroy(Kuro_Gfx gfx, Kuro_Gfx_Commands comm
 
 KURO_GFX_API void kuro_gfx_commands_begin(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pipeline pipeline);
 KURO_GFX_API void kuro_gfx_commands_end(Kuro_Gfx gfx, Kuro_Gfx_Commands commands);
+KURO_GFX_API void kuro_gfx_commands_upload(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Buffer static_buffer);
 KURO_GFX_API void kuro_gfx_commands_pass_begin(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass);
 KURO_GFX_API void kuro_gfx_commands_pass_end(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass);
 KURO_GFX_API void kuro_gfx_commands_viewport(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, uint32_t width, uint32_t height);
