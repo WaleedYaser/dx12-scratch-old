@@ -65,9 +65,10 @@ main()
 
     Kuro_Gfx gfx = kuro_gfx_create();
     Kuro_Gfx_Commands commands = kuro_gfx_commands_create(gfx);
+    Kuro_Gfx_Swapchain swapchain = kuro_gfx_swapchain_create(gfx, window_width, window_height, hwnd);
 
     kuro_gfx_commands_begin(gfx, commands);
-    Kuro_Gfx_Swapchain swapchain = kuro_gfx_swapchain_create(gfx, commands, window_width, window_height, hwnd);
+    Kuro_Gfx_Image depth_target = kuro_gfx_image_create(gfx, commands, window_width, window_height);
     kuro_gfx_commands_end(gfx, commands);
     kuro_gfx_flush(gfx);
 
@@ -137,8 +138,11 @@ main()
             window_width = current_width;
             window_height = current_height;
 
+            kuro_gfx_swapchain_resize(gfx, swapchain, window_width, window_height);
+
+            kuro_gfx_image_destroy(gfx, depth_target);
             kuro_gfx_commands_begin(gfx, commands);
-            kuro_gfx_swapchain_resize(gfx, commands, swapchain, window_width, window_height);
+            depth_target = kuro_gfx_image_create(gfx, commands, window_width, window_height);
             kuro_gfx_commands_end(gfx, commands);
             kuro_gfx_flush(gfx);
         }
@@ -146,9 +150,11 @@ main()
         kuro_gfx_commands_begin(gfx, commands);
         {
             kuro_gfx_commands_pipeline(commands, pipeline);
-            kuro_gfx_commands_pass_begin(commands, pass);
+            kuro_gfx_commands_pass_begin(commands, pass, depth_target);
             kuro_gfx_commands_viewport(commands, window_width, window_height);
-            kuro_gfx_commands_pass_clear(commands, pass, {1.0f, 1.0f, 0.0f, 1.0f});
+
+            kuro_gfx_commands_clear_color(commands, pass, {1.0f, 1.0f, 0.0f, 1.0f});
+            kuro_gfx_commands_clear_depth(commands, depth_target, 1.0f);
 
             Kuro_Gfx_Draw_Desc draw_desc = {};
             draw_desc.vertex_buffers[0].buffer = vertex_buffer;
@@ -167,9 +173,10 @@ main()
     kuro_gfx_pipeline_destroy(gfx, pipeline);
     kuro_gfx_pixel_shader_destroy(gfx, pixel_shader);
     kuro_gfx_vertex_shader_destroy(gfx, vertex_shader);
-    kuro_gfx_commands_destroy(gfx, commands);
     kuro_gfx_pass_free(gfx, pass);
+    kuro_gfx_image_destroy(gfx, depth_target);
     kuro_gfx_swapchain_destroy(gfx, swapchain);
+    kuro_gfx_commands_destroy(gfx, commands);
     kuro_gfx_destroy(gfx);
     DestroyWindow(hwnd);
 

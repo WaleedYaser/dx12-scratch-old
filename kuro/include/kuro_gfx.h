@@ -15,6 +15,7 @@ extern "C" {
 
 typedef struct _Kuro_Gfx *Kuro_Gfx;
 typedef struct _Kuro_Gfx_Swapchain *Kuro_Gfx_Swapchain;
+typedef struct _Kuro_Gfx_Image *Kuro_Gfx_Image;
 typedef struct _Kuro_Gfx_Buffer *Kuro_Gfx_Buffer;
 typedef struct _Kuro_Gfx_Vertex_Shader *Kuro_Gfx_Vertex_Shader;
 typedef struct _Kuro_Gfx_Pixel_Shader *Kuro_Gfx_Pixel_Shader;
@@ -75,10 +76,13 @@ typedef struct Kuro_Gfx_Draw_Desc {
 KURO_GFX_API Kuro_Gfx kuro_gfx_create();
 KURO_GFX_API void kuro_gfx_destroy(Kuro_Gfx gfx);
 
-KURO_GFX_API Kuro_Gfx_Swapchain kuro_gfx_swapchain_create(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, uint32_t width, uint32_t height, void *window_handle);
+KURO_GFX_API Kuro_Gfx_Swapchain kuro_gfx_swapchain_create(Kuro_Gfx gfx, uint32_t width, uint32_t height, void *window_handle);
 KURO_GFX_API void kuro_gfx_swapchain_destroy(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain);
-KURO_GFX_API void kuro_gfx_swapchain_resize(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height);
+KURO_GFX_API void kuro_gfx_swapchain_resize(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height);
 KURO_GFX_API void kuro_gfx_swapchain_present(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain);
+
+KURO_GFX_API Kuro_Gfx_Image kuro_gfx_image_create(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, uint32_t width, uint32_t height);
+KURO_GFX_API void kuro_gfx_image_destroy(Kuro_Gfx gfx, Kuro_Gfx_Image image);
 
 KURO_GFX_API Kuro_Gfx_Buffer kuro_gfx_buffer_create(Kuro_Gfx gfx, KURO_GFX_USAGE usage, void *initial_data, uint32_t size_in_bytes);
 KURO_GFX_API void kuro_gfx_buffer_destroy(Kuro_Gfx gfx, Kuro_Gfx_Buffer buffer);
@@ -102,10 +106,11 @@ KURO_GFX_API void kuro_gfx_commands_end(Kuro_Gfx gfx, Kuro_Gfx_Commands commands
 
 KURO_GFX_API void kuro_gfx_commands_pipeline(Kuro_Gfx_Commands commands, Kuro_Gfx_Pipeline pipeline);
 KURO_GFX_API void kuro_gfx_commands_upload(Kuro_Gfx_Commands commands, Kuro_Gfx_Buffer static_buffer);
-KURO_GFX_API void kuro_gfx_commands_pass_begin(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass);
+KURO_GFX_API void kuro_gfx_commands_pass_begin(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Image depth_target);
 KURO_GFX_API void kuro_gfx_commands_pass_end(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass);
 KURO_GFX_API void kuro_gfx_commands_viewport(Kuro_Gfx_Commands commands, uint32_t width, uint32_t height);
-KURO_GFX_API void kuro_gfx_commands_pass_clear(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Color color);
+KURO_GFX_API void kuro_gfx_commands_clear_color(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Color color);
+KURO_GFX_API void kuro_gfx_commands_clear_depth(Kuro_Gfx_Commands commands, Kuro_Gfx_Image depth_target, float value);
 KURO_GFX_API void kuro_gfx_commands_draw(Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc);
 
 KURO_GFX_API void kuro_gfx_flush(Kuro_Gfx gfx);

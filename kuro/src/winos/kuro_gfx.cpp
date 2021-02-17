@@ -3,6 +3,7 @@
     * create swapchain without depth
     * use pool
     * create static buffer
+    * test MSAA
  */
 
 #pragma comment(lib, "DXGI.lib")
@@ -30,18 +31,23 @@ typedef struct _Kuro_Gfx {
 
 typedef struct _Kuro_Gfx_Swapchain {
     DXGI_FORMAT backbuffer_format;
-    DXGI_FORMAT depth_stencil_format;
     uint32_t buffer_count;
     bool msaa_state;
     uint32_t msaa_x4_quality;
     IDXGISwapChain3 *swapchain;
     ID3D12Resource *buffers[MAX_SWAPCHAIN_BUFFER_COUNT];
-    ID3D12Resource *depth_stencil_buffer;
     ID3D12DescriptorHeap *rtv_heap;
-    ID3D12DescriptorHeap *dsv_heap;
     D3D12_CPU_DESCRIPTOR_HANDLE rtv_descriptor[MAX_SWAPCHAIN_BUFFER_COUNT];
-    D3D12_CPU_DESCRIPTOR_HANDLE dsv_descriptor;
 } _Kuro_Gfx_Swapchain;
+
+typedef struct _Kuro_Gfx_Image {
+    DXGI_FORMAT depth_stencil_format;
+    bool msaa_state;
+    uint32_t msaa_x4_quality;
+    ID3D12Resource *depth_stencil_buffer;
+    ID3D12DescriptorHeap *dsv_heap;
+    D3D12_CPU_DESCRIPTOR_HANDLE dsv_descriptor;
+} _Kuro_Gfx_Image;
 
 typedef struct _Kuro_Gfx_Buffer {
     KURO_GFX_USAGE usage;
@@ -98,63 +104,6 @@ _kuro_gfx_class_to_dx(KURO_GFX_CLASS classification)
         default:
             assert(false); return D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
     }
-}
-
-static inline void
-_kuro_gfx_swapchain_init(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height)
-{
-    HRESULT hr = {};
-
-    for (uint32_t i = 0; i < swapchain->buffer_count; ++i)
-    {
-        hr = swapchain->swapchain->GetBuffer(i, IID_PPV_ARGS(&swapchain->buffers[i]));
-        assert(SUCCEEDED(hr));
-        gfx->device->CreateRenderTargetView(
-            swapchain->buffers[i],
-            nullptr,
-            swapchain->rtv_descriptor[i]);
-    }
-
-    D3D12_HEAP_PROPERTIES dsv_heap_properties = {};
-    dsv_heap_properties.Type = D3D12_HEAP_TYPE_DEFAULT;
-
-    D3D12_RESOURCE_DESC depth_stencil_desc = {};
-    depth_stencil_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-    depth_stencil_desc.Width = width;
-    depth_stencil_desc.Height = height;
-    depth_stencil_desc.DepthOrArraySize = 1;
-    depth_stencil_desc.MipLevels = 1;
-    depth_stencil_desc.Format = swapchain->depth_stencil_format;
-    depth_stencil_desc.SampleDesc.Count = swapchain->msaa_state ? 4 : 1;
-    depth_stencil_desc.SampleDesc.Quality = swapchain->msaa_state ? (swapchain->msaa_x4_quality - 1) : 0;
-    depth_stencil_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-    D3D12_CLEAR_VALUE optimized_clear_value = {};
-    optimized_clear_value.Format = swapchain->depth_stencil_format;
-    optimized_clear_value.DepthStencil.Depth = 1.0f;
-    optimized_clear_value.DepthStencil.Stencil = 0;
-
-    hr = gfx->device->CreateCommittedResource(
-        &dsv_heap_properties,
-        D3D12_HEAP_FLAG_NONE,
-        &depth_stencil_desc,
-        D3D12_RESOURCE_STATE_COMMON,
-        &optimized_clear_value,
-        IID_PPV_ARGS(&swapchain->depth_stencil_buffer));
-    assert(SUCCEEDED(hr));
-
-    gfx->device->CreateDepthStencilView(
-        swapchain->depth_stencil_buffer,
-        nullptr,
-        swapchain->dsv_descriptor);
-
-    D3D12_RESOURCE_BARRIER resource_barrier = {};
-    resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    resource_barrier.Transition.pResource = swapchain->depth_stencil_buffer;
-    resource_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
-    resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-    commands->command_list->ResourceBarrier(1, &resource_barrier);
 }
 
 Kuro_Gfx
@@ -235,13 +184,12 @@ kuro_gfx_destroy(Kuro_Gfx gfx)
 }
 
 Kuro_Gfx_Swapchain
-kuro_gfx_swapchain_create(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, uint32_t width, uint32_t height, void *window_handle)
+kuro_gfx_swapchain_create(Kuro_Gfx gfx, uint32_t width, uint32_t height, void *window_handle)
 {
     HRESULT hr = {};
 
     Kuro_Gfx_Swapchain swapchain = (Kuro_Gfx_Swapchain)malloc(sizeof(_Kuro_Gfx_Swapchain));
     swapchain->backbuffer_format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    swapchain->depth_stencil_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
     swapchain->buffer_count = 2;
     swapchain->msaa_state = false;
 
@@ -297,15 +245,15 @@ kuro_gfx_swapchain_create(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, uint32_t wid
         swapchain->rtv_descriptor[i].ptr += (i * gfx->rtv_desctiptor_size);
     }
 
-    D3D12_DESCRIPTOR_HEAP_DESC dsv_heap_desc = {};
-    dsv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-    dsv_heap_desc.NumDescriptors = 1;
-    hr = gfx->device->CreateDescriptorHeap(&dsv_heap_desc, IID_PPV_ARGS(&swapchain->dsv_heap));
-    assert(SUCCEEDED(hr));
-
-    swapchain->dsv_descriptor = swapchain->dsv_heap->GetCPUDescriptorHandleForHeapStart();
-
-    _kuro_gfx_swapchain_init(gfx, commands, swapchain, width, height);
+    for (uint32_t i = 0; i < swapchain->buffer_count; ++i)
+    {
+        hr = swapchain->swapchain->GetBuffer(i, IID_PPV_ARGS(&swapchain->buffers[i]));
+        assert(SUCCEEDED(hr));
+        gfx->device->CreateRenderTargetView(
+            swapchain->buffers[i],
+            nullptr,
+            swapchain->rtv_descriptor[i]);
+    }
 
     return swapchain;
 }
@@ -313,9 +261,7 @@ kuro_gfx_swapchain_create(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, uint32_t wid
 void
 kuro_gfx_swapchain_destroy(Kuro_Gfx, Kuro_Gfx_Swapchain swapchain)
 {
-    swapchain->dsv_heap->Release();
     swapchain->rtv_heap->Release();
-    swapchain->depth_stencil_buffer->Release();
     for (uint32_t i = 0; i < swapchain->buffer_count; ++i)
         swapchain->buffers[i]->Release();
     swapchain->swapchain->Release();
@@ -323,11 +269,10 @@ kuro_gfx_swapchain_destroy(Kuro_Gfx, Kuro_Gfx_Swapchain swapchain)
 }
 
 void
-kuro_gfx_swapchain_resize(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height)
+kuro_gfx_swapchain_resize(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height)
 {
     HRESULT hr = {};
 
-    swapchain->depth_stencil_buffer->Release();
     for (uint32_t i = 0; i < swapchain->buffer_count; ++i)
         swapchain->buffers[i]->Release();
 
@@ -338,7 +283,15 @@ kuro_gfx_swapchain_resize(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, Kuro_Gfx_Swa
         DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
     assert(SUCCEEDED(hr));
 
-    _kuro_gfx_swapchain_init(gfx, commands, swapchain, width, height);
+    for (uint32_t i = 0; i < swapchain->buffer_count; ++i)
+    {
+        hr = swapchain->swapchain->GetBuffer(i, IID_PPV_ARGS(&swapchain->buffers[i]));
+        assert(SUCCEEDED(hr));
+        gfx->device->CreateRenderTargetView(
+            swapchain->buffers[i],
+            nullptr,
+            swapchain->rtv_descriptor[i]);
+    }
 }
 
 void
@@ -346,6 +299,76 @@ kuro_gfx_swapchain_present(Kuro_Gfx, Kuro_Gfx_Swapchain swapchain)
 {
     HRESULT hr = swapchain->swapchain->Present(0, 0);
     assert(SUCCEEDED(hr));
+}
+
+Kuro_Gfx_Image
+kuro_gfx_image_create(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, uint32_t width, uint32_t height)
+{
+    Kuro_Gfx_Image image = (Kuro_Gfx_Image)malloc(sizeof(_Kuro_Gfx_Image));
+    image->depth_stencil_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    image->msaa_state = false;
+    image->msaa_x4_quality = 0;
+
+    HRESULT hr = {};
+
+    D3D12_HEAP_PROPERTIES dsv_heap_properties = {};
+    dsv_heap_properties.Type = D3D12_HEAP_TYPE_DEFAULT;
+
+    D3D12_RESOURCE_DESC depth_stencil_desc = {};
+    depth_stencil_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    depth_stencil_desc.Width = width;
+    depth_stencil_desc.Height = height;
+    depth_stencil_desc.DepthOrArraySize = 1;
+    depth_stencil_desc.MipLevels = 1;
+    depth_stencil_desc.Format = image->depth_stencil_format;
+    depth_stencil_desc.SampleDesc.Count = image->msaa_state ? 4 : 1;
+    depth_stencil_desc.SampleDesc.Quality = image->msaa_state ? (image->msaa_x4_quality - 1) : 0;
+    depth_stencil_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+    D3D12_CLEAR_VALUE optimized_clear_value = {};
+    optimized_clear_value.Format = image->depth_stencil_format;
+    optimized_clear_value.DepthStencil.Depth = 1.0f;
+    optimized_clear_value.DepthStencil.Stencil = 0;
+
+    hr = gfx->device->CreateCommittedResource(
+        &dsv_heap_properties,
+        D3D12_HEAP_FLAG_NONE,
+        &depth_stencil_desc,
+        D3D12_RESOURCE_STATE_COMMON,
+        &optimized_clear_value,
+        IID_PPV_ARGS(&image->depth_stencil_buffer));
+    assert(SUCCEEDED(hr));
+
+    D3D12_DESCRIPTOR_HEAP_DESC dsv_heap_desc = {};
+    dsv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    dsv_heap_desc.NumDescriptors = 1;
+    hr = gfx->device->CreateDescriptorHeap(&dsv_heap_desc, IID_PPV_ARGS(&image->dsv_heap));
+    assert(SUCCEEDED(hr));
+
+    image->dsv_descriptor = image->dsv_heap->GetCPUDescriptorHandleForHeapStart();
+
+    gfx->device->CreateDepthStencilView(
+        image->depth_stencil_buffer,
+        nullptr,
+        image->dsv_descriptor);
+
+    D3D12_RESOURCE_BARRIER resource_barrier = {};
+    resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    resource_barrier.Transition.pResource = image->depth_stencil_buffer;
+    resource_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+    resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+    commands->command_list->ResourceBarrier(1, &resource_barrier);
+
+    return image;
+}
+
+void
+kuro_gfx_image_destroy(Kuro_Gfx, Kuro_Gfx_Image image)
+{
+    image->dsv_heap->Release();
+    image->depth_stencil_buffer->Release();
+    free(image);
 }
 
 Kuro_Gfx_Buffer
@@ -658,7 +681,7 @@ kuro_gfx_commands_pipeline(Kuro_Gfx_Commands commands, Kuro_Gfx_Pipeline pipelin
 }
 
 void
-kuro_gfx_commands_pass_begin(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass)
+kuro_gfx_commands_pass_begin(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Image depth_target)
 {
     D3D12_RESOURCE_BARRIER resource_barrier = {};
     resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -672,7 +695,7 @@ kuro_gfx_commands_pass_begin(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass)
         1,
         &pass->swapchain->rtv_descriptor[pass->swapchain->swapchain->GetCurrentBackBufferIndex()],
         true,
-        &pass->swapchain->dsv_descriptor);
+        depth_target ? &depth_target->dsv_descriptor : nullptr);
 }
 
 void
@@ -703,10 +726,15 @@ kuro_gfx_commands_viewport(Kuro_Gfx_Commands commands, uint32_t width, uint32_t 
 }
 
 void
-kuro_gfx_commands_pass_clear(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Color color)
+kuro_gfx_commands_clear_color(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Color color)
 {
     commands->command_list->ClearRenderTargetView(pass->swapchain->rtv_descriptor[pass->swapchain->swapchain->GetCurrentBackBufferIndex()], &color.r, 0, nullptr);
-    commands->command_list->ClearDepthStencilView(pass->swapchain->dsv_descriptor, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+}
+
+void
+kuro_gfx_commands_clear_depth(Kuro_Gfx_Commands commands, Kuro_Gfx_Image depth_target, float value)
+{
+    commands->command_list->ClearDepthStencilView(depth_target->dsv_descriptor, D3D12_CLEAR_FLAG_DEPTH, value, 0, 0, nullptr);
 }
 
 void
