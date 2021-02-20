@@ -71,6 +71,8 @@ typedef struct Kuro_Gfx_Pipeline_Desc {
 typedef struct Kuro_Gfx_Draw_Desc {
     KURO_GFX_PRIMITIVE primitive;
     Kuro_Gfx_Vertex_Buffer_Desc vertex_buffers[KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES];
+    uint32_t count;
+    uint32_t offset;
 } Kuro_Gfx_Draw_Desc;
 
 KURO_GFX_API Kuro_Gfx kuro_gfx_create();
@@ -84,7 +86,8 @@ KURO_GFX_API void kuro_gfx_swapchain_present(Kuro_Gfx gfx, Kuro_Gfx_Swapchain sw
 KURO_GFX_API Kuro_Gfx_Image kuro_gfx_image_create(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, uint32_t width, uint32_t height);
 KURO_GFX_API void kuro_gfx_image_destroy(Kuro_Gfx gfx, Kuro_Gfx_Image image);
 
-KURO_GFX_API Kuro_Gfx_Buffer kuro_gfx_buffer_create(Kuro_Gfx gfx, KURO_GFX_USAGE usage, void *initial_data, uint32_t size_in_bytes);
+KURO_GFX_API Kuro_Gfx_Buffer kuro_gfx_buffer_static_create(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, void *initial_data, uint32_t size_in_bytes);
+KURO_GFX_API Kuro_Gfx_Buffer kuro_gfx_buffer_dynamic_create(Kuro_Gfx gfx, void *initial_data, uint32_t size_in_bytes);
 KURO_GFX_API void kuro_gfx_buffer_destroy(Kuro_Gfx gfx, Kuro_Gfx_Buffer buffer);
 
 KURO_GFX_API Kuro_Gfx_Vertex_Shader kuro_gfx_vertex_shader_create(Kuro_Gfx gfx, const char *shader, const char *entry_point);

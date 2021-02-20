@@ -372,18 +372,17 @@ kuro_gfx_image_destroy(Kuro_Gfx, Kuro_Gfx_Image image)
 }
 
 Kuro_Gfx_Buffer
-kuro_gfx_buffer_create(Kuro_Gfx gfx, KURO_GFX_USAGE usage, void *initial_data, uint32_t size_in_bytes)
+kuro_gfx_buffer_static_create(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, void *initial_data, uint32_t size_in_bytes)
 {
     Kuro_Gfx_Buffer buffer = (Kuro_Gfx_Buffer)malloc(sizeof(_Kuro_Gfx_Buffer));
 
-    buffer->usage = usage;
+    buffer->usage = KURO_GFX_USAGE_STATIC;
     buffer->default_buffer = nullptr;
     buffer->upload_buffer = nullptr;
     buffer->size_in_bytes = size_in_bytes;
 
     HRESULT hr = {};
 
-    if (buffer->usage == KURO_GFX_USAGE_STATIC)
     {
         D3D12_HEAP_PROPERTIES heap_properties = {};
         heap_properties.Type = D3D12_HEAP_TYPE_DEFAULT;
@@ -405,6 +404,65 @@ kuro_gfx_buffer_create(Kuro_Gfx gfx, KURO_GFX_USAGE usage, void *initial_data, u
             IID_PPV_ARGS(&buffer->default_buffer));
         assert(SUCCEEDED(hr));
     }
+
+    {
+        D3D12_HEAP_PROPERTIES heap_properties = {};
+        heap_properties.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+        D3D12_RESOURCE_DESC resource_desc = {};
+        resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+        resource_desc.Width = size_in_bytes;
+        resource_desc.Height = 1;
+        resource_desc.DepthOrArraySize = 1;
+        resource_desc.MipLevels = 1;
+        resource_desc.SampleDesc.Count = 1;
+        resource_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        hr = gfx->device->CreateCommittedResource(
+            &heap_properties,
+            D3D12_HEAP_FLAG_NONE,
+            &resource_desc,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&buffer->upload_buffer));
+        assert(SUCCEEDED(hr));
+    }
+
+    D3D12_RANGE read_range = {};
+    void *mapped_data = nullptr;
+
+    hr = buffer->upload_buffer->Map(0, &read_range, &mapped_data);
+    assert(SUCCEEDED(hr));
+    memcpy(mapped_data, initial_data, size_in_bytes);
+    buffer->upload_buffer->Unmap(0, nullptr);
+
+    D3D12_RESOURCE_BARRIER resource_barrier = {};
+    resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    resource_barrier.Transition.pResource = buffer->default_buffer;
+    resource_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+    resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
+    commands->command_list->ResourceBarrier(1, &resource_barrier);
+
+    commands->command_list->CopyBufferRegion(buffer->default_buffer, 0, buffer->upload_buffer, 0, size_in_bytes);
+
+    resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+    resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
+    commands->command_list->ResourceBarrier(1, &resource_barrier);
+
+    return buffer;
+}
+
+Kuro_Gfx_Buffer
+kuro_gfx_buffer_dynamic_create(Kuro_Gfx gfx, void *initial_data, uint32_t size_in_bytes)
+{
+    Kuro_Gfx_Buffer buffer = (Kuro_Gfx_Buffer)malloc(sizeof(_Kuro_Gfx_Buffer));
+
+    buffer->usage = KURO_GFX_USAGE_DYNAMIC;
+    buffer->default_buffer = nullptr;
+    buffer->upload_buffer = nullptr;
+    buffer->size_in_bytes = size_in_bytes;
+
+    HRESULT hr = {};
 
     D3D12_HEAP_PROPERTIES heap_properties = {};
     heap_properties.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -742,6 +800,8 @@ kuro_gfx_commands_draw(Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc)
 {
     commands->command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+    D3D12_VERTEX_BUFFER_VIEW vertex_buffer_views[KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES] = {};
+
     for (uint32_t i = 0; i < KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES; ++i)
     {
         Kuro_Gfx_Buffer vertex_buffer = desc.vertex_buffers[i].buffer;
@@ -749,14 +809,12 @@ kuro_gfx_commands_draw(Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc)
             continue;
 
         ID3D12Resource *buffer = vertex_buffer->usage == KURO_GFX_USAGE_STATIC ? vertex_buffer->default_buffer : vertex_buffer->upload_buffer;
-
-        D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view = {};
-        vertex_buffer_view.BufferLocation = buffer->GetGPUVirtualAddress();
-        vertex_buffer_view.SizeInBytes = vertex_buffer->size_in_bytes;
-        vertex_buffer_view.StrideInBytes = desc.vertex_buffers[i].stride;
-        commands->command_list->IASetVertexBuffers(i, 1, &vertex_buffer_view);
+        vertex_buffer_views[i].BufferLocation = buffer->GetGPUVirtualAddress();
+        vertex_buffer_views[i].SizeInBytes = vertex_buffer->size_in_bytes;
+        vertex_buffer_views[i].StrideInBytes = desc.vertex_buffers[i].stride;
     }
-    commands->command_list->DrawInstanced(3, 1, 0, 0);
+    commands->command_list->IASetVertexBuffers(0, KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES, vertex_buffer_views);
+    commands->command_list->DrawInstanced(desc.count, 1, desc.offset, 0);
 }
 
 void
