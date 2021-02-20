@@ -102,14 +102,21 @@ main()
 
     float vertices[] = {
         // position     color
-         0.0f,  0.5f,  1.0f, 0.0f, 0.0f,
-        -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-         0.5f, -0.5f,  0.0f, 0.0f, 1.0f
+        -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
+        -0.5f, +0.5f,  0.0f, 1.0f, 0.0f,
+        +0.5f, +0.5f,  0.0f, 0.0f, 1.0f,
+        +0.5f, -0.5f,  0.0f, 1.0f, 1.0f
+    };
+
+    uint16_t indices[] = {
+        0, 2, 1,
+        0, 3, 2
     };
 
     kuro_gfx_commands_begin(gfx, commands);
     Kuro_Gfx_Image depth_target = kuro_gfx_image_create(gfx, commands, window_width, window_height);
     Kuro_Gfx_Buffer vertex_buffer = kuro_gfx_buffer_static_create(gfx, commands, &vertices, sizeof(vertices));
+    Kuro_Gfx_Buffer index_buffer = kuro_gfx_buffer_static_create(gfx, commands, &indices, sizeof(indices));
     kuro_gfx_commands_end(gfx, commands);
     kuro_gfx_flush(gfx);
 
@@ -158,7 +165,9 @@ main()
             Kuro_Gfx_Draw_Desc draw_desc = {};
             draw_desc.vertex_buffers[0].buffer = vertex_buffer;
             draw_desc.vertex_buffers[0].stride = 5 * sizeof(float);
-            draw_desc.count = 3;
+            draw_desc.index_buffer.buffer = index_buffer;
+            draw_desc.index_buffer.format = KURO_GFX_FORMAT_R16_UINT;
+            draw_desc.count = 6;
             kuro_gfx_commands_draw(commands, draw_desc);
 
             kuro_gfx_commands_pass_end(commands, pass);
@@ -169,6 +178,7 @@ main()
     }
 
     // release resources
+    kuro_gfx_buffer_destroy(gfx, index_buffer);
     kuro_gfx_buffer_destroy(gfx, vertex_buffer);
     kuro_gfx_image_destroy(gfx, depth_target);
     kuro_gfx_pipeline_destroy(gfx, pipeline);

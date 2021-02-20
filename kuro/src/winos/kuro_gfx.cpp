@@ -83,6 +83,10 @@ _kuro_gfx_format_to_dx(KURO_GFX_FORMAT format)
 {
     switch (format)
     {
+        case KURO_GFX_FORMAT_R16_UINT:
+            return DXGI_FORMAT_R16_UINT;
+        case KURO_GFX_FORMAT_R32_UINT:
+            return DXGI_FORMAT_R32_UINT;
         case KURO_GFX_FORMAT_R32G32_FLOAT:
             return DXGI_FORMAT_R32G32_FLOAT;
         case KURO_GFX_FORMAT_R32G32B32_FLOAT:
@@ -801,7 +805,6 @@ kuro_gfx_commands_draw(Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc)
     commands->command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     D3D12_VERTEX_BUFFER_VIEW vertex_buffer_views[KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES] = {};
-
     for (uint32_t i = 0; i < KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES; ++i)
     {
         Kuro_Gfx_Buffer vertex_buffer = desc.vertex_buffers[i].buffer;
@@ -814,7 +817,26 @@ kuro_gfx_commands_draw(Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc)
         vertex_buffer_views[i].StrideInBytes = desc.vertex_buffers[i].stride;
     }
     commands->command_list->IASetVertexBuffers(0, KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES, vertex_buffer_views);
-    commands->command_list->DrawInstanced(desc.count, 1, desc.offset, 0);
+
+    if (desc.index_buffer.buffer)
+    {
+        assert(desc.index_buffer.format == KURO_GFX_FORMAT_R16_UINT || desc.index_buffer.format == KURO_GFX_FORMAT_R32_UINT);
+
+        ID3D12Resource *buffer = desc.index_buffer.buffer->usage == KURO_GFX_USAGE_STATIC ?
+            desc.index_buffer.buffer->default_buffer : desc.index_buffer.buffer->upload_buffer;
+
+        D3D12_INDEX_BUFFER_VIEW index_buffer_view = {};
+        index_buffer_view.BufferLocation = buffer->GetGPUVirtualAddress();
+        index_buffer_view.SizeInBytes = desc.index_buffer.buffer->size_in_bytes;
+        index_buffer_view.Format = _kuro_gfx_format_to_dx(desc.index_buffer.format);
+        commands->command_list->IASetIndexBuffer(&index_buffer_view);
+
+        commands->command_list->DrawIndexedInstanced(desc.count, 1, 0, 0, 0);
+    }
+    else
+    {
+        commands->command_list->DrawInstanced(desc.count, 1, 0, 0);
+    }
 }
 
 void

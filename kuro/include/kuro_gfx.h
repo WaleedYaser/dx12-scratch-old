@@ -34,6 +34,8 @@ typedef enum KURO_GFX_USAGE {
 
 typedef enum KURO_GFX_FORMAT {
     KURO_GFX_FORMAT_NONE,
+    KURO_GFX_FORMAT_R16_UINT,
+    KURO_GFX_FORMAT_R32_UINT,
     KURO_GFX_FORMAT_R32G32_FLOAT,
     KURO_GFX_FORMAT_R32G32B32_FLOAT
 } KURO_GFX_FORMAT;
@@ -62,6 +64,11 @@ typedef struct Kuro_Gfx_Vertex_Buffer_Desc {
     uint32_t stride;
 } Kuro_Gfx_Vertex_Buffer_Desc;
 
+typedef struct Kuro_Gfx_Index_Buffer_Desc {
+    Kuro_Gfx_Buffer buffer;
+    KURO_GFX_FORMAT format;
+} Kuro_Gfx_Index_Buffer_Desc;
+
 typedef struct Kuro_Gfx_Pipeline_Desc {
     Kuro_Gfx_Vertex_Shader vertex_shader;
     Kuro_Gfx_Pixel_Shader pixel_shader;
@@ -71,8 +78,8 @@ typedef struct Kuro_Gfx_Pipeline_Desc {
 typedef struct Kuro_Gfx_Draw_Desc {
     KURO_GFX_PRIMITIVE primitive;
     Kuro_Gfx_Vertex_Buffer_Desc vertex_buffers[KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES];
+    Kuro_Gfx_Index_Buffer_Desc index_buffer;
     uint32_t count;
-    uint32_t offset;
 } Kuro_Gfx_Draw_Desc;
 
 KURO_GFX_API Kuro_Gfx kuro_gfx_create();
