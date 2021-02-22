@@ -70,6 +70,11 @@ main()
     Kuro_Gfx_Pass pass =kuro_gfx_pass_from_swapchain(gfx, swapchain);
 
     const char shader[] = R"(
+        cbuffer Constant_Buffer : register(b0)
+        {
+            float t;
+        };
+
         struct PS_Input
         {
             float4 position : SV_POSITION;
@@ -80,7 +85,7 @@ main()
         {
             PS_Input output;
             output.position = float4(pos, 0.0f, 1.0f);
-            output.color = color;
+            output.color = t * color;
             return output;
         }
 
@@ -131,6 +136,9 @@ main()
     kuro_gfx_buffer_destroy(gfx, vertex_upload_buffer);
     kuro_gfx_buffer_destroy(gfx, index_upload_buffer);
 
+    Kuro_Gfx_Buffer constant_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_WRITE, 256);
+    kuro_gfx_pipeline_set_constant_buffer(gfx, pipeline, constant_buffer, 0);
+
     bool running = true;
     while (running)
     {
@@ -164,9 +172,12 @@ main()
             kuro_gfx_sync(gfx);
         }
 
+        float t = 0.5f;
+        kuro_gfx_buffer_write(gfx, constant_buffer, &t, sizeof(t));
+
         kuro_gfx_commands_begin(gfx, commands);
         {
-            kuro_gfx_commands_pipeline(commands, pipeline);
+            kuro_gfx_commands_set_pipeline(commands, pipeline);
             kuro_gfx_commands_pass_begin(commands, pass, depth_target);
             kuro_gfx_commands_viewport(commands, window_width, window_height);
 
@@ -189,6 +200,7 @@ main()
     }
 
     // release resources
+    kuro_gfx_buffer_destroy(gfx, constant_buffer);
     kuro_gfx_buffer_destroy(gfx, index_buffer);
     kuro_gfx_buffer_destroy(gfx, vertex_buffer);
     kuro_gfx_image_destroy(gfx, depth_target);

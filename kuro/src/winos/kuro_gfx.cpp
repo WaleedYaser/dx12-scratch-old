@@ -64,6 +64,7 @@ typedef struct _Kuro_Gfx_Pixel_Shader {
 typedef struct _Kuro_Gfx_Pipeline {
     ID3D12PipelineState *pipeline_state;
     ID3D12RootSignature *root_signature;
+    ID3D12DescriptorHeap *cbv_heap;
 } _Kuro_Gfx_Pipeline;
 
 typedef struct _Kuro_Gfx_Pass {
@@ -443,10 +444,8 @@ kuro_gfx_buffer_write(Kuro_Gfx, Kuro_Gfx_Buffer buffer, void *data, uint32_t siz
 
     HRESULT hr = {};
 
-    D3D12_RANGE read_range = {};
     void *mapped_data = nullptr;
-
-    hr = buffer->buffer->Map(0, &read_range, &mapped_data);
+    hr = buffer->buffer->Map(0, nullptr, &mapped_data);
     assert(SUCCEEDED(hr));
     memcpy(mapped_data, data, size_in_bytes);
     buffer->buffer->Unmap(0, nullptr);
@@ -522,19 +521,36 @@ Kuro_Gfx_Pipeline
 kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc)
 {
     assert(desc.vertex_shader);
-    assert(desc.pixel_shader);
 
     Kuro_Gfx_Pipeline pipeline = (Kuro_Gfx_Pipeline)malloc(sizeof(_Kuro_Gfx_Pipeline));
 
     HRESULT hr = {};
 
+    D3D12_DESCRIPTOR_RANGE descriptor_range = {};
+    descriptor_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+    descriptor_range.NumDescriptors = 1;
+    descriptor_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+    D3D12_ROOT_PARAMETER root_parameter = {};
+    root_parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    root_parameter.DescriptorTable.NumDescriptorRanges = 1;
+    root_parameter.DescriptorTable.pDescriptorRanges = &descriptor_range;
+    root_parameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
     D3D12_ROOT_SIGNATURE_DESC root_signature_desc = {};
+    root_signature_desc.NumParameters = 1;
+    root_signature_desc.pParameters = &root_parameter;
     root_signature_desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
     ID3DBlob *signature_blob = nullptr;
     ID3DBlob *error_blob = nullptr;
     hr = D3D12SerializeRootSignature(&root_signature_desc, D3D_ROOT_SIGNATURE_VERSION_1, &signature_blob, &error_blob);
-    assert(SUCCEEDED(hr));
+    if (FAILED(hr))
+    {
+        OutputDebugStringA((char *)error_blob->GetBufferPointer());
+        OutputDebugStringA("\n");
+        assert(false);
+    }
     hr = gfx->device->CreateRootSignature(0, signature_blob->GetBufferPointer(), signature_blob->GetBufferSize(), IID_PPV_ARGS(&pipeline->root_signature));
     assert(SUCCEEDED(hr));
     signature_blob->Release();
@@ -545,6 +561,16 @@ kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc)
 
     D3D12_SHADER_DESC shader_desc = {};
     reflection->GetDesc(&shader_desc);
+
+    if (shader_desc.ConstantBuffers > 0)
+    {
+        D3D12_DESCRIPTOR_HEAP_DESC cbv_heap_desc = {};
+        cbv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        cbv_heap_desc.NumDescriptors = shader_desc.ConstantBuffers;
+        cbv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+        hr = gfx->device->CreateDescriptorHeap(&cbv_heap_desc, IID_PPV_ARGS(&pipeline->cbv_heap));
+        assert(SUCCEEDED(hr));
+    }
 
     D3D12_INPUT_ELEMENT_DESC *input_element_desc = (D3D12_INPUT_ELEMENT_DESC *)calloc(shader_desc.InputParameters, sizeof(D3D12_INPUT_ELEMENT_DESC));
     for (uint32_t i = 0; i < shader_desc.InputParameters; ++i)
@@ -565,8 +591,11 @@ kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc)
     pipeline_desc.pRootSignature = pipeline->root_signature;
     pipeline_desc.VS.pShaderBytecode = desc.vertex_shader->blob->GetBufferPointer();
     pipeline_desc.VS.BytecodeLength = desc.vertex_shader->blob->GetBufferSize();
-    pipeline_desc.PS.pShaderBytecode = desc.pixel_shader->blob->GetBufferPointer();
-    pipeline_desc.PS.BytecodeLength = desc.pixel_shader->blob->GetBufferSize();
+    if (desc.pixel_shader)
+    {
+        pipeline_desc.PS.pShaderBytecode = desc.pixel_shader->blob->GetBufferPointer();
+        pipeline_desc.PS.BytecodeLength = desc.pixel_shader->blob->GetBufferSize();
+    }
     for (int i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
     {
         pipeline_desc.BlendState.RenderTarget[i].BlendEnable = FALSE;
@@ -614,6 +643,22 @@ kuro_gfx_pipeline_destroy(Kuro_Gfx, Kuro_Gfx_Pipeline pipeline)
 {
     pipeline->pipeline_state->Release();
     pipeline->root_signature->Release();
+    pipeline->cbv_heap->Release();
+}
+
+void
+kuro_gfx_pipeline_set_constant_buffer(Kuro_Gfx gfx, Kuro_Gfx_Pipeline pipeline, Kuro_Gfx_Buffer buffer, uint32_t slot)
+{
+    assert(buffer->size_in_bytes % 256 == 0);
+
+    D3D12_CONSTANT_BUFFER_VIEW_DESC cbv_desc = {};
+    cbv_desc.BufferLocation = buffer->buffer->GetGPUVirtualAddress();
+    cbv_desc.SizeInBytes = buffer->size_in_bytes;
+
+    // TODO[Waleed]: get cbv_descriptor size
+    D3D12_CPU_DESCRIPTOR_HANDLE cbv_descreptor = pipeline->cbv_heap->GetCPUDescriptorHandleForHeapStart();
+    cbv_descreptor.ptr += (slot * gfx->rtv_desctiptor_size);
+    gfx->device->CreateConstantBufferView(&cbv_desc, cbv_descreptor);
 }
 
 Kuro_Gfx_Pass
@@ -705,10 +750,14 @@ kuro_gfx_commands_buffer_copy(Kuro_Gfx_Commands commands, Kuro_Gfx_Buffer src_bu
 }
 
 void
-kuro_gfx_commands_pipeline(Kuro_Gfx_Commands commands, Kuro_Gfx_Pipeline pipeline)
+kuro_gfx_commands_set_pipeline(Kuro_Gfx_Commands commands, Kuro_Gfx_Pipeline pipeline)
 {
     commands->command_list->SetPipelineState(pipeline->pipeline_state);
     commands->command_list->SetGraphicsRootSignature(pipeline->root_signature);
+
+    ID3D12DescriptorHeap *descriptor_heaps[] = {pipeline->cbv_heap};
+    commands->command_list->SetDescriptorHeaps(1, descriptor_heaps);
+    commands->command_list->SetGraphicsRootDescriptorTable(0, pipeline->cbv_heap->GetGPUDescriptorHandleForHeapStart());
 }
 
 void

@@ -105,6 +105,7 @@ KURO_GFX_API void kuro_gfx_pixel_shader_destroy(Kuro_Gfx gfx, Kuro_Gfx_Pixel_Sha
 
 KURO_GFX_API Kuro_Gfx_Pipeline kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc);
 KURO_GFX_API void kuro_gfx_pipeline_destroy(Kuro_Gfx gfx, Kuro_Gfx_Pipeline pipeline);
+KURO_GFX_API void kuro_gfx_pipeline_set_constant_buffer(Kuro_Gfx gfx, Kuro_Gfx_Pipeline pipeline, Kuro_Gfx_Buffer buffer, uint32_t slot);
 
 KURO_GFX_API Kuro_Gfx_Pass kuro_gfx_pass_from_swapchain(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain);
 KURO_GFX_API void kuro_gfx_pass_free(Kuro_Gfx gfx, Kuro_Gfx_Pass pass);
@@ -116,8 +117,7 @@ KURO_GFX_API void kuro_gfx_commands_begin(Kuro_Gfx gfx, Kuro_Gfx_Commands comman
 KURO_GFX_API void kuro_gfx_commands_end(Kuro_Gfx gfx, Kuro_Gfx_Commands commands);
 
 KURO_GFX_API void kuro_gfx_commands_buffer_copy(Kuro_Gfx_Commands commands, Kuro_Gfx_Buffer src_buffer, Kuro_Gfx_Buffer dst_buffer);
-KURO_GFX_API void kuro_gfx_commands_pipeline(Kuro_Gfx_Commands commands, Kuro_Gfx_Pipeline pipeline);
-KURO_GFX_API void kuro_gfx_commands_upload(Kuro_Gfx_Commands commands, Kuro_Gfx_Buffer static_buffer);
+KURO_GFX_API void kuro_gfx_commands_set_pipeline(Kuro_Gfx_Commands commands, Kuro_Gfx_Pipeline pipeline);
 KURO_GFX_API void kuro_gfx_commands_pass_begin(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Image depth_target);
 KURO_GFX_API void kuro_gfx_commands_pass_end(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass);
 KURO_GFX_API void kuro_gfx_commands_viewport(Kuro_Gfx_Commands commands, uint32_t width, uint32_t height);
