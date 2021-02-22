@@ -113,12 +113,23 @@ main()
         0, 3, 2
     };
 
+    Kuro_Gfx_Buffer vertex_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_NONE, sizeof(vertices));
+    Kuro_Gfx_Buffer vertex_upload_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_WRITE, sizeof(vertices));
+    kuro_gfx_buffer_write(gfx, vertex_upload_buffer, vertices, sizeof(vertices));
+
+    Kuro_Gfx_Buffer index_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_NONE, sizeof(indices));
+    Kuro_Gfx_Buffer index_upload_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_WRITE, sizeof(indices));
+    kuro_gfx_buffer_write(gfx, index_upload_buffer, indices, sizeof(indices));
+
     kuro_gfx_commands_begin(gfx, commands);
     Kuro_Gfx_Image depth_target = kuro_gfx_image_create(gfx, commands, window_width, window_height);
-    Kuro_Gfx_Buffer vertex_buffer = kuro_gfx_buffer_static_create(gfx, commands, &vertices, sizeof(vertices));
-    Kuro_Gfx_Buffer index_buffer = kuro_gfx_buffer_static_create(gfx, commands, &indices, sizeof(indices));
+    kuro_gfx_commands_buffer_copy(commands, vertex_upload_buffer, vertex_buffer);
+    kuro_gfx_commands_buffer_copy(commands, index_upload_buffer, index_buffer);
     kuro_gfx_commands_end(gfx, commands);
-    kuro_gfx_flush(gfx);
+    kuro_gfx_sync(gfx);
+
+    kuro_gfx_buffer_destroy(gfx, vertex_upload_buffer);
+    kuro_gfx_buffer_destroy(gfx, index_upload_buffer);
 
     bool running = true;
     while (running)
@@ -150,7 +161,7 @@ main()
             kuro_gfx_commands_begin(gfx, commands);
             depth_target = kuro_gfx_image_create(gfx, commands, window_width, window_height);
             kuro_gfx_commands_end(gfx, commands);
-            kuro_gfx_flush(gfx);
+            kuro_gfx_sync(gfx);
         }
 
         kuro_gfx_commands_begin(gfx, commands);
@@ -174,7 +185,7 @@ main()
         }
         kuro_gfx_commands_end(gfx, commands);
         kuro_gfx_swapchain_present(gfx, swapchain);
-        kuro_gfx_flush(gfx);
+        kuro_gfx_sync(gfx);
     }
 
     // release resources

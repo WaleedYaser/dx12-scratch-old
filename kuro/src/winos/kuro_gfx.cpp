@@ -1,8 +1,6 @@
 /*
     TODO[Waleed]:
-    * create swapchain without depth
     * use pool
-    * create static buffer
     * test MSAA
  */
 
@@ -50,9 +48,8 @@ typedef struct _Kuro_Gfx_Image {
 } _Kuro_Gfx_Image;
 
 typedef struct _Kuro_Gfx_Buffer {
-    KURO_GFX_USAGE usage;
-    ID3D12Resource *default_buffer;
-    ID3D12Resource *upload_buffer;
+    KURO_GFX_ACCESS cpu_access;
+    ID3D12Resource *buffer;
     uint32_t size_in_bytes;
 } _Kuro_Gfx_Buffer;
 
@@ -376,100 +373,41 @@ kuro_gfx_image_destroy(Kuro_Gfx, Kuro_Gfx_Image image)
 }
 
 Kuro_Gfx_Buffer
-kuro_gfx_buffer_static_create(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, void *initial_data, uint32_t size_in_bytes)
+kuro_gfx_buffer_create(Kuro_Gfx gfx, KURO_GFX_ACCESS cpu_access, uint32_t size_in_bytes)
 {
     Kuro_Gfx_Buffer buffer = (Kuro_Gfx_Buffer)malloc(sizeof(_Kuro_Gfx_Buffer));
 
-    buffer->usage = KURO_GFX_USAGE_STATIC;
-    buffer->default_buffer = nullptr;
-    buffer->upload_buffer = nullptr;
-    buffer->size_in_bytes = size_in_bytes;
-
-    HRESULT hr = {};
-
-    {
-        D3D12_HEAP_PROPERTIES heap_properties = {};
-        heap_properties.Type = D3D12_HEAP_TYPE_DEFAULT;
-
-        D3D12_RESOURCE_DESC resource_desc = {};
-        resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        resource_desc.Width = size_in_bytes;
-        resource_desc.Height = 1;
-        resource_desc.DepthOrArraySize = 1;
-        resource_desc.MipLevels = 1;
-        resource_desc.SampleDesc.Count = 1;
-        resource_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        hr = gfx->device->CreateCommittedResource(
-            &heap_properties,
-            D3D12_HEAP_FLAG_NONE,
-            &resource_desc,
-            D3D12_RESOURCE_STATE_COMMON,
-            nullptr,
-            IID_PPV_ARGS(&buffer->default_buffer));
-        assert(SUCCEEDED(hr));
-    }
-
-    {
-        D3D12_HEAP_PROPERTIES heap_properties = {};
-        heap_properties.Type = D3D12_HEAP_TYPE_UPLOAD;
-
-        D3D12_RESOURCE_DESC resource_desc = {};
-        resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        resource_desc.Width = size_in_bytes;
-        resource_desc.Height = 1;
-        resource_desc.DepthOrArraySize = 1;
-        resource_desc.MipLevels = 1;
-        resource_desc.SampleDesc.Count = 1;
-        resource_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        hr = gfx->device->CreateCommittedResource(
-            &heap_properties,
-            D3D12_HEAP_FLAG_NONE,
-            &resource_desc,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            IID_PPV_ARGS(&buffer->upload_buffer));
-        assert(SUCCEEDED(hr));
-    }
-
-    D3D12_RANGE read_range = {};
-    void *mapped_data = nullptr;
-
-    hr = buffer->upload_buffer->Map(0, &read_range, &mapped_data);
-    assert(SUCCEEDED(hr));
-    memcpy(mapped_data, initial_data, size_in_bytes);
-    buffer->upload_buffer->Unmap(0, nullptr);
-
-    D3D12_RESOURCE_BARRIER resource_barrier = {};
-    resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    resource_barrier.Transition.pResource = buffer->default_buffer;
-    resource_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
-    resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
-    commands->command_list->ResourceBarrier(1, &resource_barrier);
-
-    commands->command_list->CopyBufferRegion(buffer->default_buffer, 0, buffer->upload_buffer, 0, size_in_bytes);
-
-    resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-    resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
-    commands->command_list->ResourceBarrier(1, &resource_barrier);
-
-    return buffer;
-}
-
-Kuro_Gfx_Buffer
-kuro_gfx_buffer_dynamic_create(Kuro_Gfx gfx, void *initial_data, uint32_t size_in_bytes)
-{
-    Kuro_Gfx_Buffer buffer = (Kuro_Gfx_Buffer)malloc(sizeof(_Kuro_Gfx_Buffer));
-
-    buffer->usage = KURO_GFX_USAGE_DYNAMIC;
-    buffer->default_buffer = nullptr;
-    buffer->upload_buffer = nullptr;
+    buffer->cpu_access = cpu_access;
+    buffer->buffer = nullptr;
     buffer->size_in_bytes = size_in_bytes;
 
     HRESULT hr = {};
 
     D3D12_HEAP_PROPERTIES heap_properties = {};
-    heap_properties.Type = D3D12_HEAP_TYPE_UPLOAD;
+    switch (buffer->cpu_access)
+    {
+        case KURO_GFX_ACCESS_NONE:
+            heap_properties.Type = D3D12_HEAP_TYPE_DEFAULT;
+            break;
+        case KURO_GFX_ACCESS_WRITE:
+            heap_properties.Type = D3D12_HEAP_TYPE_UPLOAD;
+            break;
+        default:
+            assert(false); break;
+    }
+
+    D3D12_RESOURCE_STATES initial_state = {};
+    switch (buffer->cpu_access)
+    {
+        case KURO_GFX_ACCESS_NONE:
+            initial_state = D3D12_RESOURCE_STATE_COMMON;
+            break;
+        case KURO_GFX_ACCESS_WRITE:
+            initial_state = D3D12_RESOURCE_STATE_GENERIC_READ;
+            break;
+        default:
+            assert(false); break;
+    }
 
     D3D12_RESOURCE_DESC resource_desc = {};
     resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
@@ -483,18 +421,10 @@ kuro_gfx_buffer_dynamic_create(Kuro_Gfx gfx, void *initial_data, uint32_t size_i
         &heap_properties,
         D3D12_HEAP_FLAG_NONE,
         &resource_desc,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
+        initial_state,
         nullptr,
-        IID_PPV_ARGS(&buffer->upload_buffer));
+        IID_PPV_ARGS(&buffer->buffer));
     assert(SUCCEEDED(hr));
-
-    D3D12_RANGE read_range = {};
-    void *mapped_data = nullptr;
-
-    hr = buffer->upload_buffer->Map(0, &read_range, &mapped_data);
-    assert(SUCCEEDED(hr));
-    memcpy(mapped_data, initial_data, size_in_bytes);
-    buffer->upload_buffer->Unmap(0, nullptr);
 
     return buffer;
 }
@@ -502,8 +432,24 @@ kuro_gfx_buffer_dynamic_create(Kuro_Gfx gfx, void *initial_data, uint32_t size_i
 void
 kuro_gfx_buffer_destroy(Kuro_Gfx, Kuro_Gfx_Buffer buffer)
 {
-    if (buffer->upload_buffer) buffer->upload_buffer->Release();
-    if (buffer->default_buffer) buffer->default_buffer->Release();
+    buffer->buffer->Release();
+    free(buffer);
+}
+
+void
+kuro_gfx_buffer_write(Kuro_Gfx, Kuro_Gfx_Buffer buffer, void *data, uint32_t size_in_bytes)
+{
+    assert(buffer->cpu_access == KURO_GFX_ACCESS_WRITE);
+
+    HRESULT hr = {};
+
+    D3D12_RANGE read_range = {};
+    void *mapped_data = nullptr;
+
+    hr = buffer->buffer->Map(0, &read_range, &mapped_data);
+    assert(SUCCEEDED(hr));
+    memcpy(mapped_data, data, size_in_bytes);
+    buffer->buffer->Unmap(0, nullptr);
 }
 
 Kuro_Gfx_Vertex_Shader
@@ -735,6 +681,29 @@ kuro_gfx_commands_end(Kuro_Gfx gfx, Kuro_Gfx_Commands commands)
     gfx->command_queue->ExecuteCommandLists(1, cmd_lists);
 }
 
+
+void
+kuro_gfx_commands_buffer_copy(Kuro_Gfx_Commands commands, Kuro_Gfx_Buffer src_buffer, Kuro_Gfx_Buffer dst_buffer)
+{
+    // TODO[Waleed]: cpu access doesn't matter here, we should check the state instead
+    assert(src_buffer->cpu_access == KURO_GFX_ACCESS_WRITE);
+    assert(dst_buffer->cpu_access == KURO_GFX_ACCESS_NONE);
+
+    D3D12_RESOURCE_BARRIER resource_barrier = {};
+    resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    resource_barrier.Transition.pResource = dst_buffer->buffer;
+    resource_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+    resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
+    commands->command_list->ResourceBarrier(1, &resource_barrier);
+
+    commands->command_list->CopyBufferRegion(dst_buffer->buffer, 0, src_buffer->buffer, 0, src_buffer->size_in_bytes);
+
+    resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+    resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
+    commands->command_list->ResourceBarrier(1, &resource_barrier);
+}
+
 void
 kuro_gfx_commands_pipeline(Kuro_Gfx_Commands commands, Kuro_Gfx_Pipeline pipeline)
 {
@@ -811,8 +780,7 @@ kuro_gfx_commands_draw(Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc)
         if (vertex_buffer == nullptr)
             continue;
 
-        ID3D12Resource *buffer = vertex_buffer->usage == KURO_GFX_USAGE_STATIC ? vertex_buffer->default_buffer : vertex_buffer->upload_buffer;
-        vertex_buffer_views[i].BufferLocation = buffer->GetGPUVirtualAddress();
+        vertex_buffer_views[i].BufferLocation = vertex_buffer->buffer->GetGPUVirtualAddress();
         vertex_buffer_views[i].SizeInBytes = vertex_buffer->size_in_bytes;
         vertex_buffer_views[i].StrideInBytes = desc.vertex_buffers[i].stride;
     }
@@ -822,11 +790,8 @@ kuro_gfx_commands_draw(Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc)
     {
         assert(desc.index_buffer.format == KURO_GFX_FORMAT_R16_UINT || desc.index_buffer.format == KURO_GFX_FORMAT_R32_UINT);
 
-        ID3D12Resource *buffer = desc.index_buffer.buffer->usage == KURO_GFX_USAGE_STATIC ?
-            desc.index_buffer.buffer->default_buffer : desc.index_buffer.buffer->upload_buffer;
-
         D3D12_INDEX_BUFFER_VIEW index_buffer_view = {};
-        index_buffer_view.BufferLocation = buffer->GetGPUVirtualAddress();
+        index_buffer_view.BufferLocation = desc.index_buffer.buffer->buffer->GetGPUVirtualAddress();
         index_buffer_view.SizeInBytes = desc.index_buffer.buffer->size_in_bytes;
         index_buffer_view.Format = _kuro_gfx_format_to_dx(desc.index_buffer.format);
         commands->command_list->IASetIndexBuffer(&index_buffer_view);
@@ -840,7 +805,7 @@ kuro_gfx_commands_draw(Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc)
 }
 
 void
-kuro_gfx_flush(Kuro_Gfx gfx)
+kuro_gfx_sync(Kuro_Gfx gfx)
 {
     // advance fence value to mark commands up to this fence point
     gfx->current_fence++;

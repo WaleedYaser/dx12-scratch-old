@@ -27,10 +27,11 @@ typedef enum KURO_CONSTANT {
     KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES = 16
 } KURO_CONSTANT;
 
-typedef enum KURO_GFX_USAGE {
-    KURO_GFX_USAGE_STATIC,
-    KURO_GFX_USAGE_DYNAMIC
-} KURO_GFX_USAGE;
+typedef enum KURO_GFX_ACCESS {
+    KURO_GFX_ACCESS_NONE,
+    KURO_GFX_ACCESS_READ,
+    KURO_GFX_ACCESS_WRITE
+} KURO_GFX_ACCESS;
 
 typedef enum KURO_GFX_FORMAT {
     KURO_GFX_FORMAT_NONE,
@@ -93,9 +94,9 @@ KURO_GFX_API void kuro_gfx_swapchain_present(Kuro_Gfx gfx, Kuro_Gfx_Swapchain sw
 KURO_GFX_API Kuro_Gfx_Image kuro_gfx_image_create(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, uint32_t width, uint32_t height);
 KURO_GFX_API void kuro_gfx_image_destroy(Kuro_Gfx gfx, Kuro_Gfx_Image image);
 
-KURO_GFX_API Kuro_Gfx_Buffer kuro_gfx_buffer_static_create(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, void *initial_data, uint32_t size_in_bytes);
-KURO_GFX_API Kuro_Gfx_Buffer kuro_gfx_buffer_dynamic_create(Kuro_Gfx gfx, void *initial_data, uint32_t size_in_bytes);
+KURO_GFX_API Kuro_Gfx_Buffer kuro_gfx_buffer_create(Kuro_Gfx gfx, KURO_GFX_ACCESS cpu_access, uint32_t size_in_bytes);
 KURO_GFX_API void kuro_gfx_buffer_destroy(Kuro_Gfx gfx, Kuro_Gfx_Buffer buffer);
+KURO_GFX_API void kuro_gfx_buffer_write(Kuro_Gfx gfx, Kuro_Gfx_Buffer buffer, void *data, uint32_t size_in_bytes);
 
 KURO_GFX_API Kuro_Gfx_Vertex_Shader kuro_gfx_vertex_shader_create(Kuro_Gfx gfx, const char *shader, const char *entry_point);
 KURO_GFX_API void kuro_gfx_vertex_shader_destroy(Kuro_Gfx gfx, Kuro_Gfx_Vertex_Shader vertex_shader);
@@ -114,6 +115,7 @@ KURO_GFX_API void kuro_gfx_commands_destroy(Kuro_Gfx gfx, Kuro_Gfx_Commands comm
 KURO_GFX_API void kuro_gfx_commands_begin(Kuro_Gfx gfx, Kuro_Gfx_Commands commands);
 KURO_GFX_API void kuro_gfx_commands_end(Kuro_Gfx gfx, Kuro_Gfx_Commands commands);
 
+KURO_GFX_API void kuro_gfx_commands_buffer_copy(Kuro_Gfx_Commands commands, Kuro_Gfx_Buffer src_buffer, Kuro_Gfx_Buffer dst_buffer);
 KURO_GFX_API void kuro_gfx_commands_pipeline(Kuro_Gfx_Commands commands, Kuro_Gfx_Pipeline pipeline);
 KURO_GFX_API void kuro_gfx_commands_upload(Kuro_Gfx_Commands commands, Kuro_Gfx_Buffer static_buffer);
 KURO_GFX_API void kuro_gfx_commands_pass_begin(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Image depth_target);
@@ -123,7 +125,7 @@ KURO_GFX_API void kuro_gfx_commands_clear_color(Kuro_Gfx_Commands commands, Kuro
 KURO_GFX_API void kuro_gfx_commands_clear_depth(Kuro_Gfx_Commands commands, Kuro_Gfx_Image depth_target, float value);
 KURO_GFX_API void kuro_gfx_commands_draw(Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc);
 
-KURO_GFX_API void kuro_gfx_flush(Kuro_Gfx gfx);
+KURO_GFX_API void kuro_gfx_sync(Kuro_Gfx gfx);
 
 #ifdef __cplusplus
 } // extern "C"
