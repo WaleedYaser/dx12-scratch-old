@@ -70,6 +70,7 @@ kr_window_destroy(kr_window_t *window)
     bool res = false;
     res = DestroyWindow(window->handle);
     assert(res && "failed to destroy window");
+    free(window);
 }
 
 bool
