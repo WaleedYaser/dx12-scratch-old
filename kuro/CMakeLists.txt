@@ -2,15 +2,15 @@ cmake_minimum_required(VERSION 3.10)
 
 set(HEADER_FILES
     include/kuro/window.h
+    include/kuro/gfx.h
     include/kuro/kuro_math.h
     include/kuro/kuro_os.h
-    include/kuro/kuro_gfx.h
 )
 
 if (WIN32)
     set(SOURCE_FILES
         src/kuro/winos/window.c
-        src/kuro/winos/kuro_gfx.cpp
+        src/kuro/winos/gfx.cpp
         src/kuro/winos/kuro_os.cpp
     )
 elseif(UNIX)

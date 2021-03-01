@@ -1,5 +1,5 @@
 #include <kuro/window.h>
-#include <kuro/kuro_gfx.h>
+#include <kuro/gfx.h>
 
 int main()
 {

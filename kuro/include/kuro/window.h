@@ -19,5 +19,5 @@ void kr_window_destroy(kr_window_t *window);
 bool kr_window_update(kr_window_t *window);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif;
