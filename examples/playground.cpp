@@ -99,7 +99,7 @@ int main()
             kuro_gfx_sync(gfx);
         }
 
-        float t = 0.5f;
+        float t = (float)window->input.mouse_x / (float)window->width;
         kuro_gfx_buffer_write(gfx, constant_buffer, &t, sizeof(t));
 
         kuro_gfx_commands_begin(gfx, commands);

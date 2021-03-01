@@ -76,23 +76,143 @@ kr_window_destroy(kr_window_t *window)
 bool
 kr_window_update(kr_window_t *window)
 {
-	MSG msg = {0};
-	while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
-	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+    for (int32_t i = 0; i < PLATFORM_KEY_COUNT; ++i)
+    {
+        window->input.keys[i].pressed = false;
+        window->input.keys[i].released = false;
+        window->input.keys[i].press_count = 0;
+        window->input.keys[i].release_count = 0;
+    }
+    window->input.mouse_wheel = 0.0f;
 
-		switch (msg.message)
-		{
-			case WM_QUIT:
-				return false;
-		}
-	}
+    MSG msg = {0};
+    while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
 
-	RECT rect;
-	GetClientRect((HWND)window->handle, &rect);
-	window->width = (uint16_t)(rect.right - rect.left);
-	window->height = (uint16_t)(rect.bottom - rect.top);
+        switch (msg.message)
+        {
+            case WM_QUIT:
+                return false;
+            case WM_LBUTTONDOWN:
+                SetCapture((HWND)window->handle);
+                window->input.keys[PLATFORM_KEY_MOUSE_LEFT].pressed = true;
+                window->input.keys[PLATFORM_KEY_MOUSE_LEFT].down    = true;
+                window->input.keys[PLATFORM_KEY_MOUSE_LEFT].press_count++;
+                break;
+            case WM_LBUTTONUP:
+                SetCapture(NULL);
+                window->input.keys[PLATFORM_KEY_MOUSE_LEFT].released = true;
+                window->input.keys[PLATFORM_KEY_MOUSE_LEFT].down     = false;
+                window->input.keys[PLATFORM_KEY_MOUSE_LEFT].release_count++;
+                break;
 
-	return true;
+            case WM_RBUTTONDOWN:
+                SetCapture((HWND)window->handle);
+                window->input.keys[PLATFORM_KEY_MOUSE_RIGHT].pressed = true;
+                window->input.keys[PLATFORM_KEY_MOUSE_RIGHT].down    = true;
+                window->input.keys[PLATFORM_KEY_MOUSE_RIGHT].press_count++;
+                break;
+            case WM_RBUTTONUP:
+                SetCapture(NULL);
+                window->input.keys[PLATFORM_KEY_MOUSE_RIGHT].released = true;
+                window->input.keys[PLATFORM_KEY_MOUSE_RIGHT].down     = false;
+                window->input.keys[PLATFORM_KEY_MOUSE_RIGHT].release_count++;
+                break;
+
+            case WM_MBUTTONDOWN:
+                SetCapture((HWND)window->handle);
+                window->input.keys[PLATFORM_KEY_MOUSE_MIDDLE].pressed = true;
+                window->input.keys[PLATFORM_KEY_MOUSE_MIDDLE].down    = true;
+                window->input.keys[PLATFORM_KEY_MOUSE_MIDDLE].press_count++;
+                break;
+            case WM_MBUTTONUP:
+                SetCapture(NULL);
+                window->input.keys[PLATFORM_KEY_MOUSE_MIDDLE].released = true;
+                window->input.keys[PLATFORM_KEY_MOUSE_MIDDLE].down     = false;
+                window->input.keys[PLATFORM_KEY_MOUSE_MIDDLE].release_count++;
+                break;
+
+            case WM_MOUSEWHEEL:
+                window->input.mouse_wheel += (float)GET_WHEEL_DELTA_WPARAM(msg.wParam) / (float)WHEEL_DELTA;
+                break;
+            case WM_SYSKEYDOWN:
+            case WM_SYSKEYUP:
+            case WM_KEYDOWN:
+            case WM_KEYUP:
+            {
+                int32_t was_down = (msg.lParam & (1 << 30));
+                int32_t is_down = !(msg.lParam & (1 << 31));
+
+                switch(msg.wParam)
+                {
+                    case 'W':
+                        window->input.keys[PLATFORM_KEY_W].pressed  = is_down;
+                        window->input.keys[PLATFORM_KEY_W].released = was_down;
+                        if(is_down)
+                            window->input.keys[PLATFORM_KEY_W].down = true;
+                        else if(was_down)
+                            window->input.keys[PLATFORM_KEY_W].down = false;
+                        break;
+                    case 'A':
+                        window->input.keys[PLATFORM_KEY_A].pressed  = is_down;
+                        window->input.keys[PLATFORM_KEY_A].released = was_down;
+                        if(is_down)
+                            window->input.keys[PLATFORM_KEY_A].down = true;
+                        else if(was_down)
+                            window->input.keys[PLATFORM_KEY_A].down = false;
+                        break;
+                    case 'S':
+                        window->input.keys[PLATFORM_KEY_S].pressed  = is_down;
+                        window->input.keys[PLATFORM_KEY_S].released = was_down;
+                        if(is_down)
+                            window->input.keys[PLATFORM_KEY_S].down = true;
+                        else if(was_down)
+                            window->input.keys[PLATFORM_KEY_S].down = false;
+                        break;
+                    case 'D':
+                        window->input.keys[PLATFORM_KEY_D].pressed  = is_down;
+                        window->input.keys[PLATFORM_KEY_D].released = was_down;
+                        if(is_down)
+                            window->input.keys[PLATFORM_KEY_D].down = true;
+                        else if(was_down)
+                            window->input.keys[PLATFORM_KEY_D].down = false;
+                        break;
+                    case 'E':
+                        window->input.keys[PLATFORM_KEY_E].pressed  = is_down;
+                        window->input.keys[PLATFORM_KEY_E].released = was_down;
+                        if(is_down)
+                            window->input.keys[PLATFORM_KEY_E].down = true;
+                        else if(was_down)
+                            window->input.keys[PLATFORM_KEY_E].down = false;
+                        break;
+                    case 'Q':
+                        window->input.keys[PLATFORM_KEY_Q].pressed  = is_down;
+                        window->input.keys[PLATFORM_KEY_Q].released = was_down;
+                        if(is_down)
+                            window->input.keys[PLATFORM_KEY_Q].down = true;
+                        else if(was_down)
+                            window->input.keys[PLATFORM_KEY_Q].down = false;
+                        break;
+                }
+            }
+        }
+    }
+
+    POINT mouse_point;
+	GetCursorPos(&mouse_point);
+	ScreenToClient((HWND)window->handle, &mouse_point);
+
+	window->input.mouse_dx = (int16_t)mouse_point.x - window->input.mouse_x;
+	window->input.mouse_dy = (int16_t)mouse_point.y - window->input.mouse_y;
+	window->input.mouse_x  = (int16_t)mouse_point.x;
+	window->input.mouse_y  = (int16_t)mouse_point.y;
+
+    RECT rect;
+    GetClientRect((HWND)window->handle, &rect);
+    window->width = (uint16_t)(rect.right - rect.left);
+    window->height = (uint16_t)(rect.bottom - rect.top);
+
+    return true;
 }
