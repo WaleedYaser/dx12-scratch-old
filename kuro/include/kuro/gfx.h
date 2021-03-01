@@ -3,21 +3,19 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define KURO_GFX_API
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct _Kuro_Gfx *Kuro_Gfx;
-typedef struct _Kuro_Gfx_Swapchain *Kuro_Gfx_Swapchain;
-typedef struct _Kuro_Gfx_Image *Kuro_Gfx_Image;
-typedef struct _Kuro_Gfx_Buffer *Kuro_Gfx_Buffer;
-typedef struct _Kuro_Gfx_Vertex_Shader *Kuro_Gfx_Vertex_Shader;
-typedef struct _Kuro_Gfx_Pixel_Shader *Kuro_Gfx_Pixel_Shader;
-typedef struct _Kuro_Gfx_Pipeline *Kuro_Gfx_Pipeline;
-typedef struct _Kuro_Gfx_Pass *Kuro_Gfx_Pass;
-typedef struct _Kuro_Gfx_Commands *Kuro_Gfx_Commands;
+typedef struct _kr_gfx_t *kr_gfx_t;
+typedef struct _kr_swapchain_t *kr_swapchain_t;
+typedef struct _kr_image_t *kr_image_t;
+typedef struct _kr_buffer_t *kr_buffer_t;
+typedef struct _kr_vshader_t *kr_vshader_t;
+typedef struct _kr_pshader_t *kr_pshader_t;
+typedef struct _kr_pipeline_t *kr_pipeline_t;
+typedef struct _kr_pass_t *kr_pass_t;
+typedef struct _kr_commands_t *kr_commands_t;
 
 typedef enum KURO_CONSTANT {
     KURO_CONSTANT_MAX_RENDER_TARGETS = 8,
@@ -58,18 +56,18 @@ typedef struct Kuro_Gfx_Color {
 } Kuro_Gfx_Color;
 
 typedef struct Kuro_Gfx_Vertex_Buffer_Desc {
-    Kuro_Gfx_Buffer buffer;
+    kr_buffer_t buffer;
     uint32_t stride;
 } Kuro_Gfx_Vertex_Buffer_Desc;
 
 typedef struct Kuro_Gfx_Index_Buffer_Desc {
-    Kuro_Gfx_Buffer buffer;
+    kr_buffer_t buffer;
     KURO_GFX_FORMAT format;
 } Kuro_Gfx_Index_Buffer_Desc;
 
 typedef struct Kuro_Gfx_Pipeline_Desc {
-    Kuro_Gfx_Vertex_Shader vertex_shader;
-    Kuro_Gfx_Pixel_Shader pixel_shader;
+    kr_vshader_t vertex_shader;
+    kr_pshader_t pixel_shader;
     Kuro_Gfx_Vertex_Attribure vertex_attribures[KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES];
 } Kuro_Gfx_Pipeline_Desc;
 
@@ -80,49 +78,49 @@ typedef struct Kuro_Gfx_Draw_Desc {
     uint32_t count;
 } Kuro_Gfx_Draw_Desc;
 
-KURO_GFX_API Kuro_Gfx kuro_gfx_create();
-KURO_GFX_API void kuro_gfx_destroy(Kuro_Gfx gfx);
+kr_gfx_t kuro_gfx_create();
+void kuro_gfx_destroy(kr_gfx_t gfx);
 
-KURO_GFX_API Kuro_Gfx_Swapchain kuro_gfx_swapchain_create(Kuro_Gfx gfx, uint32_t width, uint32_t height, void *window_handle);
-KURO_GFX_API void kuro_gfx_swapchain_destroy(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain);
-KURO_GFX_API void kuro_gfx_swapchain_resize(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height);
-KURO_GFX_API void kuro_gfx_swapchain_present(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain);
+kr_swapchain_t kuro_gfx_swapchain_create(kr_gfx_t gfx, uint32_t width, uint32_t height, void *window_handle);
+void kuro_gfx_swapchain_destroy(kr_gfx_t gfx, kr_swapchain_t swapchain);
+void kuro_gfx_swapchain_resize(kr_gfx_t gfx, kr_swapchain_t swapchain, uint32_t width, uint32_t height);
+void kuro_gfx_swapchain_present(kr_gfx_t gfx, kr_swapchain_t swapchain);
 
-KURO_GFX_API Kuro_Gfx_Image kuro_gfx_image_create(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, uint32_t width, uint32_t height);
-KURO_GFX_API void kuro_gfx_image_destroy(Kuro_Gfx gfx, Kuro_Gfx_Image image);
+kr_image_t kuro_gfx_image_create(kr_gfx_t gfx, kr_commands_t commands, uint32_t width, uint32_t height);
+void kuro_gfx_image_destroy(kr_gfx_t gfx, kr_image_t image);
 
-KURO_GFX_API Kuro_Gfx_Buffer kuro_gfx_buffer_create(Kuro_Gfx gfx, KURO_GFX_ACCESS cpu_access, uint32_t size_in_bytes);
-KURO_GFX_API void kuro_gfx_buffer_destroy(Kuro_Gfx gfx, Kuro_Gfx_Buffer buffer);
-KURO_GFX_API void kuro_gfx_buffer_write(Kuro_Gfx gfx, Kuro_Gfx_Buffer buffer, void *data, uint32_t size_in_bytes);
+kr_buffer_t kuro_gfx_buffer_create(kr_gfx_t gfx, KURO_GFX_ACCESS cpu_access, uint32_t size_in_bytes);
+void kuro_gfx_buffer_destroy(kr_gfx_t gfx, kr_buffer_t buffer);
+void kuro_gfx_buffer_write(kr_gfx_t gfx, kr_buffer_t buffer, void *data, uint32_t size_in_bytes);
 
-KURO_GFX_API Kuro_Gfx_Vertex_Shader kuro_gfx_vertex_shader_create(Kuro_Gfx gfx, const char *shader, const char *entry_point);
-KURO_GFX_API void kuro_gfx_vertex_shader_destroy(Kuro_Gfx gfx, Kuro_Gfx_Vertex_Shader vertex_shader);
-KURO_GFX_API Kuro_Gfx_Pixel_Shader kuro_gfx_pixel_shader_create(Kuro_Gfx gfx, const char *shader, const char *entry_point);
-KURO_GFX_API void kuro_gfx_pixel_shader_destroy(Kuro_Gfx gfx, Kuro_Gfx_Pixel_Shader pixel_shader);
+kr_vshader_t kuro_gfx_vertex_shader_create(kr_gfx_t gfx, const char *shader, const char *entry_point);
+void kuro_gfx_vertex_shader_destroy(kr_gfx_t gfx, kr_vshader_t vertex_shader);
+kr_pshader_t kuro_gfx_pixel_shader_create(kr_gfx_t gfx, const char *shader, const char *entry_point);
+void kuro_gfx_pixel_shader_destroy(kr_gfx_t gfx, kr_pshader_t pixel_shader);
 
-KURO_GFX_API Kuro_Gfx_Pipeline kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc);
-KURO_GFX_API void kuro_gfx_pipeline_destroy(Kuro_Gfx gfx, Kuro_Gfx_Pipeline pipeline);
-KURO_GFX_API void kuro_gfx_pipeline_set_constant_buffer(Kuro_Gfx gfx, Kuro_Gfx_Pipeline pipeline, Kuro_Gfx_Buffer buffer, uint32_t slot);
+kr_pipeline_t kuro_gfx_pipeline_create(kr_gfx_t gfx, Kuro_Gfx_Pipeline_Desc desc);
+void kuro_gfx_pipeline_destroy(kr_gfx_t gfx, kr_pipeline_t pipeline);
+void kuro_gfx_pipeline_set_constant_buffer(kr_gfx_t gfx, kr_pipeline_t pipeline, kr_buffer_t buffer, uint32_t slot);
 
-KURO_GFX_API Kuro_Gfx_Pass kuro_gfx_pass_from_swapchain(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain);
-KURO_GFX_API void kuro_gfx_pass_free(Kuro_Gfx gfx, Kuro_Gfx_Pass pass);
+kr_pass_t kuro_gfx_pass_from_swapchain(kr_gfx_t gfx, kr_swapchain_t swapchain);
+void kuro_gfx_pass_free(kr_gfx_t gfx, kr_pass_t pass);
 
-KURO_GFX_API Kuro_Gfx_Commands kuro_gfx_commands_create(Kuro_Gfx gfx);
-KURO_GFX_API void kuro_gfx_commands_destroy(Kuro_Gfx gfx, Kuro_Gfx_Commands commands);
+kr_commands_t kuro_gfx_commands_create(kr_gfx_t gfx);
+void kuro_gfx_commands_destroy(kr_gfx_t gfx, kr_commands_t commands);
 
-KURO_GFX_API void kuro_gfx_commands_begin(Kuro_Gfx gfx, Kuro_Gfx_Commands commands);
-KURO_GFX_API void kuro_gfx_commands_end(Kuro_Gfx gfx, Kuro_Gfx_Commands commands);
+void kuro_gfx_commands_begin(kr_gfx_t gfx, kr_commands_t commands);
+void kuro_gfx_commands_end(kr_gfx_t gfx, kr_commands_t commands);
 
-KURO_GFX_API void kuro_gfx_commands_buffer_copy(Kuro_Gfx_Commands commands, Kuro_Gfx_Buffer src_buffer, Kuro_Gfx_Buffer dst_buffer);
-KURO_GFX_API void kuro_gfx_commands_set_pipeline(Kuro_Gfx_Commands commands, Kuro_Gfx_Pipeline pipeline);
-KURO_GFX_API void kuro_gfx_commands_pass_begin(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Image depth_target);
-KURO_GFX_API void kuro_gfx_commands_pass_end(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass);
-KURO_GFX_API void kuro_gfx_commands_viewport(Kuro_Gfx_Commands commands, uint32_t width, uint32_t height);
-KURO_GFX_API void kuro_gfx_commands_clear_color(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Color color);
-KURO_GFX_API void kuro_gfx_commands_clear_depth(Kuro_Gfx_Commands commands, Kuro_Gfx_Image depth_target, float value);
-KURO_GFX_API void kuro_gfx_commands_draw(Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc);
+void kuro_gfx_commands_buffer_copy(kr_commands_t commands, kr_buffer_t src_buffer, kr_buffer_t dst_buffer);
+void kuro_gfx_commands_set_pipeline(kr_commands_t commands, kr_pipeline_t pipeline);
+void kuro_gfx_commands_pass_begin(kr_commands_t commands, kr_pass_t pass, kr_image_t depth_target);
+void kuro_gfx_commands_pass_end(kr_commands_t commands, kr_pass_t pass);
+void kuro_gfx_commands_viewport(kr_commands_t commands, uint32_t width, uint32_t height);
+void kuro_gfx_commands_clear_color(kr_commands_t commands, kr_pass_t pass, Kuro_Gfx_Color color);
+void kuro_gfx_commands_clear_depth(kr_commands_t commands, kr_image_t depth_target, float value);
+void kuro_gfx_commands_draw(kr_commands_t commands, Kuro_Gfx_Draw_Desc desc);
 
-KURO_GFX_API void kuro_gfx_sync(Kuro_Gfx gfx);
+void kuro_gfx_sync(kr_gfx_t gfx);
 
 #ifdef __cplusplus
 } // extern "C"

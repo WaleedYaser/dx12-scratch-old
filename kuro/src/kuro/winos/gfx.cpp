@@ -17,7 +17,7 @@
 
 static const int MAX_SWAPCHAIN_BUFFER_COUNT = 3;
 
-typedef struct _Kuro_Gfx {
+typedef struct _kr_gfx_t {
     IDXGIFactory4 *factory;
     ID3D12Device *device;
     ID3D12CommandQueue *command_queue;
@@ -25,9 +25,9 @@ typedef struct _Kuro_Gfx {
     uint32_t dsv_descriptor_size;
     ID3D12Fence *fence;
     uint64_t current_fence;
-} _Kuro_Gfx;
+} _kr_gfx_t;
 
-typedef struct _Kuro_Gfx_Swapchain {
+typedef struct _kr_swapchain_t {
     DXGI_FORMAT backbuffer_format;
     uint32_t buffer_count;
     bool msaa_state;
@@ -36,45 +36,45 @@ typedef struct _Kuro_Gfx_Swapchain {
     ID3D12Resource *buffers[MAX_SWAPCHAIN_BUFFER_COUNT];
     ID3D12DescriptorHeap *rtv_heap;
     D3D12_CPU_DESCRIPTOR_HANDLE rtv_descriptor[MAX_SWAPCHAIN_BUFFER_COUNT];
-} _Kuro_Gfx_Swapchain;
+} _kr_swapchain_t;
 
-typedef struct _Kuro_Gfx_Image {
+typedef struct _kr_image_t {
     DXGI_FORMAT depth_stencil_format;
     bool msaa_state;
     uint32_t msaa_x4_quality;
     ID3D12Resource *depth_stencil_buffer;
     ID3D12DescriptorHeap *dsv_heap;
     D3D12_CPU_DESCRIPTOR_HANDLE dsv_descriptor;
-} _Kuro_Gfx_Image;
+} _kr_image_t;
 
-typedef struct _Kuro_Gfx_Buffer {
+typedef struct _kr_buffer_t {
     KURO_GFX_ACCESS cpu_access;
     ID3D12Resource *buffer;
     uint32_t size_in_bytes;
-} _Kuro_Gfx_Buffer;
+} _kr_buffer_t;
 
-typedef struct _Kuro_Gfx_Vertex_Shader {
+typedef struct _kr_vshader_t {
     ID3DBlob *blob;
-} _Kuro_Gfx_Vertex_Shader;
+} _kr_vshader_t;
 
-typedef struct _Kuro_Gfx_Pixel_Shader {
+typedef struct _kr_pshader_t {
     ID3DBlob *blob;
-} _Kuro_Gfx_Pixel_Shader;
+} _kr_pshader_t;
 
-typedef struct _Kuro_Gfx_Pipeline {
+typedef struct _kr_pipeline_t {
     ID3D12PipelineState *pipeline_state;
     ID3D12RootSignature *root_signature;
     ID3D12DescriptorHeap *cbv_heap;
-} _Kuro_Gfx_Pipeline;
+} _kr_pipeline_t;
 
-typedef struct _Kuro_Gfx_Pass {
-    Kuro_Gfx_Swapchain swapchain;
-} _Kuro_Gfx_Pass;
+typedef struct _kr_pass_t {
+    kr_swapchain_t swapchain;
+} _kr_pass_t;
 
-typedef struct _Kuro_Gfx_Commands {
+typedef struct _kr_commands_t {
     ID3D12CommandAllocator *command_allocator;
     ID3D12GraphicsCommandList *command_list;
-} _Kuro_Gfx_Commands;
+} _kr_commands_t;
 
 static inline DXGI_FORMAT
 _kuro_gfx_format_to_dx(KURO_GFX_FORMAT format)
@@ -108,12 +108,12 @@ _kuro_gfx_class_to_dx(KURO_GFX_CLASS classification)
     }
 }
 
-Kuro_Gfx
+kr_gfx_t
 kuro_gfx_create()
 {
     HRESULT hr = {};
 
-    Kuro_Gfx gfx = (Kuro_Gfx)malloc(sizeof(_Kuro_Gfx));
+    kr_gfx_t gfx = (kr_gfx_t)malloc(sizeof(_kr_gfx_t));
 
     #if defined(DEBUG) || defined(_DEBUG)
     // Enable D3D12 debug layer
@@ -176,7 +176,7 @@ kuro_gfx_create()
 }
 
 void
-kuro_gfx_destroy(Kuro_Gfx gfx)
+kuro_gfx_destroy(kr_gfx_t gfx)
 {
     gfx->fence->Release();
     gfx->command_queue->Release();
@@ -185,12 +185,12 @@ kuro_gfx_destroy(Kuro_Gfx gfx)
     free(gfx);
 }
 
-Kuro_Gfx_Swapchain
-kuro_gfx_swapchain_create(Kuro_Gfx gfx, uint32_t width, uint32_t height, void *window_handle)
+kr_swapchain_t
+kuro_gfx_swapchain_create(kr_gfx_t gfx, uint32_t width, uint32_t height, void *window_handle)
 {
     HRESULT hr = {};
 
-    Kuro_Gfx_Swapchain swapchain = (Kuro_Gfx_Swapchain)malloc(sizeof(_Kuro_Gfx_Swapchain));
+    kr_swapchain_t swapchain = (kr_swapchain_t)malloc(sizeof(_kr_swapchain_t));
     swapchain->backbuffer_format = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapchain->buffer_count = 2;
     swapchain->msaa_state = false;
@@ -261,7 +261,7 @@ kuro_gfx_swapchain_create(Kuro_Gfx gfx, uint32_t width, uint32_t height, void *w
 }
 
 void
-kuro_gfx_swapchain_destroy(Kuro_Gfx, Kuro_Gfx_Swapchain swapchain)
+kuro_gfx_swapchain_destroy(kr_gfx_t, kr_swapchain_t swapchain)
 {
     swapchain->rtv_heap->Release();
     for (uint32_t i = 0; i < swapchain->buffer_count; ++i)
@@ -271,7 +271,7 @@ kuro_gfx_swapchain_destroy(Kuro_Gfx, Kuro_Gfx_Swapchain swapchain)
 }
 
 void
-kuro_gfx_swapchain_resize(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t width, uint32_t height)
+kuro_gfx_swapchain_resize(kr_gfx_t gfx, kr_swapchain_t swapchain, uint32_t width, uint32_t height)
 {
     HRESULT hr = {};
 
@@ -297,16 +297,16 @@ kuro_gfx_swapchain_resize(Kuro_Gfx gfx, Kuro_Gfx_Swapchain swapchain, uint32_t w
 }
 
 void
-kuro_gfx_swapchain_present(Kuro_Gfx, Kuro_Gfx_Swapchain swapchain)
+kuro_gfx_swapchain_present(kr_gfx_t, kr_swapchain_t swapchain)
 {
     HRESULT hr = swapchain->swapchain->Present(0, 0);
     assert(SUCCEEDED(hr));
 }
 
-Kuro_Gfx_Image
-kuro_gfx_image_create(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, uint32_t width, uint32_t height)
+kr_image_t
+kuro_gfx_image_create(kr_gfx_t gfx, kr_commands_t commands, uint32_t width, uint32_t height)
 {
-    Kuro_Gfx_Image image = (Kuro_Gfx_Image)malloc(sizeof(_Kuro_Gfx_Image));
+    kr_image_t image = (kr_image_t)malloc(sizeof(_kr_image_t));
     image->depth_stencil_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
     image->msaa_state = false;
     image->msaa_x4_quality = 0;
@@ -366,17 +366,17 @@ kuro_gfx_image_create(Kuro_Gfx gfx, Kuro_Gfx_Commands commands, uint32_t width, 
 }
 
 void
-kuro_gfx_image_destroy(Kuro_Gfx, Kuro_Gfx_Image image)
+kuro_gfx_image_destroy(kr_gfx_t, kr_image_t image)
 {
     image->dsv_heap->Release();
     image->depth_stencil_buffer->Release();
     free(image);
 }
 
-Kuro_Gfx_Buffer
-kuro_gfx_buffer_create(Kuro_Gfx gfx, KURO_GFX_ACCESS cpu_access, uint32_t size_in_bytes)
+kr_buffer_t
+kuro_gfx_buffer_create(kr_gfx_t gfx, KURO_GFX_ACCESS cpu_access, uint32_t size_in_bytes)
 {
-    Kuro_Gfx_Buffer buffer = (Kuro_Gfx_Buffer)malloc(sizeof(_Kuro_Gfx_Buffer));
+    kr_buffer_t buffer = (kr_buffer_t)malloc(sizeof(_kr_buffer_t));
 
     buffer->cpu_access = cpu_access;
     buffer->buffer = nullptr;
@@ -431,14 +431,14 @@ kuro_gfx_buffer_create(Kuro_Gfx gfx, KURO_GFX_ACCESS cpu_access, uint32_t size_i
 }
 
 void
-kuro_gfx_buffer_destroy(Kuro_Gfx, Kuro_Gfx_Buffer buffer)
+kuro_gfx_buffer_destroy(kr_gfx_t, kr_buffer_t buffer)
 {
     buffer->buffer->Release();
     free(buffer);
 }
 
 void
-kuro_gfx_buffer_write(Kuro_Gfx, Kuro_Gfx_Buffer buffer, void *data, uint32_t size_in_bytes)
+kuro_gfx_buffer_write(kr_gfx_t, kr_buffer_t buffer, void *data, uint32_t size_in_bytes)
 {
     assert(buffer->cpu_access == KURO_GFX_ACCESS_WRITE);
 
@@ -451,10 +451,10 @@ kuro_gfx_buffer_write(Kuro_Gfx, Kuro_Gfx_Buffer buffer, void *data, uint32_t siz
     buffer->buffer->Unmap(0, nullptr);
 }
 
-Kuro_Gfx_Vertex_Shader
-kuro_gfx_vertex_shader_create(Kuro_Gfx, const char *shader, const char *entry_point)
+kr_vshader_t
+kuro_gfx_vertex_shader_create(kr_gfx_t, const char *shader, const char *entry_point)
 {
-    Kuro_Gfx_Vertex_Shader vertex_shader = (Kuro_Gfx_Vertex_Shader)malloc(sizeof(_Kuro_Gfx_Vertex_Shader));
+    kr_vshader_t vertex_shader = (kr_vshader_t)malloc(sizeof(_kr_vshader_t));
 
     UINT compile_flags = 0;
     #if defined(DEBUG) || defined(_DEBUG)
@@ -478,16 +478,16 @@ kuro_gfx_vertex_shader_create(Kuro_Gfx, const char *shader, const char *entry_po
 }
 
 void
-kuro_gfx_vertex_shader_destroy(Kuro_Gfx, Kuro_Gfx_Vertex_Shader vertex_shader)
+kuro_gfx_vertex_shader_destroy(kr_gfx_t, kr_vshader_t vertex_shader)
 {
     vertex_shader->blob->Release();
     free(vertex_shader);
 }
 
-Kuro_Gfx_Pixel_Shader
-kuro_gfx_pixel_shader_create(Kuro_Gfx, const char *shader, const char *entry_point)
+kr_pshader_t
+kuro_gfx_pixel_shader_create(kr_gfx_t, const char *shader, const char *entry_point)
 {
-    Kuro_Gfx_Pixel_Shader pixel_shader = (Kuro_Gfx_Pixel_Shader)malloc(sizeof(_Kuro_Gfx_Pixel_Shader));
+    kr_pshader_t pixel_shader = (kr_pshader_t)malloc(sizeof(_kr_pshader_t));
 
     UINT compile_flags = 0;
     #if defined(DEBUG) || defined(_DEBUG)
@@ -511,18 +511,18 @@ kuro_gfx_pixel_shader_create(Kuro_Gfx, const char *shader, const char *entry_poi
 }
 
 void
-kuro_gfx_pixel_shader_destroy(Kuro_Gfx, Kuro_Gfx_Pixel_Shader pixel_shader)
+kuro_gfx_pixel_shader_destroy(kr_gfx_t, kr_pshader_t pixel_shader)
 {
     pixel_shader->blob->Release();
     free(pixel_shader);
 }
 
-Kuro_Gfx_Pipeline
-kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc)
+kr_pipeline_t
+kuro_gfx_pipeline_create(kr_gfx_t gfx, Kuro_Gfx_Pipeline_Desc desc)
 {
     assert(desc.vertex_shader);
 
-    Kuro_Gfx_Pipeline pipeline = (Kuro_Gfx_Pipeline)malloc(sizeof(_Kuro_Gfx_Pipeline));
+    kr_pipeline_t pipeline = (kr_pipeline_t)malloc(sizeof(_kr_pipeline_t));
 
     HRESULT hr = {};
 
@@ -639,7 +639,7 @@ kuro_gfx_pipeline_create(Kuro_Gfx gfx, Kuro_Gfx_Pipeline_Desc desc)
 }
 
 void
-kuro_gfx_pipeline_destroy(Kuro_Gfx, Kuro_Gfx_Pipeline pipeline)
+kuro_gfx_pipeline_destroy(kr_gfx_t, kr_pipeline_t pipeline)
 {
     pipeline->pipeline_state->Release();
     pipeline->root_signature->Release();
@@ -647,7 +647,7 @@ kuro_gfx_pipeline_destroy(Kuro_Gfx, Kuro_Gfx_Pipeline pipeline)
 }
 
 void
-kuro_gfx_pipeline_set_constant_buffer(Kuro_Gfx gfx, Kuro_Gfx_Pipeline pipeline, Kuro_Gfx_Buffer buffer, uint32_t slot)
+kuro_gfx_pipeline_set_constant_buffer(kr_gfx_t gfx, kr_pipeline_t pipeline, kr_buffer_t buffer, uint32_t slot)
 {
     assert(buffer->size_in_bytes % 256 == 0);
 
@@ -661,26 +661,26 @@ kuro_gfx_pipeline_set_constant_buffer(Kuro_Gfx gfx, Kuro_Gfx_Pipeline pipeline, 
     gfx->device->CreateConstantBufferView(&cbv_desc, cbv_descreptor);
 }
 
-Kuro_Gfx_Pass
-kuro_gfx_pass_from_swapchain(Kuro_Gfx, Kuro_Gfx_Swapchain swapchain)
+kr_pass_t
+kuro_gfx_pass_from_swapchain(kr_gfx_t, kr_swapchain_t swapchain)
 {
-    Kuro_Gfx_Pass pass = (Kuro_Gfx_Pass)malloc(sizeof(_Kuro_Gfx_Pass));
+    kr_pass_t pass = (kr_pass_t)malloc(sizeof(_kr_pass_t));
     pass->swapchain = swapchain;
     return pass;
 }
 
 void
-kuro_gfx_pass_free(Kuro_Gfx, Kuro_Gfx_Pass pass)
+kuro_gfx_pass_free(kr_gfx_t, kr_pass_t pass)
 {
     free(pass);
 }
 
-Kuro_Gfx_Commands
-kuro_gfx_commands_create(Kuro_Gfx gfx)
+kr_commands_t
+kuro_gfx_commands_create(kr_gfx_t gfx)
 {
     HRESULT hr = {};
 
-    Kuro_Gfx_Commands commands = (Kuro_Gfx_Commands)malloc(sizeof(_Kuro_Gfx_Commands));
+    kr_commands_t commands = (kr_commands_t)malloc(sizeof(_kr_commands_t));
 
     hr = gfx->device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commands->command_allocator));
     assert(SUCCEEDED(hr));
@@ -700,14 +700,14 @@ kuro_gfx_commands_create(Kuro_Gfx gfx)
 }
 
 void
-kuro_gfx_commands_destroy(Kuro_Gfx, Kuro_Gfx_Commands commands)
+kuro_gfx_commands_destroy(kr_gfx_t, kr_commands_t commands)
 {
     commands->command_list->Release();
     commands->command_allocator->Release();
 }
 
 void
-kuro_gfx_commands_begin(Kuro_Gfx, Kuro_Gfx_Commands commands)
+kuro_gfx_commands_begin(kr_gfx_t, kr_commands_t commands)
 {
     HRESULT hr = commands->command_allocator->Reset();
     assert(SUCCEEDED(hr));
@@ -717,7 +717,7 @@ kuro_gfx_commands_begin(Kuro_Gfx, Kuro_Gfx_Commands commands)
 }
 
 void
-kuro_gfx_commands_end(Kuro_Gfx gfx, Kuro_Gfx_Commands commands)
+kuro_gfx_commands_end(kr_gfx_t gfx, kr_commands_t commands)
 {
     HRESULT hr = commands->command_list->Close();
     assert(SUCCEEDED(hr));
@@ -728,7 +728,7 @@ kuro_gfx_commands_end(Kuro_Gfx gfx, Kuro_Gfx_Commands commands)
 
 
 void
-kuro_gfx_commands_buffer_copy(Kuro_Gfx_Commands commands, Kuro_Gfx_Buffer src_buffer, Kuro_Gfx_Buffer dst_buffer)
+kuro_gfx_commands_buffer_copy(kr_commands_t commands, kr_buffer_t src_buffer, kr_buffer_t dst_buffer)
 {
     // TODO[Waleed]: cpu access doesn't matter here, we should check the state instead
     assert(src_buffer->cpu_access == KURO_GFX_ACCESS_WRITE);
@@ -750,7 +750,7 @@ kuro_gfx_commands_buffer_copy(Kuro_Gfx_Commands commands, Kuro_Gfx_Buffer src_bu
 }
 
 void
-kuro_gfx_commands_set_pipeline(Kuro_Gfx_Commands commands, Kuro_Gfx_Pipeline pipeline)
+kuro_gfx_commands_set_pipeline(kr_commands_t commands, kr_pipeline_t pipeline)
 {
     commands->command_list->SetPipelineState(pipeline->pipeline_state);
     commands->command_list->SetGraphicsRootSignature(pipeline->root_signature);
@@ -761,7 +761,7 @@ kuro_gfx_commands_set_pipeline(Kuro_Gfx_Commands commands, Kuro_Gfx_Pipeline pip
 }
 
 void
-kuro_gfx_commands_pass_begin(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Image depth_target)
+kuro_gfx_commands_pass_begin(kr_commands_t commands, kr_pass_t pass, kr_image_t depth_target)
 {
     D3D12_RESOURCE_BARRIER resource_barrier = {};
     resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -779,7 +779,7 @@ kuro_gfx_commands_pass_begin(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kur
 }
 
 void
-kuro_gfx_commands_pass_end(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass)
+kuro_gfx_commands_pass_end(kr_commands_t commands, kr_pass_t pass)
 {
     D3D12_RESOURCE_BARRIER resource_barrier = {};
     resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -791,7 +791,7 @@ kuro_gfx_commands_pass_end(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass)
 }
 
 void
-kuro_gfx_commands_viewport(Kuro_Gfx_Commands commands, uint32_t width, uint32_t height)
+kuro_gfx_commands_viewport(kr_commands_t commands, uint32_t width, uint32_t height)
 {
     D3D12_VIEWPORT viewport = {};
     viewport.Width = (float)width;
@@ -806,26 +806,26 @@ kuro_gfx_commands_viewport(Kuro_Gfx_Commands commands, uint32_t width, uint32_t 
 }
 
 void
-kuro_gfx_commands_clear_color(Kuro_Gfx_Commands commands, Kuro_Gfx_Pass pass, Kuro_Gfx_Color color)
+kuro_gfx_commands_clear_color(kr_commands_t commands, kr_pass_t pass, Kuro_Gfx_Color color)
 {
     commands->command_list->ClearRenderTargetView(pass->swapchain->rtv_descriptor[pass->swapchain->swapchain->GetCurrentBackBufferIndex()], &color.r, 0, nullptr);
 }
 
 void
-kuro_gfx_commands_clear_depth(Kuro_Gfx_Commands commands, Kuro_Gfx_Image depth_target, float value)
+kuro_gfx_commands_clear_depth(kr_commands_t commands, kr_image_t depth_target, float value)
 {
     commands->command_list->ClearDepthStencilView(depth_target->dsv_descriptor, D3D12_CLEAR_FLAG_DEPTH, value, 0, 0, nullptr);
 }
 
 void
-kuro_gfx_commands_draw(Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc)
+kuro_gfx_commands_draw(kr_commands_t commands, Kuro_Gfx_Draw_Desc desc)
 {
     commands->command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     D3D12_VERTEX_BUFFER_VIEW vertex_buffer_views[KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES] = {};
     for (uint32_t i = 0; i < KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES; ++i)
     {
-        Kuro_Gfx_Buffer vertex_buffer = desc.vertex_buffers[i].buffer;
+        kr_buffer_t vertex_buffer = desc.vertex_buffers[i].buffer;
         if (vertex_buffer == nullptr)
             continue;
 
@@ -854,7 +854,7 @@ kuro_gfx_commands_draw(Kuro_Gfx_Commands commands, Kuro_Gfx_Draw_Desc desc)
 }
 
 void
-kuro_gfx_sync(Kuro_Gfx gfx)
+kuro_gfx_sync(kr_gfx_t gfx)
 {
     // advance fence value to mark commands up to this fence point
     gfx->current_fence++;
