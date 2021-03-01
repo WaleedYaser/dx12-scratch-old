@@ -1,73 +1,14 @@
-#pragma comment(lib, "user32.lib")
+#include <kuro/window.h>
+#include <kuro/kuro_gfx.h>
 
-#define UNICODE
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-
-#include <kuro_gfx.h>
-
-LRESULT CALLBACK
-window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+int main()
 {
-    switch (msg)
-    {
-        case WM_CLOSE:
-        case WM_DESTROY:
-            PostQuitMessage(0);
-            return 0;
-        default:
-            return DefWindowProc(hwnd, msg, wparam, lparam);
-            break;
-    }
-}
-
-int
-main()
-{
-    // register window class
-    {
-        WNDCLASSEX wnd_class = {};
-        wnd_class.cbSize = sizeof(wnd_class);
-        wnd_class.hCursor = LoadCursor(nullptr, IDC_ARROW);
-        wnd_class.lpfnWndProc = window_proc;
-        wnd_class.lpszClassName = L"dx11_wnd_class";
-
-        if (RegisterClassEx(&wnd_class) == 0)
-        {
-            OutputDebugString(L"Failed to register window class");
-            return GetLastError();
-        }
-    }
-
-    // create window
-    HWND hwnd = CreateWindowEx(
-        0,
-        L"dx11_wnd_class",
-        L"playground",
-        WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr
-    );
-    if (hwnd == nullptr)
-    {
-        OutputDebugString(L"Failed to create window");
-        return GetLastError();
-    }
-
-    // get window width and height
-    RECT rect;
-    GetClientRect(hwnd, &rect);
-    int window_width = rect.right - rect.left;
-    int window_height = rect.bottom - rect.top;
+    kr_window_t *window = kr_window_create("playground", 800, 600);
 
     Kuro_Gfx gfx = kuro_gfx_create();
     Kuro_Gfx_Commands commands = kuro_gfx_commands_create(gfx);
-    Kuro_Gfx_Swapchain swapchain = kuro_gfx_swapchain_create(gfx, window_width, window_height, hwnd);
-
-    Kuro_Gfx_Pass pass =kuro_gfx_pass_from_swapchain(gfx, swapchain);
+    Kuro_Gfx_Swapchain swapchain = kuro_gfx_swapchain_create(gfx, window->width, window->height, window->handle);
+    Kuro_Gfx_Pass pass = kuro_gfx_pass_from_swapchain(gfx, swapchain);
 
     const char shader[] = R"(
         cbuffer Constant_Buffer : register(b0)
@@ -127,7 +68,7 @@ main()
     kuro_gfx_buffer_write(gfx, index_upload_buffer, indices, sizeof(indices));
 
     kuro_gfx_commands_begin(gfx, commands);
-    Kuro_Gfx_Image depth_target = kuro_gfx_image_create(gfx, commands, window_width, window_height);
+    Kuro_Gfx_Image depth_target = kuro_gfx_image_create(gfx, commands, window->width, window->height);
     kuro_gfx_commands_buffer_copy(commands, vertex_upload_buffer, vertex_buffer);
     kuro_gfx_commands_buffer_copy(commands, index_upload_buffer, index_buffer);
     kuro_gfx_commands_end(gfx, commands);
@@ -139,35 +80,21 @@ main()
     Kuro_Gfx_Buffer constant_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_WRITE, 256);
     kuro_gfx_pipeline_set_constant_buffer(gfx, pipeline, constant_buffer, 0);
 
-    bool running = true;
-    while (running)
+    uint16_t width = window->width;
+    uint16_t height = window->height;
+
+    while (kr_window_update(window))
     {
-        MSG msg = {};
-        PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE);
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-
-        switch (msg.message)
+        if (width != window->width || height != window->height)
         {
-            case WM_QUIT:
-                running = false;
-                break;
-        }
+            width = window->width;
+            height = window->height;
 
-        GetClientRect(hwnd, &rect);
-        int current_width = rect.right - rect.left;
-        int current_height = rect.bottom - rect.top;
-
-        if (current_width != window_width || current_height != window_height)
-        {
-            window_width = current_width;
-            window_height = current_height;
-
-            kuro_gfx_swapchain_resize(gfx, swapchain, window_width, window_height);
+            kuro_gfx_swapchain_resize(gfx, swapchain, width, height);
 
             kuro_gfx_image_destroy(gfx, depth_target);
             kuro_gfx_commands_begin(gfx, commands);
-            depth_target = kuro_gfx_image_create(gfx, commands, window_width, window_height);
+            depth_target = kuro_gfx_image_create(gfx, commands, width, height);
             kuro_gfx_commands_end(gfx, commands);
             kuro_gfx_sync(gfx);
         }
@@ -179,7 +106,7 @@ main()
         {
             kuro_gfx_commands_set_pipeline(commands, pipeline);
             kuro_gfx_commands_pass_begin(commands, pass, depth_target);
-            kuro_gfx_commands_viewport(commands, window_width, window_height);
+            kuro_gfx_commands_viewport(commands, width, height);
 
             kuro_gfx_commands_clear_color(commands, pass, {1.0f, 1.0f, 0.0f, 1.0f});
             kuro_gfx_commands_clear_depth(commands, depth_target, 1.0f);
@@ -211,7 +138,7 @@ main()
     kuro_gfx_swapchain_destroy(gfx, swapchain);
     kuro_gfx_commands_destroy(gfx, commands);
     kuro_gfx_destroy(gfx);
-    DestroyWindow(hwnd);
+    kr_window_destroy(window);
 
     return 0;
 }

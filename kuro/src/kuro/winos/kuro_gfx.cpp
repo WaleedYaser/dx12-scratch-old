@@ -8,7 +8,7 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 
-#include "kuro_gfx.h"
+#include "kuro/kuro_gfx.h"
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -150,8 +150,8 @@ kuro_gfx_create()
 
     DXGI_ADAPTER_DESC adapter_desc = {};
     adapter4->GetDesc(&adapter_desc);
-    OutputDebugString(adapter_desc.Description);
-    OutputDebugString(L"\n");
+    OutputDebugStringW(adapter_desc.Description);
+    OutputDebugString("\n");
 
     hr = D3D12CreateDevice(adapter4, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&gfx->device));
     assert(SUCCEEDED(hr));

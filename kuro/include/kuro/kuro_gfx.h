@@ -9,10 +9,6 @@
 extern "C" {
 #endif
 
-/*
-    max_render_targets = 8;
-*/
-
 typedef struct _Kuro_Gfx *Kuro_Gfx;
 typedef struct _Kuro_Gfx_Swapchain *Kuro_Gfx_Swapchain;
 typedef struct _Kuro_Gfx_Image *Kuro_Gfx_Image;
@@ -24,6 +20,7 @@ typedef struct _Kuro_Gfx_Pass *Kuro_Gfx_Pass;
 typedef struct _Kuro_Gfx_Commands *Kuro_Gfx_Commands;
 
 typedef enum KURO_CONSTANT {
+    KURO_CONSTANT_MAX_RENDER_TARGETS = 8,
     KURO_CONSTANT_MAX_VERTEX_ATTRIPUTES = 16
 } KURO_CONSTANT;
 

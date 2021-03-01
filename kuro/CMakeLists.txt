@@ -1,19 +1,21 @@
 cmake_minimum_required(VERSION 3.10)
 
 set(HEADER_FILES
-    include/kuro_math.h
-    include/kuro_os.h
-    include/kuro_gfx.h
+    include/kuro/window.h
+    include/kuro/kuro_math.h
+    include/kuro/kuro_os.h
+    include/kuro/kuro_gfx.h
 )
 
 if (WIN32)
     set(SOURCE_FILES
-        src/winos/kuro_gfx.cpp
-        src/winos/kuro_os.cpp
+        src/kuro/winos/window.c
+        src/kuro/winos/kuro_gfx.cpp
+        src/kuro/winos/kuro_os.cpp
     )
 elseif(UNIX)
     set(SOURCE_FILES
-        src/linux/kuro_os.cpp
+        src/kuro/linux/kuro_os.cpp
     )
 endif()
 
@@ -39,8 +41,8 @@ target_include_directories(kuro
 )
 
 target_compile_definitions(kuro
-    PRIVATE
-        $<$<PLATFORM_ID:Windows>:UNICODE;_UNICODE>
+    # PRIVATE
+        # $<$<PLATFORM_ID:Windows>:UNICODE;_UNICODE>
     PUBLIC
         $<$<PLATFORM_ID:Windows>:OS_WINDOWS=1>
         $<$<PLATFORM_ID:Linux>:OS_LINUX=1>
