@@ -8,7 +8,6 @@ int main()
     kr_gfx_t gfx = kuro_gfx_create();
     kr_commands_t commands = kuro_gfx_commands_create(gfx);
     kr_swapchain_t swapchain = kuro_gfx_swapchain_create(gfx, window->width, window->height, window->handle);
-    kr_pass_t pass = kuro_gfx_pass_from_swapchain(gfx, swapchain);
 
     const char shader[] = R"(
         cbuffer Constant_Buffer : register(b0)
@@ -67,7 +66,7 @@ int main()
     kr_buffer_t index_upload_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_WRITE, sizeof(indices));
     kuro_gfx_buffer_write(gfx, index_upload_buffer, indices, sizeof(indices));
 
-    kuro_gfx_commands_begin(gfx, commands);
+    kuro_gfx_commands_begin(gfx, commands, nullptr, nullptr);
     kr_image_t depth_target = kuro_gfx_image_create(gfx, commands, window->width, window->height);
     kuro_gfx_commands_buffer_copy(commands, vertex_upload_buffer, vertex_buffer);
     kuro_gfx_commands_buffer_copy(commands, index_upload_buffer, index_buffer);
@@ -90,10 +89,13 @@ int main()
             width = window->width;
             height = window->height;
 
+            if (width == 0) width = 1;
+            if (height == 0) height = 1;
+
             kuro_gfx_swapchain_resize(gfx, swapchain, width, height);
 
             kuro_gfx_image_destroy(gfx, depth_target);
-            kuro_gfx_commands_begin(gfx, commands);
+            kuro_gfx_commands_begin(gfx, commands, nullptr, nullptr);
             depth_target = kuro_gfx_image_create(gfx, commands, width, height);
             kuro_gfx_commands_end(gfx, commands);
             kuro_gfx_sync(gfx);
@@ -102,14 +104,12 @@ int main()
         float t = (float)window->input.mouse_x / (float)window->width;
         kuro_gfx_buffer_write(gfx, constant_buffer, &t, sizeof(t));
 
-        kuro_gfx_commands_begin(gfx, commands);
+        kuro_gfx_commands_begin(gfx, commands, swapchain, depth_target);
         {
             kuro_gfx_commands_set_pipeline(commands, pipeline);
-            kuro_gfx_commands_pass_begin(commands, pass, depth_target);
             kuro_gfx_commands_viewport(commands, width, height);
 
-            kuro_gfx_commands_clear_color(commands, pass, {1.0f, 1.0f, 0.0f, 1.0f});
-            kuro_gfx_commands_clear_depth(commands, depth_target, 1.0f);
+            kuro_gfx_commands_clear(commands, {1.0f, 1.0f, 0.0f, 1.0f}, 1.0f);
 
             Kuro_Gfx_Draw_Desc draw_desc = {};
             draw_desc.vertex_buffers[0].buffer = vertex_buffer;
@@ -118,12 +118,8 @@ int main()
             draw_desc.index_buffer.format = KURO_GFX_FORMAT_R16_UINT;
             draw_desc.count = 6;
             kuro_gfx_commands_draw(commands, draw_desc);
-
-            kuro_gfx_commands_pass_end(commands, pass);
         }
         kuro_gfx_commands_end(gfx, commands);
-        kuro_gfx_swapchain_present(gfx, swapchain);
-        kuro_gfx_sync(gfx);
     }
 
     // release resources
@@ -134,7 +130,6 @@ int main()
     kuro_gfx_pipeline_destroy(gfx, pipeline);
     kuro_gfx_pixel_shader_destroy(gfx, pixel_shader);
     kuro_gfx_vertex_shader_destroy(gfx, vertex_shader);
-    kuro_gfx_pass_free(gfx, pass);
     kuro_gfx_swapchain_destroy(gfx, swapchain);
     kuro_gfx_commands_destroy(gfx, commands);
     kuro_gfx_destroy(gfx);

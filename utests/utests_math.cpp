@@ -1,4 +1,4 @@
-#include <kuro_math.h>
+#include <kuro/kuro_math.h>
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
