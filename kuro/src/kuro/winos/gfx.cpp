@@ -793,7 +793,7 @@ kuro_gfx_commands_end(kr_gfx_t gfx, kr_commands_t commands)
 }
 
 void
-kuro_gfx_commands_buffer_copy(kr_commands_t commands, kr_buffer_t src_buffer, kr_buffer_t dst_buffer)
+kuro_gfx_buffer_copy(kr_commands_t commands, kr_buffer_t src_buffer, kr_buffer_t dst_buffer)
 {
     // TODO[Waleed]: cpu access doesn't matter here, we should check the state instead
     assert(src_buffer->cpu_access == KURO_GFX_ACCESS_WRITE);
@@ -815,7 +815,7 @@ kuro_gfx_commands_buffer_copy(kr_commands_t commands, kr_buffer_t src_buffer, kr
 }
 
 void
-kuro_gfx_commands_set_pipeline(kr_commands_t commands, kr_pipeline_t pipeline)
+kuro_gfx_set_pipeline(kr_commands_t commands, kr_pipeline_t pipeline)
 {
     commands->command_list->SetPipelineState(pipeline->pipeline_state);
     commands->command_list->SetGraphicsRootSignature(pipeline->root_signature);
@@ -826,7 +826,7 @@ kuro_gfx_commands_set_pipeline(kr_commands_t commands, kr_pipeline_t pipeline)
 }
 
 void
-kuro_gfx_commands_viewport(kr_commands_t commands, uint32_t width, uint32_t height)
+kuro_gfx_viewport(kr_commands_t commands, uint32_t width, uint32_t height)
 {
     D3D12_VIEWPORT viewport = {};
     viewport.Width = (float)width;
@@ -841,14 +841,14 @@ kuro_gfx_commands_viewport(kr_commands_t commands, uint32_t width, uint32_t heig
 }
 
 void
-kuro_gfx_commands_clear(kr_commands_t commands, Kuro_Gfx_Color color, float depth)
+kuro_gfx_clear(kr_commands_t commands, Kuro_Gfx_Color color, float depth)
 {
     commands->command_list->ClearRenderTargetView(commands->swapchain->rtv_descriptor[commands->swapchain->swapchain->GetCurrentBackBufferIndex()], &color.r, 0, nullptr);
     commands->command_list->ClearDepthStencilView(commands->depth_target->dsv_descriptor, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
 }
 
 void
-kuro_gfx_commands_draw(kr_commands_t commands, Kuro_Gfx_Draw_Desc desc)
+kuro_gfx_draw(kr_commands_t commands, Kuro_Gfx_Draw_Desc desc)
 {
     commands->command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 

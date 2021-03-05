@@ -68,8 +68,8 @@ int main()
 
     kuro_gfx_commands_begin(gfx, commands, nullptr, nullptr);
     kr_image_t depth_target = kuro_gfx_image_create(gfx, commands, window->width, window->height);
-    kuro_gfx_commands_buffer_copy(commands, vertex_upload_buffer, vertex_buffer);
-    kuro_gfx_commands_buffer_copy(commands, index_upload_buffer, index_buffer);
+    kuro_gfx_buffer_copy(commands, vertex_upload_buffer, vertex_buffer);
+    kuro_gfx_buffer_copy(commands, index_upload_buffer, index_buffer);
     kuro_gfx_commands_end(gfx, commands);
     kuro_gfx_sync(gfx);
 
@@ -106,10 +106,10 @@ int main()
 
         kuro_gfx_commands_begin(gfx, commands, swapchain, depth_target);
         {
-            kuro_gfx_commands_set_pipeline(commands, pipeline);
-            kuro_gfx_commands_viewport(commands, width, height);
+            kuro_gfx_set_pipeline(commands, pipeline);
+            kuro_gfx_viewport(commands, width, height);
 
-            kuro_gfx_commands_clear(commands, {1.0f, 1.0f, 0.0f, 1.0f}, 1.0f);
+            kuro_gfx_clear(commands, {1.0f, 1.0f, 0.0f, 1.0f}, 1.0f);
 
             Kuro_Gfx_Draw_Desc draw_desc = {};
             draw_desc.vertex_buffers[0].buffer = vertex_buffer;
@@ -117,7 +117,7 @@ int main()
             draw_desc.index_buffer.buffer = index_buffer;
             draw_desc.index_buffer.format = KURO_GFX_FORMAT_R16_UINT;
             draw_desc.count = 6;
-            kuro_gfx_commands_draw(commands, draw_desc);
+            kuro_gfx_draw(commands, draw_desc);
         }
         kuro_gfx_commands_end(gfx, commands);
     }

@@ -106,11 +106,11 @@ void kuro_gfx_commands_destroy(kr_gfx_t gfx, kr_commands_t commands);
 void kuro_gfx_commands_begin(kr_gfx_t gfx, kr_commands_t commands, kr_swapchain_t swapchain, kr_image_t depth_target);
 void kuro_gfx_commands_end(kr_gfx_t gfx, kr_commands_t commands);
 
-void kuro_gfx_commands_buffer_copy(kr_commands_t commands, kr_buffer_t src_buffer, kr_buffer_t dst_buffer);
-void kuro_gfx_commands_set_pipeline(kr_commands_t commands, kr_pipeline_t pipeline);
-void kuro_gfx_commands_viewport(kr_commands_t commands, uint32_t width, uint32_t height);
-void kuro_gfx_commands_clear(kr_commands_t commands, Kuro_Gfx_Color color, float depth);
-void kuro_gfx_commands_draw(kr_commands_t commands, Kuro_Gfx_Draw_Desc desc);
+void kuro_gfx_buffer_copy(kr_commands_t commands, kr_buffer_t src_buffer, kr_buffer_t dst_buffer);
+void kuro_gfx_set_pipeline(kr_commands_t commands, kr_pipeline_t pipeline);
+void kuro_gfx_viewport(kr_commands_t commands, uint32_t width, uint32_t height);
+void kuro_gfx_clear(kr_commands_t commands, Kuro_Gfx_Color color, float depth);
+void kuro_gfx_draw(kr_commands_t commands, Kuro_Gfx_Draw_Desc desc);
 
 void kuro_gfx_sync(kr_gfx_t gfx);
 
