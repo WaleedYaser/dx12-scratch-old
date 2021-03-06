@@ -62,7 +62,6 @@ int main()
     kr_buffer_t vertex_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_NONE, vertices, sizeof(vertices));
     kr_buffer_t index_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_NONE, indices, sizeof(indices));
     kr_buffer_t constant_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_WRITE, nullptr, 256);
-    kuro_gfx_pipeline_set_constant_buffer(gfx, pipeline, constant_buffer, 0);
 
     uint16_t width = window->width;
     uint16_t height = window->height;
@@ -91,6 +90,8 @@ int main()
             kuro_gfx_viewport(commands, width, height);
 
             kuro_gfx_clear(commands, {1.0f, 1.0f, 0.0f, 1.0f}, 1.0f);
+
+            kuro_gfx_buffer_bind(commands, constant_buffer, 0);
 
             Kuro_Gfx_Draw_Desc draw_desc = {};
             draw_desc.vertex_buffers[0].buffer = vertex_buffer;

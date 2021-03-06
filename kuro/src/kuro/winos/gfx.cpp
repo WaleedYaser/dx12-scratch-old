@@ -17,17 +17,20 @@
 
 static const int MAX_SWAPCHAIN_BUFFER_COUNT = 3;
 static const int SYNC = 3;
-
+static const int MAX_CBV_HEAP_DESC_NUM = 1024;
 typedef struct _kr_gfx_t {
     IDXGIFactory4 *factory;
     ID3D12Device *device;
     ID3D12CommandQueue *command_queue;
     uint32_t rtv_desctiptor_size;
     uint32_t dsv_descriptor_size;
+    uint32_t cbv_descriptor_size;
     ID3D12Fence *fence;
     uint64_t current_fence;
     ID3D12GraphicsCommandList *command_list;
     ID3D12CommandAllocator *command_allocator;
+    ID3D12DescriptorHeap *cbv_heap;
+    int next_free_cbv_index;
 } _kr_gfx_t;
 
 typedef struct _kr_swapchain_t {
@@ -55,6 +58,7 @@ typedef struct _kr_buffer_t {
     KURO_GFX_ACCESS cpu_access;
     ID3D12Resource *buffer[SYNC];
     uint32_t size_in_bytes;
+    D3D12_GPU_DESCRIPTOR_HANDLE cbv;
 } _kr_buffer_t;
 
 typedef struct _kr_vshader_t {
@@ -68,7 +72,6 @@ typedef struct _kr_pshader_t {
 typedef struct _kr_pipeline_t {
     ID3D12PipelineState *pipeline_state;
     ID3D12RootSignature *root_signature;
-    ID3D12DescriptorHeap *cbv_heap;
 } _kr_pipeline_t;
 
 typedef struct _kr_commands_t {
@@ -171,6 +174,8 @@ kuro_gfx_create()
         gfx->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     gfx->dsv_descriptor_size =
         gfx->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    gfx->cbv_descriptor_size =
+        gfx->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     hr = gfx->device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&gfx->fence));
     assert(SUCCEEDED(hr));
@@ -190,6 +195,14 @@ kuro_gfx_create()
     hr = gfx->command_list->Close();
     assert(SUCCEEDED(hr));
 
+    D3D12_DESCRIPTOR_HEAP_DESC cbv_heap_desc = {};
+    cbv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    cbv_heap_desc.NumDescriptors = MAX_CBV_HEAP_DESC_NUM;
+    cbv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    hr = gfx->device->CreateDescriptorHeap(&cbv_heap_desc, IID_PPV_ARGS(&gfx->cbv_heap));
+    assert(SUCCEEDED(hr));
+    gfx->next_free_cbv_index = 0;
+
     return gfx;
 }
 
@@ -197,6 +210,7 @@ void
 kuro_gfx_destroy(kr_gfx_t gfx)
 {
     kuro_gfx_sync(gfx);
+    gfx->cbv_heap->Release();
     gfx->command_list->Release();
     gfx->command_allocator->Release();
     gfx->fence->Release();
@@ -495,6 +509,23 @@ kuro_gfx_buffer_create(kr_gfx_t gfx, KURO_GFX_ACCESS cpu_access, void *data, uin
         kuro_gfx_sync(gfx);
         upload_buffer->Release();
     }
+    else
+    {
+        assert(size_in_bytes % 256 == 0);
+
+        D3D12_CONSTANT_BUFFER_VIEW_DESC cbv_desc = {};
+        cbv_desc.BufferLocation = buffer->buffer[0]->GetGPUVirtualAddress();
+        cbv_desc.SizeInBytes = size_in_bytes;
+
+        D3D12_CPU_DESCRIPTOR_HANDLE heap_handle = gfx->cbv_heap->GetCPUDescriptorHandleForHeapStart();
+        heap_handle.ptr += (gfx->next_free_cbv_index * gfx->cbv_descriptor_size);
+        gfx->device->CreateConstantBufferView(&cbv_desc, heap_handle);
+
+        buffer->cbv = gfx->cbv_heap->GetGPUDescriptorHandleForHeapStart();
+        buffer->cbv.ptr += (gfx->next_free_cbv_index * gfx->cbv_descriptor_size);
+
+        gfx->next_free_cbv_index++;
+    }
 
     return buffer;
 }
@@ -638,16 +669,6 @@ kuro_gfx_pipeline_create(kr_gfx_t gfx, Kuro_Gfx_Pipeline_Desc desc)
     D3D12_SHADER_DESC shader_desc = {};
     reflection->GetDesc(&shader_desc);
 
-    if (shader_desc.ConstantBuffers > 0)
-    {
-        D3D12_DESCRIPTOR_HEAP_DESC cbv_heap_desc = {};
-        cbv_heap_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-        cbv_heap_desc.NumDescriptors = shader_desc.ConstantBuffers;
-        cbv_heap_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        hr = gfx->device->CreateDescriptorHeap(&cbv_heap_desc, IID_PPV_ARGS(&pipeline->cbv_heap));
-        assert(SUCCEEDED(hr));
-    }
-
     D3D12_INPUT_ELEMENT_DESC *input_element_desc = (D3D12_INPUT_ELEMENT_DESC *)calloc(shader_desc.InputParameters, sizeof(D3D12_INPUT_ELEMENT_DESC));
     for (uint32_t i = 0; i < shader_desc.InputParameters; ++i)
     {
@@ -720,22 +741,6 @@ kuro_gfx_pipeline_destroy(kr_gfx_t gfx, kr_pipeline_t pipeline)
     kuro_gfx_sync(gfx);
     pipeline->pipeline_state->Release();
     pipeline->root_signature->Release();
-    pipeline->cbv_heap->Release();
-}
-
-void
-kuro_gfx_pipeline_set_constant_buffer(kr_gfx_t gfx, kr_pipeline_t pipeline, kr_buffer_t buffer, uint32_t slot)
-{
-    assert(buffer->size_in_bytes % 256 == 0);
-
-    D3D12_CONSTANT_BUFFER_VIEW_DESC cbv_desc = {};
-    cbv_desc.BufferLocation = buffer->buffer[0]->GetGPUVirtualAddress();
-    cbv_desc.SizeInBytes = buffer->size_in_bytes;
-
-    // TODO[Waleed]: get cbv_descriptor size
-    D3D12_CPU_DESCRIPTOR_HANDLE cbv_descreptor = pipeline->cbv_heap->GetCPUDescriptorHandleForHeapStart();
-    cbv_descreptor.ptr += (slot * gfx->rtv_desctiptor_size);
-    gfx->device->CreateConstantBufferView(&cbv_desc, cbv_descreptor);
 }
 
 kr_commands_t
@@ -829,6 +834,9 @@ kuro_gfx_commands_begin(kr_gfx_t gfx, kr_commands_t commands, kr_swapchain_t swa
             &swapchain->rtv_descriptor[swapchain->swapchain->GetCurrentBackBufferIndex()],
             true,
             depth_target ? &depth_target->dsv_descriptor : nullptr);
+
+        ID3D12DescriptorHeap *descriptor_heaps[] = {gfx->cbv_heap};
+        commands->command_list->SetDescriptorHeaps(1, descriptor_heaps);
     }
 }
 
@@ -872,10 +880,6 @@ kuro_gfx_set_pipeline(kr_commands_t commands, kr_pipeline_t pipeline)
 {
     commands->command_list->SetPipelineState(pipeline->pipeline_state);
     commands->command_list->SetGraphicsRootSignature(pipeline->root_signature);
-
-    ID3D12DescriptorHeap *descriptor_heaps[] = {pipeline->cbv_heap};
-    commands->command_list->SetDescriptorHeaps(1, descriptor_heaps);
-    commands->command_list->SetGraphicsRootDescriptorTable(0, pipeline->cbv_heap->GetGPUDescriptorHandleForHeapStart());
 }
 
 void
@@ -898,6 +902,13 @@ kuro_gfx_clear(kr_commands_t commands, Kuro_Gfx_Color color, float depth)
 {
     commands->command_list->ClearRenderTargetView(commands->swapchain->rtv_descriptor[commands->swapchain->swapchain->GetCurrentBackBufferIndex()], &color.r, 0, nullptr);
     commands->command_list->ClearDepthStencilView(commands->depth_target->dsv_descriptor, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
+}
+
+void
+kuro_gfx_buffer_bind(kr_commands_t commands, kr_buffer_t buffer, uint32_t slot)
+{
+    assert(buffer->cpu_access == KURO_GFX_ACCESS_WRITE);
+    commands->command_list->SetGraphicsRootDescriptorTable(slot, buffer->cbv);
 }
 
 void
