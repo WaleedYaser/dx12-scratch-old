@@ -1,10 +1,39 @@
 #include <kuro/window.h>
 #include <kuro/gfx.h>
 #include <kuro/kuro_os.h>
+#include <kuro/kuro_math.h>
 #include <stdio.h>
+
+struct Pass_Constants
+{
+    kuro::mat4 view;
+    kuro::mat4 view_inv;
+    kuro::mat4 proj;
+    kuro::mat4 proj_inv;
+    kuro::mat4 view_proj;
+    kuro::mat4 view_proj_inv;
+    kuro::vec3 cam_pos;
+    char padding0[4];
+    kuro::vec2 render_target_size;
+    kuro::vec2 render_target_size_inv;
+    float cam_near;
+    float cam_far;
+    float delta_time;
+    float total_time;
+    char padding1[80];
+};
+
+struct Object_Constants
+{
+    kuro::mat4 model;
+    char padding[192];
+};
 
 int main()
 {
+    size_t size = 0;
+    size = sizeof(Pass_Constants);
+
     kr_window_t *window = kr_window_create("playground", 800, 600);
 
     kr_gfx_t gfx = kuro_gfx_create();
@@ -13,26 +42,43 @@ int main()
     kr_image_t depth_target = kuro_gfx_image_create(gfx, window->width, window->height);
 
     const char shader[] = R"(
-        cbuffer Constant_Buffer : register(b0)
+        cbuffer Pass_Constants : register(b0)
         {
-            float t;
+            float4x4 view;
+            float4x4 view_inv;
+            float4x4 proj;
+            float4x4 proj_inv;
+            float4x4 view_proj;
+            float4x4 view_proj_inv;
+            float3 cam_pos;
+            float2 render_target_size;
+            float2 render_target_size_inv;
+            float cam_near;
+            float cam_far;
+            float delta_time;
+            float total_time;
         };
 
-        struct PS_Input
+        cbuffer Object_Constants : register(b1)
+        {
+            float4x4 model;
+        };
+
+        struct VS_Out
         {
             float4 position : SV_POSITION;
             float3 color : COLOR;
         };
 
-        PS_Input vs_main(float2 pos : POSITION, float3 color : COLOR)
+        VS_Out vs_main(float2 pos : POSITION, float3 color : COLOR)
         {
-            PS_Input output;
-            output.position = float4(pos, 0.0f, 1.0f);
-            output.color = t * color;
+            VS_Out output;
+            output.position = mul(mul(float4(pos, 0.0f, 1.0f), model), view_proj);
+            output.color = color;
             return output;
         }
 
-        float4 ps_main(PS_Input input) : SV_TARGET
+        float4 ps_main(VS_Out input) : SV_TARGET
         {
             return float4(input.color, 1.0f);
         }
@@ -63,7 +109,9 @@ int main()
 
     kr_buffer_t vertex_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_NONE, vertices, sizeof(vertices));
     kr_buffer_t index_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_NONE, indices, sizeof(indices));
-    kr_buffer_t constant_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_WRITE, nullptr, 256);
+
+    kr_buffer_t pass_constants_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_WRITE, nullptr, sizeof(Pass_Constants));
+    kr_buffer_t object_constants_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_WRITE, nullptr, sizeof(Object_Constants));
 
     uint16_t width = window->width;
     uint16_t height = window->height;
@@ -71,6 +119,7 @@ int main()
     double target_time = 1.0 / 60.0;
     double begin_time = kuro::os_seconds();
     double total_time = 0.0;
+    double dt = 0.0;
     while (kr_window_update(window))
     {
         if (width != window->width || height != window->height)
@@ -94,9 +143,26 @@ int main()
 
             kuro_gfx_clear(commands, {1.0f, 1.0f, 0.0f, 1.0f}, 1.0f);
 
-            float t = (float)window->input.mouse_x / (float)window->width;
-            kuro_gfx_buffer_write(commands, constant_buffer, &t, sizeof(t));
-            kuro_gfx_buffer_bind(commands, constant_buffer, 0);
+            Pass_Constants pass_constants = {};
+            pass_constants.view = kuro::mat4_identity();
+            pass_constants.view_inv = kuro::mat4_inverse(pass_constants.view);
+            pass_constants.proj = kuro::mat4_identity();
+            pass_constants.proj_inv = kuro::mat4_inverse(pass_constants.proj);
+            pass_constants.view_proj = pass_constants.view * pass_constants.proj;
+            pass_constants.cam_pos = {};
+            pass_constants.render_target_size = {(float)width, (float)height};
+            pass_constants.render_target_size_inv = {1.0f / (float)width, 1.0f / (float)height};
+            pass_constants.cam_near = 0.0f;
+            pass_constants.cam_far = 0.0f;
+            pass_constants.delta_time = (float)dt;
+            pass_constants.total_time = (float)total_time;
+            kuro_gfx_buffer_write(commands, pass_constants_buffer, &pass_constants, sizeof(pass_constants));
+            kuro_gfx_buffer_bind(commands, pass_constants_buffer, 0);
+
+            Object_Constants object_constants = {};
+            object_constants.model = kuro::mat4_identity();
+            kuro_gfx_buffer_write(commands, object_constants_buffer, &object_constants, sizeof(object_constants));
+            kuro_gfx_buffer_bind(commands, object_constants_buffer, 1);
 
             Kuro_Gfx_Draw_Desc draw_desc = {};
             draw_desc.vertex_buffers[0].buffer = vertex_buffer;
@@ -107,7 +173,6 @@ int main()
             kuro_gfx_draw(commands, draw_desc);
         }
         kuro_gfx_commands_end(gfx, commands);
-        kuro_gfx_sync(gfx);
 
         // timing
         double end_time = kuro::os_seconds();
@@ -115,7 +180,7 @@ int main()
         if (frame_time < target_time)
             kuro::os_sleep(target_time - frame_time);
         double sleep_time = kuro::os_seconds() - end_time;
-        double dt = frame_time + sleep_time;
+        dt = frame_time + sleep_time;
         begin_time = end_time;
         total_time += dt;
 
@@ -129,7 +194,8 @@ int main()
     }
 
     // release resources
-    kuro_gfx_buffer_destroy(gfx, constant_buffer);
+    kuro_gfx_buffer_destroy(gfx, object_constants_buffer);
+    kuro_gfx_buffer_destroy(gfx, pass_constants_buffer);
     kuro_gfx_buffer_destroy(gfx, index_buffer);
     kuro_gfx_buffer_destroy(gfx, vertex_buffer);
     kuro_gfx_pipeline_destroy(gfx, pipeline);

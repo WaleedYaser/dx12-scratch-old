@@ -623,20 +623,25 @@ kuro_gfx_pipeline_create(kr_gfx_t gfx, Kuro_Gfx_Pipeline_Desc desc)
 
     HRESULT hr = {};
 
-    D3D12_DESCRIPTOR_RANGE descriptor_range = {};
-    descriptor_range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-    descriptor_range.NumDescriptors = 1;
-    descriptor_range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    // TODO[Waleed]: make this number dynamic
+    D3D12_DESCRIPTOR_RANGE descriptor_range[2] = {};
+    D3D12_ROOT_PARAMETER root_parameter[2] = {};
+    for (int i = 0; i < 2; ++i)
+    {
+        descriptor_range[i].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+        descriptor_range[i].NumDescriptors = 1;
+        descriptor_range[i].BaseShaderRegister = i;
+        descriptor_range[i].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-    D3D12_ROOT_PARAMETER root_parameter = {};
-    root_parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    root_parameter.DescriptorTable.NumDescriptorRanges = 1;
-    root_parameter.DescriptorTable.pDescriptorRanges = &descriptor_range;
-    root_parameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+        root_parameter[i].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        root_parameter[i].DescriptorTable.NumDescriptorRanges = 1;
+        root_parameter[i].DescriptorTable.pDescriptorRanges = &descriptor_range[i];
+        root_parameter[i].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+    }
 
     D3D12_ROOT_SIGNATURE_DESC root_signature_desc = {};
-    root_signature_desc.NumParameters = 1;
-    root_signature_desc.pParameters = &root_parameter;
+    root_signature_desc.NumParameters = 2;
+    root_signature_desc.pParameters = root_parameter;
     root_signature_desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
     ID3DBlob *signature_blob = nullptr;
