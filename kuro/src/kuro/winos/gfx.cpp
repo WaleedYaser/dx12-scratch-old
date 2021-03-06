@@ -26,6 +26,8 @@ typedef struct _kr_gfx_t {
     uint32_t dsv_descriptor_size;
     ID3D12Fence *fence;
     uint64_t current_fence;
+    ID3D12GraphicsCommandList *command_list;
+    ID3D12CommandAllocator *command_allocator;
 } _kr_gfx_t;
 
 typedef struct _kr_swapchain_t {
@@ -174,6 +176,20 @@ kuro_gfx_create()
     assert(SUCCEEDED(hr));
     gfx->current_fence = 0;
 
+    hr = gfx->device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&gfx->command_allocator));
+    assert(SUCCEEDED(hr));
+
+    hr = gfx->device->CreateCommandList(
+        0,
+        D3D12_COMMAND_LIST_TYPE_DIRECT,
+        gfx->command_allocator,
+        nullptr,
+        IID_PPV_ARGS(&gfx->command_list));
+    assert(SUCCEEDED(hr));
+
+    hr = gfx->command_list->Close();
+    assert(SUCCEEDED(hr));
+
     return gfx;
 }
 
@@ -181,6 +197,8 @@ void
 kuro_gfx_destroy(kr_gfx_t gfx)
 {
     kuro_gfx_sync(gfx);
+    gfx->command_list->Release();
+    gfx->command_allocator->Release();
     gfx->fence->Release();
     gfx->command_queue->Release();
     gfx->device->Release();
@@ -367,7 +385,7 @@ kuro_gfx_image_destroy(kr_gfx_t gfx, kr_image_t image)
 }
 
 kr_buffer_t
-kuro_gfx_buffer_create(kr_gfx_t gfx, KURO_GFX_ACCESS cpu_access, uint32_t size_in_bytes)
+kuro_gfx_buffer_create(kr_gfx_t gfx, KURO_GFX_ACCESS cpu_access, void *data, uint32_t size_in_bytes)
 {
     kr_buffer_t buffer = (kr_buffer_t)malloc(sizeof(_kr_buffer_t));
 
@@ -426,6 +444,56 @@ kuro_gfx_buffer_create(kr_gfx_t gfx, KURO_GFX_ACCESS cpu_access, uint32_t size_i
 
         if (buffer->cpu_access == KURO_GFX_ACCESS_NONE)
             break;
+    }
+
+    if (buffer->cpu_access == KURO_GFX_ACCESS_NONE)
+    {
+        assert(data);
+        ID3D12Resource *upload_buffer = nullptr;
+
+        heap_properties.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+        hr = gfx->device->CreateCommittedResource(
+            &heap_properties,
+            D3D12_HEAP_FLAG_NONE,
+            &resource_desc,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&upload_buffer));
+        assert(SUCCEEDED(hr));
+
+        void *mapped_data = nullptr;
+        hr = upload_buffer->Map(0, nullptr, &mapped_data);
+        assert(SUCCEEDED(hr));
+        memcpy(mapped_data, data, size_in_bytes);
+        upload_buffer->Unmap(0, nullptr);
+
+        kuro_gfx_sync(gfx);
+        hr = gfx->command_allocator->Reset();
+        assert(SUCCEEDED(hr));
+        hr = gfx->command_list->Reset(gfx->command_allocator, nullptr);
+        assert(SUCCEEDED(hr));
+
+        D3D12_RESOURCE_BARRIER resource_barrier = {};
+        resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        resource_barrier.Transition.pResource = buffer->buffer[0];
+        resource_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+        resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
+        gfx->command_list->ResourceBarrier(1, &resource_barrier);
+
+        gfx->command_list->CopyBufferRegion(buffer->buffer[0], 0, upload_buffer, 0, size_in_bytes);
+
+        resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+        resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
+        gfx->command_list->ResourceBarrier(1, &resource_barrier);
+
+        hr = gfx->command_list->Close();
+        assert(SUCCEEDED(hr));
+        ID3D12CommandList *cmd_lists[] = { gfx->command_list };
+        gfx->command_queue->ExecuteCommandLists(1, cmd_lists);
+        kuro_gfx_sync(gfx);
+        upload_buffer->Release();
     }
 
     return buffer;
@@ -797,28 +865,6 @@ kuro_gfx_commands_end(kr_gfx_t gfx, kr_commands_t commands)
 
     commands->swapchain = nullptr;
     commands->depth_target = nullptr;
-}
-
-void
-kuro_gfx_buffer_copy(kr_commands_t commands, kr_buffer_t src_buffer, kr_buffer_t dst_buffer)
-{
-    // TODO[Waleed]: cpu access doesn't matter here, we should check the state instead
-    assert(src_buffer->cpu_access == KURO_GFX_ACCESS_WRITE);
-    assert(dst_buffer->cpu_access == KURO_GFX_ACCESS_NONE);
-
-    D3D12_RESOURCE_BARRIER resource_barrier = {};
-    resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    resource_barrier.Transition.pResource = dst_buffer->buffer[0];
-    resource_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
-    resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
-    commands->command_list->ResourceBarrier(1, &resource_barrier);
-
-    commands->command_list->CopyBufferRegion(dst_buffer->buffer[0], 0, src_buffer->buffer[0], 0, src_buffer->size_in_bytes);
-
-    resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-    resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
-    commands->command_list->ResourceBarrier(1, &resource_barrier);
 }
 
 void

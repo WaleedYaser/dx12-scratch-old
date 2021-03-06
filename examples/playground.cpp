@@ -59,24 +59,9 @@ int main()
         0, 3, 2
     };
 
-    kr_buffer_t vertex_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_NONE, sizeof(vertices));
-    kr_buffer_t vertex_upload_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_WRITE, sizeof(vertices));
-    kuro_gfx_buffer_write(gfx, vertex_upload_buffer, vertices, sizeof(vertices));
-
-    kr_buffer_t index_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_NONE, sizeof(indices));
-    kr_buffer_t index_upload_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_WRITE, sizeof(indices));
-    kuro_gfx_buffer_write(gfx, index_upload_buffer, indices, sizeof(indices));
-
-    kuro_gfx_commands_begin(gfx, commands, nullptr, nullptr);
-    kuro_gfx_buffer_copy(commands, vertex_upload_buffer, vertex_buffer);
-    kuro_gfx_buffer_copy(commands, index_upload_buffer, index_buffer);
-    kuro_gfx_commands_end(gfx, commands);
-    kuro_gfx_sync(gfx);
-
-    kuro_gfx_buffer_destroy(gfx, vertex_upload_buffer);
-    kuro_gfx_buffer_destroy(gfx, index_upload_buffer);
-
-    kr_buffer_t constant_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_WRITE, 256);
+    kr_buffer_t vertex_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_NONE, vertices, sizeof(vertices));
+    kr_buffer_t index_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_NONE, indices, sizeof(indices));
+    kr_buffer_t constant_buffer = kuro_gfx_buffer_create(gfx, KURO_GFX_ACCESS_WRITE, nullptr, 256);
     kuro_gfx_pipeline_set_constant_buffer(gfx, pipeline, constant_buffer, 0);
 
     uint16_t width = window->width;
