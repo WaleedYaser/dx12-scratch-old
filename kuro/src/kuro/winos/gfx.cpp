@@ -46,6 +46,7 @@ typedef struct _kr_image_t {
     ID3D12Resource *depth_stencil_buffer;
     ID3D12DescriptorHeap *dsv_heap;
     D3D12_CPU_DESCRIPTOR_HANDLE dsv_descriptor;
+    bool transition;
 } _kr_image_t;
 
 typedef struct _kr_buffer_t {
@@ -302,12 +303,13 @@ kuro_gfx_swapchain_resize(kr_gfx_t gfx, kr_swapchain_t swapchain, uint32_t width
 }
 
 kr_image_t
-kuro_gfx_image_create(kr_gfx_t gfx, kr_commands_t commands, uint32_t width, uint32_t height)
+kuro_gfx_image_create(kr_gfx_t gfx, uint32_t width, uint32_t height)
 {
     kr_image_t image = (kr_image_t)malloc(sizeof(_kr_image_t));
     image->depth_stencil_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
     image->msaa_state = false;
     image->msaa_x4_quality = 0;
+    image->transition = true;
 
     HRESULT hr = {};
 
@@ -351,14 +353,6 @@ kuro_gfx_image_create(kr_gfx_t gfx, kr_commands_t commands, uint32_t width, uint
         image->depth_stencil_buffer,
         nullptr,
         image->dsv_descriptor);
-
-    D3D12_RESOURCE_BARRIER resource_barrier = {};
-    resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    resource_barrier.Transition.pResource = image->depth_stencil_buffer;
-    resource_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-    resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
-    resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-    commands->command_list->ResourceBarrier(1, &resource_barrier);
 
     return image;
 }
@@ -738,6 +732,19 @@ kuro_gfx_commands_begin(kr_gfx_t gfx, kr_commands_t commands, kr_swapchain_t swa
 
     hr = commands->command_list->Reset(commands->command_allocator[commands->current_resource_index], nullptr);
     assert(SUCCEEDED(hr));
+
+    if (depth_target && depth_target->transition)
+    {
+        depth_target->transition = false;
+
+        D3D12_RESOURCE_BARRIER resource_barrier = {};
+        resource_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        resource_barrier.Transition.pResource = depth_target->depth_stencil_buffer;
+        resource_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        resource_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+        resource_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+        commands->command_list->ResourceBarrier(1, &resource_barrier);
+    }
 
     if (swapchain)
     {

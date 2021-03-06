@@ -8,6 +8,7 @@ int main()
     kr_gfx_t gfx = kuro_gfx_create();
     kr_commands_t commands = kuro_gfx_commands_create(gfx);
     kr_swapchain_t swapchain = kuro_gfx_swapchain_create(gfx, window->width, window->height, window->handle);
+    kr_image_t depth_target = kuro_gfx_image_create(gfx, window->width, window->height);
 
     const char shader[] = R"(
         cbuffer Constant_Buffer : register(b0)
@@ -67,7 +68,6 @@ int main()
     kuro_gfx_buffer_write(gfx, index_upload_buffer, indices, sizeof(indices));
 
     kuro_gfx_commands_begin(gfx, commands, nullptr, nullptr);
-    kr_image_t depth_target = kuro_gfx_image_create(gfx, commands, window->width, window->height);
     kuro_gfx_buffer_copy(commands, vertex_upload_buffer, vertex_buffer);
     kuro_gfx_buffer_copy(commands, index_upload_buffer, index_buffer);
     kuro_gfx_commands_end(gfx, commands);
@@ -93,12 +93,8 @@ int main()
             if (height == 0) height = 1;
 
             kuro_gfx_swapchain_resize(gfx, swapchain, width, height);
-
             kuro_gfx_image_destroy(gfx, depth_target);
-            kuro_gfx_commands_begin(gfx, commands, nullptr, nullptr);
-            depth_target = kuro_gfx_image_create(gfx, commands, width, height);
-            kuro_gfx_commands_end(gfx, commands);
-            kuro_gfx_sync(gfx);
+            depth_target = kuro_gfx_image_create(gfx, width, height);
         }
 
         float t = (float)window->input.mouse_x / (float)window->width;
@@ -126,10 +122,10 @@ int main()
     kuro_gfx_buffer_destroy(gfx, constant_buffer);
     kuro_gfx_buffer_destroy(gfx, index_buffer);
     kuro_gfx_buffer_destroy(gfx, vertex_buffer);
-    kuro_gfx_image_destroy(gfx, depth_target);
     kuro_gfx_pipeline_destroy(gfx, pipeline);
     kuro_gfx_pixel_shader_destroy(gfx, pixel_shader);
     kuro_gfx_vertex_shader_destroy(gfx, vertex_shader);
+    kuro_gfx_image_destroy(gfx, depth_target);
     kuro_gfx_swapchain_destroy(gfx, swapchain);
     kuro_gfx_commands_destroy(gfx, commands);
     kuro_gfx_destroy(gfx);

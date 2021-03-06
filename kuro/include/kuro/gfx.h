@@ -84,7 +84,7 @@ kr_swapchain_t kuro_gfx_swapchain_create(kr_gfx_t gfx, uint32_t width, uint32_t 
 void kuro_gfx_swapchain_destroy(kr_gfx_t gfx, kr_swapchain_t swapchain);
 void kuro_gfx_swapchain_resize(kr_gfx_t gfx, kr_swapchain_t swapchain, uint32_t width, uint32_t height);
 
-kr_image_t kuro_gfx_image_create(kr_gfx_t gfx, kr_commands_t commands, uint32_t width, uint32_t height);
+kr_image_t kuro_gfx_image_create(kr_gfx_t gfx, uint32_t width, uint32_t height);
 void kuro_gfx_image_destroy(kr_gfx_t gfx, kr_image_t image);
 
 kr_buffer_t kuro_gfx_buffer_create(kr_gfx_t gfx, KURO_GFX_ACCESS cpu_access, uint32_t size_in_bytes);
