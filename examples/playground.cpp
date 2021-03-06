@@ -1,5 +1,7 @@
 #include <kuro/window.h>
 #include <kuro/gfx.h>
+#include <kuro/kuro_os.h>
+#include <stdio.h>
 
 int main()
 {
@@ -66,6 +68,9 @@ int main()
     uint16_t width = window->width;
     uint16_t height = window->height;
 
+    double target_time = 1.0 / 60.0;
+    double begin_time = kuro::os_seconds();
+    double total_time = 0.0;
     while (kr_window_update(window))
     {
         if (width != window->width || height != window->height)
@@ -79,6 +84,7 @@ int main()
             kuro_gfx_swapchain_resize(gfx, swapchain, width, height);
             kuro_gfx_image_destroy(gfx, depth_target);
             depth_target = kuro_gfx_image_create(gfx, width, height);
+            begin_time = kuro::os_seconds();
         }
 
         kuro_gfx_commands_begin(gfx, commands, swapchain, depth_target);
@@ -101,6 +107,25 @@ int main()
             kuro_gfx_draw(commands, draw_desc);
         }
         kuro_gfx_commands_end(gfx, commands);
+        kuro_gfx_sync(gfx);
+
+        // timing
+        double end_time = kuro::os_seconds();
+        double frame_time = end_time - begin_time;
+        if (frame_time < target_time)
+            kuro::os_sleep(target_time - frame_time);
+        double sleep_time = kuro::os_seconds() - end_time;
+        double dt = frame_time + sleep_time;
+        begin_time = end_time;
+        total_time += dt;
+
+        char title[256];
+        sprintf_s(
+            title, sizeof(title),
+            "playground - total_time: %0.4f s | dt: %7.4f ms | fps: %2.0f | frame time: %7.4f ms | sleep time: %7.4f ms",
+            total_time, dt * 1000.0, 1.0 / dt, frame_time * 1000.0, sleep_time * 1000.0);
+        kr_window_title_set(window, title);
+        printf("%s\n", title);
     }
 
     // release resources

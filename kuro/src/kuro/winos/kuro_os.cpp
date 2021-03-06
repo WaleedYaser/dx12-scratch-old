@@ -1,6 +1,7 @@
+#pragma comment(lib, "winmm.lib")
+
 #include "kuro/kuro_os.h"
 
-#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
 namespace kuro
@@ -15,5 +16,18 @@ namespace kuro
         LARGE_INTEGER now;
         ::QueryPerformanceCounter(&now);
         return (f64)now.QuadPart / (f64)frequency.QuadPart;
+    }
+
+    void
+    os_sleep(double seconds)
+    {
+        static bool init = true;
+        if (init)
+        {
+            init = false;
+            timeBeginPeriod(1);
+        }
+
+        Sleep((WORD)(seconds * 1000.0));
     }
 }

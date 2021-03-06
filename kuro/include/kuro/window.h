@@ -42,7 +42,6 @@ typedef struct kr_input_t
 
 typedef struct kr_window_t
 {
-    const char *title;
     uint16_t width, height;
     void *handle;
     kr_input_t input;
@@ -51,6 +50,7 @@ typedef struct kr_window_t
 kr_window_t * kr_window_create(const char *title, uint16_t width, uint16_t height);
 void kr_window_destroy(kr_window_t *window);
 bool kr_window_update(kr_window_t *window);
+void kr_window_title_set(kr_window_t *window, const char *title);
 
 #ifdef __cplusplus
 } // extern "C"

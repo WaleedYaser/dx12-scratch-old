@@ -28,7 +28,6 @@ kr_window_create(const char *title, uint16_t width, uint16_t height)
     assert(width > 0 && height > 0 && "can't create a window with 0 width or height");
 
     kr_window_t *window = (kr_window_t *)malloc(sizeof(kr_window_t));
-    window->title = title;
     window->width = width;
     window->height = height;
 
@@ -215,4 +214,10 @@ kr_window_update(kr_window_t *window)
     window->height = (uint16_t)(rect.bottom - rect.top);
 
     return true;
+}
+
+void
+kr_window_title_set(kr_window_t *window, const char *title)
+{
+    SetWindowText((HWND)window->handle, title);
 }
