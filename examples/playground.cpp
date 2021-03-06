@@ -81,9 +81,6 @@ int main()
             depth_target = kuro_gfx_image_create(gfx, width, height);
         }
 
-        float t = (float)window->input.mouse_x / (float)window->width;
-        kuro_gfx_buffer_write(gfx, constant_buffer, &t, sizeof(t));
-
         kuro_gfx_commands_begin(gfx, commands, swapchain, depth_target);
         {
             kuro_gfx_set_pipeline(commands, pipeline);
@@ -91,6 +88,8 @@ int main()
 
             kuro_gfx_clear(commands, {1.0f, 1.0f, 0.0f, 1.0f}, 1.0f);
 
+            float t = (float)window->input.mouse_x / (float)window->width;
+            kuro_gfx_buffer_write(commands, constant_buffer, &t, sizeof(t));
             kuro_gfx_buffer_bind(commands, constant_buffer, 0);
 
             Kuro_Gfx_Draw_Desc draw_desc = {};

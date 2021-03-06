@@ -18,6 +18,7 @@
 static const int MAX_SWAPCHAIN_BUFFER_COUNT = 3;
 static const int SYNC = 3;
 static const int MAX_CBV_HEAP_DESC_NUM = 1024;
+
 typedef struct _kr_gfx_t {
     IDXGIFactory4 *factory;
     ID3D12Device *device;
@@ -58,7 +59,7 @@ typedef struct _kr_buffer_t {
     KURO_GFX_ACCESS cpu_access;
     ID3D12Resource *buffer[SYNC];
     uint32_t size_in_bytes;
-    D3D12_GPU_DESCRIPTOR_HANDLE cbv;
+    D3D12_GPU_DESCRIPTOR_HANDLE cbv[SYNC];
 } _kr_buffer_t;
 
 typedef struct _kr_vshader_t {
@@ -513,18 +514,21 @@ kuro_gfx_buffer_create(kr_gfx_t gfx, KURO_GFX_ACCESS cpu_access, void *data, uin
     {
         assert(size_in_bytes % 256 == 0);
 
-        D3D12_CONSTANT_BUFFER_VIEW_DESC cbv_desc = {};
-        cbv_desc.BufferLocation = buffer->buffer[0]->GetGPUVirtualAddress();
-        cbv_desc.SizeInBytes = size_in_bytes;
+        for (int i = 0; i < SYNC; ++i)
+        {
+            D3D12_CONSTANT_BUFFER_VIEW_DESC cbv_desc = {};
+            cbv_desc.BufferLocation = buffer->buffer[i]->GetGPUVirtualAddress();
+            cbv_desc.SizeInBytes = size_in_bytes;
 
-        D3D12_CPU_DESCRIPTOR_HANDLE heap_handle = gfx->cbv_heap->GetCPUDescriptorHandleForHeapStart();
-        heap_handle.ptr += (gfx->next_free_cbv_index * gfx->cbv_descriptor_size);
-        gfx->device->CreateConstantBufferView(&cbv_desc, heap_handle);
+            D3D12_CPU_DESCRIPTOR_HANDLE heap_handle = gfx->cbv_heap->GetCPUDescriptorHandleForHeapStart();
+            heap_handle.ptr += (gfx->next_free_cbv_index * gfx->cbv_descriptor_size);
+            gfx->device->CreateConstantBufferView(&cbv_desc, heap_handle);
 
-        buffer->cbv = gfx->cbv_heap->GetGPUDescriptorHandleForHeapStart();
-        buffer->cbv.ptr += (gfx->next_free_cbv_index * gfx->cbv_descriptor_size);
+            buffer->cbv[i] = gfx->cbv_heap->GetGPUDescriptorHandleForHeapStart();
+            buffer->cbv[i].ptr += (gfx->next_free_cbv_index * gfx->cbv_descriptor_size);
 
-        gfx->next_free_cbv_index++;
+            gfx->next_free_cbv_index++;
+        }
     }
 
     return buffer;
@@ -540,20 +544,6 @@ kuro_gfx_buffer_destroy(kr_gfx_t gfx, kr_buffer_t buffer)
             buffer->buffer[i]->Release();
     }
     free(buffer);
-}
-
-void
-kuro_gfx_buffer_write(kr_gfx_t, kr_buffer_t buffer, void *data, uint32_t size_in_bytes)
-{
-    assert(buffer->cpu_access == KURO_GFX_ACCESS_WRITE);
-
-    HRESULT hr = {};
-
-    void *mapped_data = nullptr;
-    hr = buffer->buffer[0]->Map(0, nullptr, &mapped_data);
-    assert(SUCCEEDED(hr));
-    memcpy(mapped_data, data, size_in_bytes);
-    buffer->buffer[0]->Unmap(0, nullptr);
 }
 
 kr_vshader_t
@@ -905,10 +895,24 @@ kuro_gfx_clear(kr_commands_t commands, Kuro_Gfx_Color color, float depth)
 }
 
 void
+kuro_gfx_buffer_write(kr_commands_t commands, kr_buffer_t buffer, void *data, uint32_t size_in_bytes)
+{
+    assert(buffer->cpu_access == KURO_GFX_ACCESS_WRITE);
+
+    HRESULT hr = {};
+
+    void *mapped_data = nullptr;
+    hr = buffer->buffer[commands->current_resource_index]->Map(0, nullptr, &mapped_data);
+    assert(SUCCEEDED(hr));
+    memcpy(mapped_data, data, size_in_bytes);
+    buffer->buffer[commands->current_resource_index]->Unmap(0, nullptr);
+}
+
+void
 kuro_gfx_buffer_bind(kr_commands_t commands, kr_buffer_t buffer, uint32_t slot)
 {
     assert(buffer->cpu_access == KURO_GFX_ACCESS_WRITE);
-    commands->command_list->SetGraphicsRootDescriptorTable(slot, buffer->cbv);
+    commands->command_list->SetGraphicsRootDescriptorTable(slot, buffer->cbv[commands->current_resource_index]);
 }
 
 void
