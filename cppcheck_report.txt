@@ -1,0 +1,161 @@
+examples/playground.cpp:35:10: style: Variable 'size' is assigned a value that is never used. [unreadVariable]
+    size = sizeof(Pass_Constants);
+         ^
+kuro/src/kuro/winos/gfx.cpp:234:18: style: Condition 'swapchain->msaa_state' is always false [knownConditionTrueFalse]
+    if (swapchain->msaa_state)
+                 ^
+kuro/src/kuro/winos/gfx.cpp:232:27: note: swapchain->msaa_state is assigned value 0
+    swapchain->msaa_state = false;
+                          ^
+kuro/src/kuro/winos/gfx.cpp:234:18: note: Condition 'swapchain->msaa_state' is always false
+    if (swapchain->msaa_state)
+                 ^
+kuro/src/kuro/winos/gfx.cpp:257:48: style: Condition 'swapchain->msaa_state' is always false [knownConditionTrueFalse]
+    swapchain_desc.SampleDesc.Count = swapchain->msaa_state ? 4 : 1;
+                                               ^
+kuro/src/kuro/winos/gfx.cpp:232:27: note: swapchain->msaa_state is assigned value 0
+    swapchain->msaa_state = false;
+                          ^
+kuro/src/kuro/winos/gfx.cpp:257:48: note: Condition 'swapchain->msaa_state' is always false
+    swapchain_desc.SampleDesc.Count = swapchain->msaa_state ? 4 : 1;
+                                               ^
+kuro/src/kuro/winos/gfx.cpp:258:50: style: Condition 'swapchain->msaa_state' is always false [knownConditionTrueFalse]
+    swapchain_desc.SampleDesc.Quality = swapchain->msaa_state ? (swapchain->msaa_x4_quality - 1) : 0;
+                                                 ^
+kuro/src/kuro/winos/gfx.cpp:232:27: note: swapchain->msaa_state is assigned value 0
+    swapchain->msaa_state = false;
+                          ^
+kuro/src/kuro/winos/gfx.cpp:258:50: note: Condition 'swapchain->msaa_state' is always false
+    swapchain_desc.SampleDesc.Quality = swapchain->msaa_state ? (swapchain->msaa_x4_quality - 1) : 0;
+                                                 ^
+kuro/src/kuro/winos/gfx.cpp:359:48: style: Condition 'image->msaa_state' is always false [knownConditionTrueFalse]
+    depth_stencil_desc.SampleDesc.Count = image->msaa_state ? 4 : 1;
+                                               ^
+kuro/src/kuro/winos/gfx.cpp:343:23: note: image->msaa_state is assigned value 0
+    image->msaa_state = false;
+                      ^
+kuro/src/kuro/winos/gfx.cpp:359:48: note: Condition 'image->msaa_state' is always false
+    depth_stencil_desc.SampleDesc.Count = image->msaa_state ? 4 : 1;
+                                               ^
+kuro/src/kuro/winos/gfx.cpp:360:50: style: Condition 'image->msaa_state' is always false [knownConditionTrueFalse]
+    depth_stencil_desc.SampleDesc.Quality = image->msaa_state ? (image->msaa_x4_quality - 1) : 0;
+                                                 ^
+kuro/src/kuro/winos/gfx.cpp:343:23: note: image->msaa_state is assigned value 0
+    image->msaa_state = false;
+                      ^
+kuro/src/kuro/winos/gfx.cpp:360:50: note: Condition 'image->msaa_state' is always false
+    depth_stencil_desc.SampleDesc.Quality = image->msaa_state ? (image->msaa_x4_quality - 1) : 0;
+                                                 ^
+kuro/src/kuro/winos/gfx.cpp:136:8: style: Redundant initialization for 'hr'. The initialized value is overwritten before it is read. [redundantInitialization]
+    hr = CreateDXGIFactory1(IID_PPV_ARGS(&gfx->factory));
+       ^
+kuro/src/kuro/winos/gfx.cpp:122:16: note: hr is initialized
+    HRESULT hr = {};
+               ^
+kuro/src/kuro/winos/gfx.cpp:136:8: note: hr is overwritten
+    hr = CreateDXGIFactory1(IID_PPV_ARGS(&gfx->factory));
+       ^
+kuro/src/kuro/winos/gfx.cpp:268:8: style: Redundant initialization for 'hr'. The initialized value is overwritten before it is read. [redundantInitialization]
+    hr = gfx->factory->CreateSwapChain(gfx->command_queue, &swapchain_desc, &swapchain_tmp);
+       ^
+kuro/src/kuro/winos/gfx.cpp:227:16: note: hr is initialized
+    HRESULT hr = {};
+               ^
+kuro/src/kuro/winos/gfx.cpp:268:8: note: hr is overwritten
+    hr = gfx->factory->CreateSwapChain(gfx->command_queue, &swapchain_desc, &swapchain_tmp);
+       ^
+kuro/src/kuro/winos/gfx.cpp:320:8: style: Redundant initialization for 'hr'. The initialized value is overwritten before it is read. [redundantInitialization]
+    hr = swapchain->swapchain->ResizeBuffers(
+       ^
+kuro/src/kuro/winos/gfx.cpp:315:16: note: hr is initialized
+    HRESULT hr = {};
+               ^
+kuro/src/kuro/winos/gfx.cpp:320:8: note: hr is overwritten
+    hr = swapchain->swapchain->ResizeBuffers(
+       ^
+kuro/src/kuro/winos/gfx.cpp:368:8: style: Redundant initialization for 'hr'. The initialized value is overwritten before it is read. [redundantInitialization]
+    hr = gfx->device->CreateCommittedResource(
+       ^
+kuro/src/kuro/winos/gfx.cpp:347:16: note: hr is initialized
+    HRESULT hr = {};
+               ^
+kuro/src/kuro/winos/gfx.cpp:368:8: note: hr is overwritten
+    hr = gfx->device->CreateCommittedResource(
+       ^
+kuro/src/kuro/winos/gfx.cpp:649:8: style: Redundant initialization for 'hr'. The initialized value is overwritten before it is read. [redundantInitialization]
+    hr = D3D12SerializeRootSignature(&root_signature_desc, D3D_ROOT_SIGNATURE_VERSION_1, &signature_blob, &error_blob);
+       ^
+kuro/src/kuro/winos/gfx.cpp:624:16: note: hr is initialized
+    HRESULT hr = {};
+               ^
+kuro/src/kuro/winos/gfx.cpp:649:8: note: hr is overwritten
+    hr = D3D12SerializeRootSignature(&root_signature_desc, D3D_ROOT_SIGNATURE_VERSION_1, &signature_blob, &error_blob);
+       ^
+kuro/src/kuro/winos/gfx.cpp:724:8: style: Variable 'hr' is reassigned a value before the old one has been used. [redundantAssignment]
+    hr = gfx->device->CreateGraphicsPipelineState(&pipeline_desc, IID_PPV_ARGS(&pipeline->pipeline_state));
+       ^
+kuro/src/kuro/winos/gfx.cpp:671:12: note: hr is assigned
+        hr = reflection->GetInputParameterDesc(i, &parameter_desc);
+           ^
+kuro/src/kuro/winos/gfx.cpp:724:8: note: hr is overwritten
+    hr = gfx->device->CreateGraphicsPipelineState(&pipeline_desc, IID_PPV_ARGS(&pipeline->pipeline_state));
+       ^
+kuro/src/kuro/winos/gfx.cpp:756:8: style: Redundant initialization for 'hr'. The initialized value is overwritten before it is read. [redundantInitialization]
+    hr = gfx->device->CreateCommandList(
+       ^
+kuro/src/kuro/winos/gfx.cpp:744:16: note: hr is initialized
+    HRESULT hr = {};
+               ^
+kuro/src/kuro/winos/gfx.cpp:756:8: note: hr is overwritten
+    hr = gfx->device->CreateCommandList(
+       ^
+kuro/src/kuro/winos/gfx.cpp:798:8: style: Redundant initialization for 'hr'. The initialized value is overwritten before it is read. [redundantInitialization]
+    hr = commands->command_allocator[commands->current_resource_index]->Reset();
+       ^
+kuro/src/kuro/winos/gfx.cpp:782:16: note: hr is initialized
+    HRESULT hr = {};
+               ^
+kuro/src/kuro/winos/gfx.cpp:798:8: note: hr is overwritten
+    hr = commands->command_allocator[commands->current_resource_index]->Reset();
+       ^
+kuro/src/kuro/winos/gfx.cpp:798:8: style: Variable 'hr' is reassigned a value before the old one has been used. [redundantAssignment]
+    hr = commands->command_allocator[commands->current_resource_index]->Reset();
+       ^
+kuro/src/kuro/winos/gfx.cpp:793:12: note: hr is assigned
+        hr = gfx->fence->SetEventOnCompletion(current_commands_fence, event_handle);
+           ^
+kuro/src/kuro/winos/gfx.cpp:798:8: note: hr is overwritten
+    hr = commands->command_allocator[commands->current_resource_index]->Reset();
+       ^
+kuro/src/kuro/winos/gfx.cpp:854:8: style: Redundant initialization for 'hr'. The initialized value is overwritten before it is read. [redundantInitialization]
+    hr = commands->command_list->Close();
+       ^
+kuro/src/kuro/winos/gfx.cpp:841:16: note: hr is initialized
+    HRESULT hr = {};
+               ^
+kuro/src/kuro/winos/gfx.cpp:854:8: note: hr is overwritten
+    hr = commands->command_list->Close();
+       ^
+kuro/src/kuro/winos/gfx.cpp:910:8: style: Redundant initialization for 'hr'. The initialized value is overwritten before it is read. [redundantInitialization]
+    hr = buffer->buffer[commands->current_resource_index]->Map(0, nullptr, &mapped_data);
+       ^
+kuro/src/kuro/winos/gfx.cpp:907:16: note: hr is initialized
+    HRESULT hr = {};
+               ^
+kuro/src/kuro/winos/gfx.cpp:910:8: note: hr is overwritten
+    hr = buffer->buffer[commands->current_resource_index]->Map(0, nullptr, &mapped_data);
+       ^
+kuro/src/kuro/winos/gfx.cpp:130:12: style: Redundant initialization for 'hr'. The initialized value is overwritten before it is read. [redundantInitialization]
+        hr = D3D12GetDebugInterface(IID_PPV_ARGS(&debug_controller));
+           ^
+kuro/src/kuro/winos/gfx.cpp:122:16: note: hr is initialized
+    HRESULT hr = {};
+               ^
+kuro/src/kuro/winos/gfx.cpp:130:12: note: hr is overwritten
+        hr = D3D12GetDebugInterface(IID_PPV_ARGS(&debug_controller));
+           ^
+kuro/src/kuro/winos/window.c:145:53: portability: Shifting signed 32-bit value by 31 bits is implementation-defined behaviour [shiftTooManyBitsSigned]
+                int32_t is_down = !(msg.lParam & (1 << 31));
+                                                    ^
+nofile:0:0: information: Cppcheck cannot find all the include files (use --check-config for details) [missingInclude]
+
